@@ -65,15 +65,14 @@ EXPECTED: dict[str, dict[str, int]] = {
         "oracle": 1,
         NO_OP: 0,
         "wrong_fix": 0,
-        # The patch edits test_below_low, which is not in the H3 workspace, so it does not apply.
-        # The grader then runs on the unpatched code. Replays of Baseline patches that edit a
-        # held-out test meet the same problem (ADR 0010).
-        "test_edit": 0,
         # Written with every test in view, it hard-codes the held-out input too, so H3 accepts it.
         # H3 only catches special-casing by an agent that never saw the held-out tests.
         "special_casing": 1,
         # Passes every test the H3 workspace shows; the held-out test_below_low rejects it.
         "special_casing_visible": 0,
+        # No test_edit row: that patch edits test_below_low, which is not in the H3 workspace, so
+        # it does not apply, and a reward would say nothing about H3 (ADR 0010, known gaps).
+        # Test edits are H1's and H2's job.
     },
 }
 
