@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test check data-facts task oracle-results
+.PHONY: install lint typecheck test check data-facts task oracle-results sample label
 
 install:
 	uv sync
@@ -31,3 +31,11 @@ oracle-results:
 	rm -rf results/oracle-check
 	gh run download $${RUN:-$$(gh run list --workflow oracle-check.yml --limit 1 --json databaseId --jq '.[0].databaseId')} --pattern 'oracle-check-*' --dir results/oracle-check
 	uv run python -m grader_proof.oracle_check summarize results/oracle-check
+
+# Draws labels/sample.jsonl (100 unresolved trajectories, 30 dev and 70 test). Keeps an existing file.
+sample:
+	uv run python -m grader_proof.label_cli sample
+
+# Labels the next unlabeled trajectory. Usage: make label SPLIT=dev (or test, or all)
+label:
+	uv run python -m grader_proof.label_cli label --split $(or $(SPLIT),dev)
