@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-results sample label
+.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-results sample label
 
 install:
 	uv sync
@@ -49,3 +49,7 @@ sample:
 # Labels the next unlabeled trajectory. Usage: make label SPLIT=dev (or test, or all)
 label:
 	uv run python -m grader_proof.label_cli label --split $(or $(SPLIT),dev)
+
+# Ranks about 20 candidate instances for the 12 tasks (needs data/, labels/human.jsonl and Docker Hub access for image sizes).
+candidates:
+	uv run python -m grader_proof.candidates
