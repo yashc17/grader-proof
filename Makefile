@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test check data-facts task oracle-results sample label
+.PHONY: install lint typecheck test check data-facts task oracle-results sample label label-page
 
 install:
 	uv sync
@@ -35,6 +35,10 @@ oracle-results:
 # Draws labels/sample.jsonl (100 unresolved trajectories, 30 dev and 70 test). Keeps an existing file.
 sample:
 	uv run python -m grader_proof.label_cli sample
+
+# Writes data/label_view/index.html: a browser page for labeling the dev items.
+label-page:
+	uv run python -m grader_proof.label_view
 
 # Labels the next unlabeled trajectory. Usage: make label SPLIT=dev (or test, or all)
 label:
