@@ -4,8 +4,12 @@ from pathlib import Path
 import pytest
 
 from grader_proof.task_builder import (
+    RESTORE,
+    FileChange,
     Instance,
+    parse_file_changes,
     render_dockerfile,
+    render_restore,
     render_solve_sh,
     render_test_sh,
     task_dir_name,
@@ -50,7 +54,77 @@ def test_from_row_rejects_empty_fail_to_pass():
 
 
 def test_task_dir_name_is_lowercase_and_names_the_condition():
-    assert task_dir_name("Org__Repo-12") == "org__repo-12__baseline"
+    assert task_dir_name("Org__Repo-12", "baseline") == "org__repo-12__baseline"
+    assert task_dir_name("Org__Repo-12", "h1") == "org__repo-12__h1"
+
+
+MODIFIED = """\
+diff --git a/tests/test_mod.py b/tests/test_mod.py
+index 1111111..2222222 100644
+--- a/tests/test_mod.py
++++ b/tests/test_mod.py
+@@ -1 +1,2 @@
+ def test_a(): pass
++def test_b(): pass
+"""
+
+# Git ends `---`/`+++` paths that hold a space with a tab.
+CREATED = """\
+diff --git a/tests/test new.py b/tests/test new.py
+new file mode 100644
+index 0000000..3333333
+--- /dev/null
++++ b/tests/test new.py\t
+@@ -0,0 +1 @@
++def test_new(): pass
+"""
+
+DELETED = """\
+diff --git a/tests/test_gone.py b/tests/test_gone.py
+deleted file mode 100644
+index 4444444..0000000
+--- a/tests/test_gone.py
++++ /dev/null
+@@ -1 +0,0 @@
+-def test_old(): pass
+"""
+
+RENAMED = """\
+diff --git a/tests/old.py b/tests/new.py
+similarity index 100%
+rename from tests/old.py
+rename to tests/new.py
+"""
+
+BINARY = """\
+diff --git a/tests/data.bin b/tests/data.bin
+new file mode 100644
+index 0000000..5555555
+Binary files /dev/null and b/tests/data.bin differ
+"""
+
+PATCH = MODIFIED + CREATED + DELETED + RENAMED + BINARY
+
+
+def test_parse_file_changes_names_each_file_before_and_after_the_patch():
+    assert parse_file_changes(PATCH) == [
+        FileChange(old="tests/test_mod.py", new="tests/test_mod.py"),
+        FileChange(old=None, new="tests/test new.py"),
+        FileChange(old="tests/test_gone.py", new=None),
+        FileChange(old="tests/old.py", new="tests/new.py"),
+        FileChange(old=None, new="tests/data.bin"),
+    ]
+
+
+def test_parse_file_changes_rejects_quoted_paths():
+    patch = 'diff --git "a/tests/t\\303\\251.py" "b/tests/t\\303\\251.py"\n'
+    with pytest.raises(ValueError, match="quoted"):
+        parse_file_changes(patch)
+
+
+def test_parse_file_changes_rejects_text_that_is_not_a_git_patch():
+    with pytest.raises(ValueError, match="no file"):
+        parse_file_changes("--- a/x.py\n+++ b/x.py\n")
 
 
 def test_test_sh_runs_every_upstream_test_in_place(instance: Instance):
@@ -60,6 +134,36 @@ def test_test_sh_runs_every_upstream_test_in_place(instance: Instance):
     )
     assert "git checkout" not in script
     assert "git apply" not in script
+
+
+def test_baseline_test_sh_does_not_restore(instance: Instance):
+    assert RESTORE not in render_test_sh(instance, "baseline")
+
+
+def test_h1_test_sh_restores_before_running_the_tests(instance: Instance):
+    script = render_test_sh(instance, "h1")
+    assert render_restore(instance) in script
+    assert f"if {RESTORE} && pytest --no-header -rA " in script
+
+
+def test_restore_resets_files_from_the_base_commit():
+    restore = render_restore(Instance.from_row({**ROW, "test_patch": PATCH}))
+    assert (
+        "rm -rf -- tests/data.bin tests/new.py tests/old.py 'tests/test new.py' "
+        "tests/test_gone.py tests/test_mod.py"
+    ) in restore
+    assert (
+        "git --literal-pathspecs checkout -q abc123 -- "
+        "tests/old.py tests/test_gone.py tests/test_mod.py"
+    ) in restore
+    assert "git apply /tests/upstream_tests.patch" in restore
+
+
+def test_restore_skips_checkout_when_the_patch_only_creates_files():
+    """`git checkout <commit> --` with no paths would move HEAD instead of restoring files."""
+    restore = render_restore(Instance.from_row({**ROW, "test_patch": CREATED + BINARY}))
+    assert "git checkout" not in restore
+    assert "git apply /tests/upstream_tests.patch" in restore
 
 
 def test_test_sh_writes_reward_from_pytest_exit_status(instance: Instance):
@@ -91,6 +195,16 @@ def test_write_task_lays_out_a_harbor_task(instance: Instance, tmp_path: Path):
     assert (task / "solution/solve.sh").stat().st_mode & 0o111
     config = tomllib.loads((task / "task.toml").read_text())
     assert config["verifier"]["timeout_sec"] > 0
+
+
+def test_write_task_h1_ships_the_test_patch_to_the_grader(instance: Instance, tmp_path: Path):
+    baseline = write_task(instance, tmp_path, "baseline")
+    h1 = write_task(instance, tmp_path, "h1")
+    assert h1 == tmp_path / "org__repo-12__h1"
+    assert (h1 / "tests/upstream_tests.patch").read_text() == instance.test_patch
+    assert not (baseline / "tests/upstream_tests.patch").exists()
+    for name in ("environment/Dockerfile", "environment/upstream_tests.patch", "instruction.md"):
+        assert (h1 / name).read_text() == (baseline / name).read_text()
 
 
 def test_write_task_replaces_an_existing_task(instance: Instance, tmp_path: Path):

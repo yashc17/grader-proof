@@ -20,10 +20,11 @@ check: lint typecheck test
 data-facts:
 	uv run python -m grader_proof.data_facts
 
-# Usage: make task ID=12rambau__sepal_ui-411
+# Usage: make task ID=12rambau__sepal_ui-411 [CONDITION=h1]
+CONDITION ?= baseline
 task:
-	@test -n "$(ID)" || { echo "usage: make task ID=<instance_id>"; exit 2; }
-	uv run python -m grader_proof.task_builder $(ID)
+	@test -n "$(ID)" || { echo "usage: make task ID=<instance_id> [CONDITION=<condition>]"; exit 2; }
+	uv run python -m grader_proof.task_builder $(ID) --condition $(CONDITION)
 
 # Downloads the results of the latest oracle-check run (or RUN=<run id>) into results/oracle-check.
 # Exits non-zero unless every task's oracle got reward 1 in all 3 runs.
