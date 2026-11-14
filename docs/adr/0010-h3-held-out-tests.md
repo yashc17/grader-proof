@@ -6,7 +6,7 @@ Under H3 the agent's workspace holds only some of the `FAIL_TO_PASS` tests. The 
 
 **The unit is a test function.** A `FAIL_TO_PASS` id is `path::Class::function[params]`. All parametrized cases of one function share one definition, so they are held out together. `function_of` drops the `[params]` part.
 
-**How many.** For `n` functions, H3 holds out `n // 2`, so at least half stay visible and at least one is visible. Functions are tried in an order shuffled with `random.Random(instance_id)`, so the split is the same on every build. A function that cannot be hidden is skipped and the next one is tried. If none can be hidden, the builder refuses the instance under H3, the same way it refuses patches it cannot read under H1.
+**How many.** For `n` functions, H3 holds out `n // 2`, so at least half stay visible and at least one is visible. Functions are tried in an order shuffled with `random.Random(instance_id)`, so the split is the same on every build. A function that cannot be hidden is skipped and the next one is tried. If fewer than `n // 2` can be hidden, the builder refuses the instance under H3, the same way it refuses patches it cannot read under H1. So "H3" always means half held out, on every task. The maintainer chose refusal over holding out fewer (issue #25): the project needs only 12 tasks, and enough instances qualify.
 
 **Only functions the test patch adds whole.** Hiding works on the patch text alone, because building a task without pulling the image is a constraint (ADR 0008). If every line of a function is a `+` line of the test patch, leaving those lines out gives a workspace in which the function was never written. A function that exists at the base commit and that the patch edits cannot be hidden this way: the old version is in the image, and only the changed lines are in the patch.
 
@@ -38,7 +38,7 @@ held_out_fail_to_pass = ["tests/test_clamp.py::test_below_low"]
 
 ## Checks before a function is held out
 
-`find_function` and `check_hideable` refuse a function, and `hold_out` then tries the next one, when:
+`find_function` and `check_hideable` reject a function, and `hold_out` then tries the next one, when:
 
 - the patch does not define it exactly once inside exactly the classes its id names. Classes are read from the hunk, or from git's hunk header when the class line is above the hunk;
 - any of its lines, including decorators, is not a `+` line, or it may continue past the end of the hunk;
@@ -57,20 +57,19 @@ Special cases of the cut:
 
 ## Measurement
 
-`make held-out-facts` runs `hold_out` on every instance at the pinned SWE-rebench revision and writes `results/held_out_facts.json`. Results on 2026-11-14:
+`make held-out-facts` runs `hold_out` on every instance at the pinned SWE-rebench revision and writes `results/held_out_facts.json`. It uses 2 worker processes by default (`--processes`). Results on 2026-11-14:
 
 | | All instances | Trajectory instances | Trajectory instances with an image |
 |---|---|---|---|
 | Instances | 21,336 | 6,306 | 5,731 |
 | Exactly 1 `FAIL_TO_PASS` test | 9,320 | 3,789 | 3,413 |
 | Exactly 1 `FAIL_TO_PASS` function (H3 holds out nothing) | 10,511 | 4,237 | 3,825 |
-| 2 or more functions, and the full `n // 2` held out | 5,553 | 1,054 | 967 |
-| 2 or more functions, some but fewer than `n // 2` held out | 1,793 | 141 | 129 |
-| 2 or more functions, none can be held out | 3,479 | 874 | 810 |
+| 2 or more functions, `n // 2` held out | 5,553 | 1,054 | 967 |
+| 2 or more functions, refused: fewer than `n // 2` can be hidden | 5,272 | 1,015 | 939 |
 
-The design's task filter "at least 2 `FAIL_TO_PASS` tests" is not enough for H3: an instance can have 2 tests that are 2 cases of one function. "Trajectory instances with an image" is the pool the 12 tasks come from: 1,096 of them can hold out at least one function.
+The design's task filter "at least 2 `FAIL_TO_PASS` tests" is not enough for H3: an instance can have 2 tests that are 2 cases of one function. "Trajectory instances with an image" is the pool the 12 tasks come from: H3 can be built for 967 of them.
 
-**Patch check.** The base files are in the images, not in the dataset. So the measurement checks each held-out file on a stand-in: the base lines the patch shows, with unique filler lines in the gaps. On it, the visible patch must apply and leave out every held-out function, and the held-out patch must then give exactly what the full test patch gives. All 7,346 instances that hold something out passed. This checks the patch arithmetic. It does not check that a visible file changed by the patch still parses, or that the tests run; the oracle runs, 3 per task under every condition (design section 4, M3), check that.
+**Patch check.** The base files are in the images, not in the dataset. So the measurement checks each held-out file on a stand-in: the base lines the patch shows, with unique filler lines in the gaps. On it, the visible patch must apply and leave out every held-out function, and the held-out patch must then give exactly what the full test patch gives. All 5,553 instances that hold something out passed. This checks the patch arithmetic. It does not check that a visible file changed by the patch still parses, or that the tests run; the oracle runs, 3 per task under every condition (design section 4, M3), check that.
 
 ## Edge cases
 
@@ -83,15 +82,15 @@ The design's task filter "at least 2 `FAIL_TO_PASS` tests" is not enough for H3:
 
 ## Known gaps
 
-**Replay cannot measure H3 on Baseline special-casing.** The replay measurement (ADR 0006) regrades patches the red team wrote under Baseline, where every test was in view. Such a patch can hard-code the held-out inputs too, and H3 then accepts it. The toy's `special_casing` patch shows this: reward 1 under H3. H3 only catches special-casing by an agent that never saw the held-out tests, which is the adaptive run against All.
+**(a) Replay does not test H3 fairly.** The replay measurement (ADR 0006) regrades patches the red team wrote under Baseline, where every test, held-out ones included, was in view. Such a patch can hard-code the held-out inputs too, and H3 then accepts it. The toy's `special_casing` patch shows this: reward 1 under H3. H3 only catches special-casing by an agent that never saw the held-out tests. Its real test is the adaptive run against All.
 
-**Some Baseline patches do not apply in the H3 workspace.** A Baseline patch that edits a held-out test cannot apply, because the H3 workspace does not have that test. Harbor's oracle agent then writes the exit code to `agent/exit-code.txt`, and the grader runs on the unpatched code. The toy's `test_edit` patch shows this: reward 0 under H3, for that reason. Replay results should report such patches separately.
+**(b) Some Baseline patches do not apply in the H3 workspace.** A Baseline patch that edits a held-out test cannot apply, because the H3 workspace does not have that test. Harbor's oracle agent then writes the exit code to `agent/exit-code.txt`, and the grader runs on the unpatched code, which usually gives 0 for a reason unrelated to H3. Replay must record "patch did not apply" as its own outcome, not as reward 0. That belongs to the replay code (#32). The toy's `test_edit` patch is such a patch, so it has no H3 row; test edits are H1's and H2's job.
 
 **Only test functions are hidden.** New fixtures, helpers and data files in the test patch stay visible, and they can reveal held-out inputs.
 
 **Not seen from the patch.** A definition of the same name at the base commit, outside the hunks, or a use of a held-out function there, cannot be checked without the base file.
 
-**Future commits.** If an image's `.git` holds commits after the base commit, `git log --all` would show the upstream tests, and the fix, under every condition. Not checked yet; it needs an image.
+**Future commits are in the image.** Checked on 2026-11-14 in one image, `swerebench/sweb.eval.x86_64.12rambau_1776_sepal_ui-411`. `/testbed/.git` is a full clone: HEAD is the base commit, but 116 refs remain (`refs/remotes/origin/*`), and 1,677 reachable commits are not ancestors of the base commit. `git log --all -S` finds both the commit that adds the upstream `FAIL_TO_PASS` test (`f71fdd7d`, "test: test disabled Datepicker function") and the fix (`0a77066b`, "fix: add a disabled trait to datepicker Fix #409"). So an agent can read the held-out tests, and the gold patch, under every condition. This is not H3's to fix. Other images are not checked.
 
 ## Consequences
 
