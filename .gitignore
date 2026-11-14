@@ -23,3 +23,6 @@ runs/
 
 # Local secrets
 .env
+
+# Half-written LLM cache entries. Finished entries are committed (ADR 0004).
+cache/llm/.tmp-*
