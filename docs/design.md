@@ -169,6 +169,24 @@ Cost estimates use Tinker list prices from 2026-10-19 and are checked with a one
 | Red team | 72 runs × up to 0.8M prefill + 20K output tokens | $5–20, depending on prefix caching |
 | M4 | 2 models × 12 tasks × 3 trials | $5–20 |
 
+**Pilot measurements (issue #2, 2026-11-13).** Setup on an Apple M3 laptop:
+
+```
+colima start --vm-type=vz --vz-rosetta --cpu 4 --memory 8 --disk 60
+docker run --rm --platform linux/amd64 alpine uname -m    # prints x86_64
+```
+
+Pilot instance: `12rambau__sepal_ui-411`, image `swerebench/sweb.eval.x86_64.12rambau_1776_sepal_ui-411`.
+
+| Measure | Value |
+|---|---|
+| Compressed download (content size) | 2.42 GB |
+| Unpacked size on disk | 8.34 GB |
+| Cold pull time | 3 min 57 s |
+| Test wall time, one test file (before and after the gold patch) | 1.3 s each |
+
+With the gold patch applied, the `FAIL_TO_PASS` test `test_disable` passes (it fails without the patch), and both `PASS_TO_PASS` tests (`test_init`, `test_bind`) still pass. The run covers `tests/test_DatePicker.py` only. The full suite does not load in this image, because `tests/test_gee.py` needs a Google Earth Engine login. Container start time was not measured separately.
+
 Every LLM call goes through one cached client: the key is a hash of the full request, and responses are stored on disk ([ADR 0004](adr/0004-llm-call-cache.md)). Agent experiments skip trials whose result file already exists, so an interrupted run can resume.
 
 ## 7. Risks
@@ -176,7 +194,7 @@ Every LLM call goes through one cached client: the key is a hash of the full req
 | Risk | Mitigation |
 |---|---|
 | Some images do not run, or run too slowly, under Rosetta. | Run replays and oracle checks on Actions; drop instances that fail and log why. |
-| Disk fills up (79 GB free; unpacked images may be 3–4 GB each). | At most 12 images on disk; prune after each batch; prefer small images. |
+| Disk fills up (79 GB free). The pilot image unpacks to 8.34 GB, more than the 3–4 GB assumed. | Twelve images at that size would not fit. Prune after each batch and keep fewer images on disk; prefer small images. |
 | Tinker's OpenAI-compatible endpoint is documented for checkpoints, not base models. | A pilot issue checks this first. Fallbacks: call Tinker's Python SDK through a thin client, or run the red team on a local model and report that limit. |
 | The red team rarely exploits. | That is a result. Report it, with the attempts it made. |
 | Labels come from one person. | Publish the codebook and labels, measure self-agreement, and state it as a limitation. |
@@ -219,6 +237,6 @@ Module names inside `src/grader_proof/` are decided per issue, not up front. `ma
 1. Is `resolved` computed with the standard SWE-bench rules on `FAIL_TO_PASS` and `PASS_TO_PASS`? The card does not say.
 2. Does `gen_tests_correct = 1` mean all of the agent's tests behave correctly, or at least one?
 3. Can Tinker's OpenAI-compatible endpoint serve a base model without a training run? Which model fits the red team: one with a context window of at least 64K tokens, at an acceptable price?
-4. Do SWE-rebench images run correctly under Rosetta, and how large are they unpacked?
+4. Answered for one image (issue #2): `12rambau__sepal_ui-411` runs under Colima with Rosetta, unpacks to 8.34 GB, and passes the gold patch on its test file (section 6). Still open: whether other images behave the same, and whether the full test suite runs, since `tests/test_gee.py` needs an Earth Engine login in this image.
 5. Can an interrupted Harbor job resume, or do we resume at the trial level ourselves?
 6. In the 2,004 "correct self-check, still unresolved" trajectories, how many failed because the patch broke a `PASS_TO_PASS` test rather than missing a `FAIL_TO_PASS` test? The labeled sample can answer this for a few.
