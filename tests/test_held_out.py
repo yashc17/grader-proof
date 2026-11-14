@@ -325,9 +325,16 @@ def test_restore_held_out_fails_if_the_lines_around_the_tests_changed(repo: Path
     assert restore_held_out(repo, held_out) != 0
 
 
-def round_trip(tmp_path: Path, base: dict[str, str], upstream: dict[str, str], function: str):
+def round_trip(
+    tmp_path: Path,
+    base: dict[str, str],
+    upstream: dict[str, str],
+    function: str,
+    delete: tuple[str, ...] = (),
+):
     """Hides one function, then checks the workspace before and after the held-out patch.
 
+    `delete` names base files the upstream side deletes.
     The upstream side also creates a file that stays visible, because an empty visible patch is
     refused. Returns the paths the visible patch names.
     """
@@ -339,6 +346,8 @@ def round_trip(tmp_path: Path, base: dict[str, str], upstream: dict[str, str], f
     git(repo, "add", "-A")
     git(repo, "commit", "-qm", "base", "--allow-empty")
     write_files(repo, upstream)
+    for name in delete:
+        (repo / name).unlink()
     git(repo, "add", "-A")
     # Not git(): text mode would turn "\r\n" into "\n".
     staged = subprocess.run(["git", "diff", "--cached"], cwd=repo, capture_output=True, check=True)
@@ -387,3 +396,13 @@ def test_hide_refuses_to_leave_the_visible_patch_empty():
     patch += "@@ -0,0 +1,2 @@\n+def test_a():\n+    pass\n"
     with pytest.raises(ValueError, match="empty"):
         hide(patch, ["t.py::test_a"])
+
+
+def test_hide_keeps_a_rename_whose_only_change_is_held_out(tmp_path: Path):
+    body = "".join(f"def test_{i}():\n    pass\n\n\n" for i in range(6))
+    base = {"tests/test_old.py": body}
+    upstream = {"tests/test_new.py": body + "def test_b():\n    pass\n"}
+    visible = round_trip(
+        tmp_path, base, upstream, "tests/test_new.py::test_b", ("tests/test_old.py",)
+    )
+    assert set(visible) == {"tests/test_keep.py", "tests/test_new.py"}

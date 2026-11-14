@@ -67,7 +67,8 @@ def _parse_file(text: str) -> FileDiff:
     first_hunk = next((i for i, line in enumerate(lines) if HUNK.match(line)), len(lines))
     header = tuple(lines[:first_hunk])
     target = next((line[4:] for line in header if line.startswith("+++ ")), "")
-    path = target[2:].removesuffix("\t") if target.startswith("b/") else None
+    renamed_to = next((line[10:] for line in header if line.startswith("rename to ")), None)
+    path = target[2:].removesuffix("\t") if target.startswith("b/") else renamed_to
     created = any(line.startswith("new file mode ") for line in header)
     return FileDiff(text, header, path, created, tuple(_parse_hunks(lines[first_hunk:])))
 
@@ -338,9 +339,13 @@ def _visible_patch(files: Sequence[FileDiff], blocks: Sequence[Block]) -> str:
         removed = [_removed(blocks, f, h) for h in range(len(diff.hunks))]
         if not any(removed):
             out.append(diff.text)
-        elif hunks := _visible_hunks(diff, removed):  # a file left with no change is left out
+        elif hunks := _visible_hunks(diff, removed):
             out.extend(line + "\n" for line in diff.header)
             out.extend(hunks)
+        elif any(line.startswith("rename from ") for line in diff.header):
+            # A rename with no change left; git rejects `---`/`+++` lines without a hunk.
+            out.extend(line + "\n" for line in diff.header if not line.startswith(("---", "+++")))
+        # Any other file left with no change is left out.
     return "".join(out)
 
 
