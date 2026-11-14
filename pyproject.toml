@@ -1,0 +1,49 @@
+[project]
+name = "grader-proof"
+version = "0.1.0"
+description = "Measuring how often coding-agent graders accept patches that do not fix the issue, and how much hardening helps."
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Yash Chanchani" }]
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4",
+    "pyright>=1.1.400",
+    "pytest>=8",
+    "ruff>=0.12",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.2,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # bugbear
+    "UP",   # pyupgrade
+    "SIM",  # simplify
+    "PT",   # pytest style
+    "RUF",  # ruff-specific
+]
+
+[tool.pyright]
+include = ["src", "tests"]
+strict = ["src"]
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "--strict-config"]
