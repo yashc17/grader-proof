@@ -193,3 +193,20 @@ def test_oracle_check_flags_a_broken_oracle(instance: Instance, tmp_path: Path):
     assert not result.passed
     assert not result.flaky
     assert result.runs[0].failing_tests == ["tests/test_clamp.py::test_above_high"]
+
+
+@pytest.mark.parametrize("condition", CONDITIONS)
+def test_task_image_keeps_only_history_up_to_the_base_commit(
+    instance: Instance, tmp_path: Path, condition: str
+):
+    git = ("docker", "run", "--rm", IMAGE)
+    assert _run(*git, "git", "rev-list", "--all", "--not", "HEAD")  # the base image does leak
+
+    task = CONDITIONS[condition](instance, tmp_path / "tasks")
+    image = f"grader-proof-toy:{condition}-stripped"
+    _run("docker", "build", "-q", "-t", image, task / "environment")
+    stripped = ("docker", "run", "--rm", image, "git")
+    assert _run(*stripped, "rev-list", "--all", "--not", instance.base_commit) == ""
+    assert _run(*stripped, "for-each-ref", "--format=%(refname)") == "refs/heads/master"
+    assert _run(*stripped, "reflog") == ""
+    assert _run(*stripped, "remote") == ""

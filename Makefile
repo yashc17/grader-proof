@@ -1,4 +1,4 @@
-.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-results sample label
+.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-results sample label history-reads
 
 install:
 	uv sync
@@ -53,3 +53,8 @@ label:
 # Ranks about 20 candidate instances for the 12 tasks (needs data/, labels/human.jsonl and Docker Hub access for image sizes).
 candidates:
 	uv run python -m grader_proof.candidates
+
+# Counts trajectories whose commands read git history beyond HEAD (issue #56, ADR 0011).
+# Needs the data that data-facts downloads.
+history-reads:
+	uv run python -m grader_proof.history_reads

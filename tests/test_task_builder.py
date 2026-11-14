@@ -239,6 +239,13 @@ def test_dockerfile_starts_from_image_and_applies_upstream_tests(instance: Insta
     assert "git apply" in dockerfile
 
 
+def test_dockerfile_strips_future_history_after_applying_the_tests(instance: Instance):
+    dockerfile = render_dockerfile(instance)
+    assert dockerfile.index("git apply") < dockerfile.index("git gc --prune=now")
+    for step in ("git update-ref --no-deref --stdin", "git remote remove", "git reflog expire"):
+        assert step in dockerfile
+
+
 def test_write_task_lays_out_a_harbor_task(instance: Instance, tmp_path: Path):
     task = write_task(instance, tmp_path)
     assert task == tmp_path / "org__repo-12__baseline"
