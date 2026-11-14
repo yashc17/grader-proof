@@ -1,6 +1,8 @@
 name: oracle-check
 
 on:
+  push:
+    branches: [m2/20-oracle-check-workflow]
   workflow_dispatch:
     inputs:
       tasks:
