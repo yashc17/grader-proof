@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test check data-facts task oracle-results sample label
+.PHONY: install lint typecheck test check data-facts h2-gold-patches task oracle-results sample label
 
 install:
 	uv sync
@@ -19,6 +19,10 @@ check: lint typecheck test
 
 data-facts:
 	uv run python -m grader_proof.data_facts
+
+# Counts the gold patches H2 would reject (ADR 0009). Needs the data that data-facts downloads.
+h2-gold-patches:
+	uv run python -m grader_proof.h2_gold_patches
 
 # Usage: make task ID=12rambau__sepal_ui-411 [CONDITION=h1]
 CONDITION ?= baseline

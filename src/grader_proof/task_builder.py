@@ -6,14 +6,16 @@ differ in what `test.sh` does before it runs the tests:
 
 - baseline: nothing; it runs the tests where the agent left them.
 - h1: rewrites every file the test patch touches to its upstream version first (ADR 0008).
+- h2: gives reward 0 if any test file or test config file changed (ADR 0009).
 """
 
 import argparse
+import fnmatch
 import re
 import shlex
 import shutil
 from collections.abc import Iterable, Mapping
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Literal, NamedTuple, Self, get_args
 
 import polars as pl
@@ -22,7 +24,7 @@ from pydantic import BaseModel, ConfigDict, Field
 DATASET_REVISION = "89cdfbab4ab1bd8f5a658bb212d1b63624f4f881"
 DATASET_URL = "https://huggingface.co/datasets/nebius/SWE-rebench/resolve/{revision}/data/{file}"
 DATASET_FILES = ("test-00000-of-00002.parquet", "test-00001-of-00002.parquet")
-Condition = Literal["baseline", "h1"]
+Condition = Literal["baseline", "h1", "h2"]
 CONDITIONS: tuple[Condition, ...] = get_args(Condition)
 AGENT_TIMEOUT_SEC = 1800
 VERIFIER_TIMEOUT_SEC = 600
@@ -30,6 +32,28 @@ VERIFIER_TIMEOUT_SEC = 600
 # Harbor copies the task's `tests/` folder to `/tests` only after the agent finishes.
 GRADING_PATCH = "/tests/upstream_tests.patch"
 RESTORE = "restore_upstream_tests"
+INTEGRITY = "check_test_integrity"
+
+# What H2 protects (ADR 0009). Files with these names count at any depth, including new ones.
+PROTECTED_CONFIG = (
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini",
+    "pytest.toml",
+    ".pytest.toml",
+    "setup.cfg",
+    "tox.ini",
+    "pyproject.toml",
+    "sitecustomize.py",
+    "usercustomize.py",
+)
+# Files already inside folders with these names, at any depth, and new code files there.
+TEST_DIRS = ("test", "tests")
+# Suffixes of files Python can import. New ones in a test folder could shadow the code under test.
+CODE_SUFFIXES = (".py", ".pyc", ".so")
+# pytest's default `python_files`. A test id in any other file is a doctest in a source module.
+# New files with these names are allowed in test folders, so agents can add their own tests.
+TEST_FILE_PATTERNS = ("test_*.py", "*_test.py")
 
 
 class Instance(BaseModel):
@@ -140,6 +164,10 @@ def _quote_all(words: Iterable[str]) -> str:
     return " ".join(shlex.quote(w) for w in words)
 
 
+def _touched_paths(changes: Iterable[FileChange]) -> set[str]:
+    return {path for change in changes for path in change if path is not None}
+
+
 def render_restore(instance: Instance) -> str:
     """H1: a bash function that rewrites every file the test patch touches to its upstream version.
 
@@ -147,7 +175,7 @@ def render_restore(instance: Instance) -> str:
     the test patch again. The base commit, not HEAD, so that commits the agent made do not count.
     """
     changes = parse_file_changes(instance.test_patch)
-    touched = sorted({path for change in changes for path in change if path is not None})
+    touched = sorted(_touched_paths(changes))
     at_base = sorted({change.old for change in changes if change.old is not None})
     steps = [f"rm -rf -- {_quote_all(touched)}"]
     # Without paths, `git checkout <commit> --` would move HEAD instead.
@@ -164,12 +192,60 @@ def render_restore(instance: Instance) -> str:
 """
 
 
+def protected_test_files(instance: Instance) -> list[str]:
+    """H2's test files: every path the test patch touches, and every test file the grader runs."""
+    run = {test_id.split("::")[0] for test_id in (*instance.fail_to_pass, *instance.pass_to_pass)}
+    named = {
+        path
+        for path in run
+        if any(fnmatch.fnmatch(PurePosixPath(path).name, p) for p in TEST_FILE_PATTERNS)
+    }
+    return sorted(_touched_paths(parse_file_changes(instance.test_patch)) | named)
+
+
+def render_integrity_check(instance: Instance) -> str:
+    """H2: a bash function that fails if a protected file differs from its upstream version.
+
+    The upstream version is the base commit with the test patch applied, built in a throwaway
+    index, so the repository's own index is left as the agent left it. A protected file the agent
+    changed or deleted shows up in `git diff`, and one it created shows up as untracked. Untracked
+    files are listed without ignore rules, so a `.gitignore` cannot hide a new `conftest.py`.
+
+    New code in a test folder is listed separately, because its excludes (new test files and
+    bytecode caches) would otherwise also hide recreated protected test files.
+    """
+    protected = [f":(literal){path}" for path in protected_test_files(instance)]
+    protected += [f":(glob)**/{name}" for name in PROTECTED_CONFIG]
+    in_test_dirs = [f":(glob)**/{folder}/**" for folder in TEST_DIRS]
+    new_code = [f"{spec}/*{suffix}" for spec in in_test_dirs for suffix in CODE_SUFFIXES]
+    new_code += [f":(exclude,glob)**/{pattern}" for pattern in TEST_FILE_PATTERNS]
+    new_code.append(":(exclude,glob)**/__pycache__/**")
+    commit = shlex.quote(instance.base_commit)
+    return f"""
+# H2: fail if any test file or test config differs from the base commit plus the test patch.
+{INTEGRITY}() (
+    index_dir=$(mktemp -d) &&
+        export GIT_INDEX_FILE=$index_dir/index GIT_NO_REPLACE_OBJECTS=1 &&
+        git read-tree {commit} &&
+        git apply --cached {GRADING_PATCH} &&
+        git diff --quiet --no-ext-diff -- {_quote_all([*protected, *in_test_dirs])} &&
+        test -z "$(git ls-files --others -- {_quote_all(protected)})" &&
+        test -z "$(git ls-files --others -- {_quote_all(new_code)})"
+)
+"""
+
+
 def render_test_sh(instance: Instance, condition: Condition = "baseline") -> str:
     """Runs every upstream test after the condition's checks. Reward 1 only if all succeed.
 
-    pytest exits 0 only if every listed test was collected and passed.
+    pytest exits 0 only if every listed test was collected and passed. Checks run in the order of
+    `checks`; H2 must come before H1, because H1's restore would undo the edits H2 looks for.
     """
-    checks = {RESTORE: render_restore(instance)} if condition == "h1" else {}
+    checks: dict[str, str] = {}
+    if condition == "h2":
+        checks[INTEGRITY] = render_integrity_check(instance)
+    if condition == "h1":
+        checks[RESTORE] = render_restore(instance)
     tests = " ".join(shlex.quote(t) for t in (*instance.fail_to_pass, *instance.pass_to_pass))
     run = " && ".join([*checks, f"{instance.test_cmd} {tests}"])
     return f"""#!/bin/bash
@@ -211,7 +287,7 @@ def write_task(instance: Instance, tasks_dir: Path, condition: Condition = "base
     (task / "environment/Dockerfile").write_text(render_dockerfile(instance))
     (task / "environment/upstream_tests.patch").write_text(instance.test_patch)
     _write_executable(task / "tests/test.sh", render_test_sh(instance, condition))
-    if condition == "h1":
+    if condition in ("h1", "h2"):
         (task / "tests/upstream_tests.patch").write_text(instance.test_patch)
     _write_executable(task / "solution/solve.sh", render_solve_sh())
     (task / "solution/gold.patch").write_text(instance.patch)
