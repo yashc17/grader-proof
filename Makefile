@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test check data-facts task oracle-results sample label
+.PHONY: install lint typecheck test check data-facts held-out-facts task oracle-results sample label
 
 install:
 	uv sync
@@ -20,7 +20,12 @@ check: lint typecheck test
 data-facts:
 	uv run python -m grader_proof.data_facts
 
-# Usage: make task ID=12rambau__sepal_ui-411 [CONDITION=h1]
+# Measures how many instances H3 can hold tests out of, and checks its patches (ADR 0010).
+# Needs the parquet files that `make data-facts` downloads.
+held-out-facts:
+	uv run python -m grader_proof.held_out_facts
+
+# Usage: make task ID=12rambau__sepal_ui-411 [CONDITION=h1|h3]
 CONDITION ?= baseline
 task:
 	@test -n "$(ID)" || { echo "usage: make task ID=<instance_id> [CONDITION=<condition>]"; exit 2; }
