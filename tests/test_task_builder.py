@@ -6,12 +6,15 @@ import pytest
 from grader_proof.held_out import hold_out
 from grader_proof.task_builder import (
     HELD_OUT_PATCH,
+    INTEGRITY,
     RESTORE,
     RESTORE_HELD_OUT,
     FileChange,
     Instance,
     parse_file_changes,
+    protected_test_files,
     render_dockerfile,
+    render_integrity_check,
     render_restore,
     render_solve_sh,
     render_test_sh,
@@ -59,6 +62,7 @@ def test_from_row_rejects_empty_fail_to_pass():
 def test_task_dir_name_is_lowercase_and_names_the_condition():
     assert task_dir_name("Org__Repo-12", "baseline") == "org__repo-12__baseline"
     assert task_dir_name("Org__Repo-12", "h1") == "org__repo-12__h1"
+    assert task_dir_name("Org__Repo-12", "h2") == "org__repo-12__h2"
     assert task_dir_name("Org__Repo-12", "h3") == "org__repo-12__h3"
 
 
@@ -170,6 +174,52 @@ def test_restore_skips_checkout_when_the_patch_only_creates_files():
     assert "git apply /tests/upstream_tests.patch" in restore
 
 
+def test_baseline_and_h1_test_sh_do_not_check_integrity(instance: Instance):
+    assert INTEGRITY not in render_test_sh(instance, "baseline")
+    assert INTEGRITY not in render_test_sh(instance, "h1")
+
+
+def test_h2_test_sh_checks_integrity_before_running_the_tests(instance: Instance):
+    script = render_test_sh(instance, "h2")
+    assert render_integrity_check(instance) in script
+    assert f"if {INTEGRITY} && pytest --no-header -rA " in script
+    assert RESTORE not in script
+
+
+def test_protected_test_files_are_patch_paths_and_test_files_the_grader_runs():
+    instance = Instance.from_row(
+        {
+            **ROW,
+            "test_patch": PATCH,
+            "FAIL_TO_PASS": ["tests/test_mod.py::test_b", "tests/unit/check_test.py::test_c[x::y]"],
+            "PASS_TO_PASS": [
+                "tests/test_other.py::Suite::test_d",
+                "pkg/doc.py::pkg.doc.g",
+                "tests/typing/test_types.yml::case",
+                "Test",
+            ],
+        }
+    )
+    assert protected_test_files(instance) == [
+        "tests/data.bin",
+        "tests/new.py",
+        "tests/old.py",
+        "tests/test new.py",
+        "tests/test_gone.py",
+        "tests/test_mod.py",
+        "tests/test_other.py",
+        "tests/unit/check_test.py",
+    ]
+
+
+def test_integrity_check_compares_against_the_base_commit_and_the_test_patch():
+    check = render_integrity_check(Instance.from_row({**ROW, "test_patch": CREATED}))
+    assert "git read-tree abc123" in check
+    assert "git apply --cached /tests/upstream_tests.patch" in check
+    assert "':(literal)tests/test new.py'" in check
+    assert "':(glob)**/conftest.py'" in check
+
+
 def test_test_sh_writes_reward_from_pytest_exit_status(instance: Instance):
     script = render_test_sh(instance)
     assert "/logs/verifier/reward.txt" in script
@@ -209,6 +259,15 @@ def test_write_task_h1_ships_the_test_patch_to_the_grader(instance: Instance, tm
     assert not (baseline / "tests/upstream_tests.patch").exists()
     for name in ("environment/Dockerfile", "environment/upstream_tests.patch", "instruction.md"):
         assert (h1 / name).read_text() == (baseline / name).read_text()
+
+
+def test_write_task_h2_ships_the_test_patch_to_the_grader(instance: Instance, tmp_path: Path):
+    baseline = write_task(instance, tmp_path, "baseline")
+    h2 = write_task(instance, tmp_path, "h2")
+    assert h2 == tmp_path / "org__repo-12__h2"
+    assert (h2 / "tests/upstream_tests.patch").read_text() == instance.test_patch
+    for name in ("environment/Dockerfile", "environment/upstream_tests.patch", "instruction.md"):
+        assert (h2 / name).read_text() == (baseline / name).read_text()
 
 
 def test_write_task_replaces_an_existing_task(instance: Instance, tmp_path: Path):
@@ -285,7 +344,7 @@ def test_write_task_h3_refuses_an_instance_with_nothing_to_hold_out(
 
 
 def test_other_conditions_have_no_task_metadata(instance: Instance, tmp_path: Path):
-    for condition in ("baseline", "h1"):
+    for condition in ("baseline", "h1", "h2"):
         config = tomllib.loads(
             (write_task(instance, tmp_path, condition) / "task.toml").read_text()
         )
