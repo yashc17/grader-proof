@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytest
 
+from grader_proof.oracle_check import RUNS, TaskResult, collect
 from grader_proof.task_builder import Instance, write_task
 
 HERE = Path(__file__).parent
@@ -96,3 +97,35 @@ def test_reward(instance: Instance, tmp_path: Path, condition: str, patch: str, 
         shutil.copy(HERE / "patches" / f"{patch}.patch", task / "solution/gold.patch")
     agent = "nop" if patch == NO_OP else "oracle"
     assert _reward(task, agent, tmp_path / "jobs") == expected
+
+
+def _oracle_check(instance: Instance, tmp_path: Path, patch: str) -> TaskResult:
+    """Runs the oracle-check workflow's steps: 3 oracle runs, then the result file."""
+    task = write_task(instance, tmp_path / "tasks")
+    shutil.copy(HERE / "patches" / f"{patch}.patch", task / "solution/gold.patch")
+    for run in range(1, RUNS + 1):
+        _run(
+            "harbor",
+            "run",
+            "-p",
+            task,
+            "-a",
+            "oracle",
+            "-o",
+            tmp_path / f"runs/run-{run}",
+            "-n",
+            "1",
+            "-y",
+        )
+    return collect(task.name, tmp_path / "runs", tmp_path / "out")
+
+
+def test_oracle_check_accepts_a_working_oracle(instance: Instance, tmp_path: Path):
+    assert _oracle_check(instance, tmp_path, "oracle").passed
+
+
+def test_oracle_check_flags_a_broken_oracle(instance: Instance, tmp_path: Path):
+    result = _oracle_check(instance, tmp_path, "wrong_fix")
+    assert not result.passed
+    assert not result.flaky
+    assert result.runs[0].failing_tests == ["tests/test_clamp.py::test_above_high"]
