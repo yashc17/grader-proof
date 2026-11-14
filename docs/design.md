@@ -187,6 +187,17 @@ Pilot instance: `12rambau__sepal_ui-411`, image `swerebench/sweb.eval.x86_64.12r
 
 With the gold patch applied, the `FAIL_TO_PASS` test `test_disable` passes (it fails without the patch), and both `PASS_TO_PASS` tests (`test_init`, `test_bind`) still pass. The run covers `tests/test_DatePicker.py` only. The full suite does not load in this image, because `tests/test_gee.py` needs a Google Earth Engine login. Container start time was not measured separately.
 
+**Pilot measurements (issue #3, 2026-11-13).**
+
+| Measure | Value |
+|---|---|
+| Local model, `llama3:latest` (8B) on Ollama, Apple M3 | Prompt processing 164.8 tokens/s on a 7,221-token prompt. Generation 14.6 tokens/s. A prompt of exactly 8K tokens was not reached (see open question 3). |
+| Tinker sampling call, method | Python SDK `tinker` 0.x in an isolated venv. `ServiceClient().create_sampling_client(base_model="Qwen/Qwen3-8B").result()`, then `sampler.sample(prompt=..., num_samples=1, sampling_params=...).result()`. The key is read from `TINKER_API_KEY`. |
+| Tinker result | Call succeeded: 5 prompt tokens, 50 output tokens, `max_tokens=50`. |
+| `Qwen/Qwen3-8B` on Tinker | Context window 32K. Prefill $0.195 per 1M tokens, cached prefill $0.039, sample $0.60, train $0.44 (Tinker pricing page, dated 2026-10-19). |
+
+Not yet chosen: the judge model (needs at least 8K context) and the red-team model (needs at least 64K). `Qwen3-8B` fits the judge. No checked model yet meets the 64K need.
+
 Every LLM call goes through one cached client: the key is a hash of the full request, and responses are stored on disk ([ADR 0004](adr/0004-llm-call-cache.md)). Agent experiments skip trials whose result file already exists, so an interrupted run can resume.
 
 ## 7. Risks
@@ -236,7 +247,7 @@ Module names inside `src/grader_proof/` are decided per issue, not up front. `ma
 
 1. Is `resolved` computed with the standard SWE-bench rules on `FAIL_TO_PASS` and `PASS_TO_PASS`? The card does not say.
 2. Does `gen_tests_correct = 1` mean all of the agent's tests behave correctly, or at least one?
-3. Can Tinker's OpenAI-compatible endpoint serve a base model without a training run? Which model fits the red team: one with a context window of at least 64K tokens, at an acceptable price?
+3. Answered in part (issue #3): the Python SDK serves the base model `Qwen/Qwen3-8B` without a training run (section 6). Still open: whether the OpenAI-compatible endpoint also serves base models, which model fits the red team (at least 64K tokens of context), and whether a local 8K-token prompt measurement is still needed.
 4. Answered for one image (issue #2): `12rambau__sepal_ui-411` runs under Colima with Rosetta, unpacks to 8.34 GB, and passes the gold patch on its test file (section 6). Still open: whether other images behave the same, and whether the full test suite runs, since `tests/test_gee.py` needs an Earth Engine login in this image.
 5. Can an interrupted Harbor job resume, or do we resume at the trial level ourselves?
 6. In the 2,004 "correct self-check, still unresolved" trajectories, how many failed because the patch broke a `PASS_TO_PASS` test rather than missing a `FAIL_TO_PASS` test? The labeled sample can answer this for a few.
