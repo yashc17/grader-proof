@@ -11,6 +11,7 @@ import os
 import shutil
 import subprocess
 from collections.abc import Callable
+from functools import partial
 from pathlib import Path
 
 import pytest
@@ -28,6 +29,7 @@ NO_OP = "no_op"
 
 CONDITIONS: dict[str, Callable[[Instance, Path], Path]] = {
     "baseline": write_task,
+    "h1": partial(write_task, condition="h1"),
 }
 
 EXPECTED: dict[str, dict[str, int]] = {
@@ -39,6 +41,15 @@ EXPECTED: dict[str, dict[str, int]] = {
         "test_edit": 1,
         # The tests only check clamp(-5, 0, 10), so a hard-coded answer for that input is accepted
         # although the bug stays. H4 (property checks) is meant to reject it.
+        "special_casing": 1,
+    },
+    "h1": {
+        "oracle": 1,
+        NO_OP: 0,
+        "wrong_fix": 0,
+        # The grader rewrites tests/test_clamp.py to its upstream version, so the edit is undone.
+        "test_edit": 0,
+        # H1 leaves code files alone, so the hard-coded answer still passes.
         "special_casing": 1,
     },
 }
