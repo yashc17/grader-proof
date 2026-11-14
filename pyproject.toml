@@ -7,6 +7,7 @@ license = "MIT"
 authors = [{ name = "Yash Chanchani" }]
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "polars>=2.1.0",
     "tinker==0.39.0",
 ]
 
