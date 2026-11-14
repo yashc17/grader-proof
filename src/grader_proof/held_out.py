@@ -245,7 +245,7 @@ def _body_length(lines: list[str], indent: int) -> int:
     return last_row
 
 
-def check_hideable(files: Sequence[FileDiff], blocks: Iterable[Block]) -> None:
+def check_hideable(files: Sequence[FileDiff], blocks: Sequence[Block]) -> None:
     """Raises ValueError if leaving all `blocks` out would break the visible test files."""
     for f, diff in enumerate(files):
         file_blocks = [b for b in blocks if b.file == f]

@@ -94,6 +94,7 @@ def measure(row: dict[str, Any]) -> dict[str, Any]:
     functions = {function_of(t) for t in row["FAIL_TO_PASS"]}
     result: dict[str, Any] = {
         "instance_id": row["instance_id"],
+        "tests": len(row["FAIL_TO_PASS"]),
         "functions": len(functions),
         "wanted": len(functions) // 2,
         "held": 0,
@@ -119,6 +120,7 @@ def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
 
     return {
         "instances": len(results),
+        "one_fail_to_pass_test": sum(r["tests"] == 1 for r in results),
         "one_fail_to_pass_function": sum(r["functions"] == 1 for r in results),
         "outcomes": dict(Counter(outcome(r) for r in results).most_common()),
         "functions_wanted": sum(r["wanted"] for r in results),

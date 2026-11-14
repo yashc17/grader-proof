@@ -1,6 +1,7 @@
 {
   "all_instances": {
     "instances": 21336,
+    "one_fail_to_pass_test": 9320,
     "one_fail_to_pass_function": 10511,
     "outcomes": {
       "one_function": 10511,
@@ -16,6 +17,7 @@
   },
   "trajectory_instances": {
     "instances": 6306,
+    "one_fail_to_pass_test": 3789,
     "one_fail_to_pass_function": 4237,
     "outcomes": {
       "one_function": 4237,
@@ -31,6 +33,7 @@
   },
   "trajectory_instances_with_image": {
     "instances": 5731,
+    "one_fail_to_pass_test": 3413,
     "one_fail_to_pass_function": 3825,
     "outcomes": {
       "one_function": 3825,
