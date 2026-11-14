@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test check task
+.PHONY: install lint typecheck test check data-facts task
 
 install:
 	uv sync
@@ -16,6 +16,9 @@ test:
 	uv run pytest; status=$$?; [ $$status -eq 0 ] || [ $$status -eq 5 ]
 
 check: lint typecheck test
+
+data-facts:
+	uv run python -m grader_proof.data_facts
 
 # Usage: make task ID=12rambau__sepal_ui-411
 task:

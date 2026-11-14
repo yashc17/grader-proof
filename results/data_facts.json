@@ -1,0 +1,53 @@
+{
+  "revisions": {
+    "trajectories": "35455389ab51bf5e2306bfd436ef72d0f98bf882",
+    "swe_rebench": "89cdfbab4ab1bd8f5a658bb212d1b63624f4f881"
+  },
+  "trajectories": 67074,
+  "instances": 6306,
+  "repositories": 1823,
+  "trajectories_per_instance": {
+    "mean": 10.636536631779258,
+    "min": 1,
+    "max": 34
+  },
+  "resolved": 32161,
+  "resolved_rate": 0.4794853445448311,
+  "instances_with_resolved_and_unresolved": 1741,
+  "exit_category": {
+    "submit": 60739,
+    "stuck_in_loop": 252,
+    "turn_limit": 6003,
+    "infrastructure_error": 80
+  },
+  "with_self_check": 31389,
+  "self_check_table": {
+    "unresolved_passes": 11773,
+    "unresolved_fails": 5253,
+    "resolved_passes": 10868,
+    "resolved_fails": 3495
+  },
+  "self_check_rates": {
+    "pass_rate_unresolved": 0.6914718665570304,
+    "pass_rate_resolved": 0.7566664345888742,
+    "unresolved_given_pass": 0.5199858663486595
+  },
+  "self_check_rate_intervals_95": {
+    "pass_rate_unresolved": [
+      0.6798087705837219,
+      0.7031638614147724
+    ],
+    "pass_rate_resolved": [
+      0.7450488145048815,
+      0.7679224065223503
+    ],
+    "unresolved_given_pass": [
+      0.5056083607369701,
+      0.534557476656391
+    ]
+  },
+  "unresolved_passing_with_correct_self_check": 2004,
+  "instances_in_swe_rebench": 6306,
+  "instances_with_image": 5731,
+  "images_x86_64": 5731
+}
