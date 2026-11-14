@@ -205,7 +205,15 @@ With the gold patch applied, the `FAIL_TO_PASS` test `test_disable` passes (it f
 | Tinker result | Call succeeded: 5 prompt tokens, 50 output tokens, `max_tokens=50`. |
 | `Qwen/Qwen3-8B` on Tinker | Context window 32K. Prefill $0.195 per 1M tokens, cached prefill $0.039, sample $0.60, train $0.44 (Tinker pricing page, dated 2026-10-19). |
 
-Not yet chosen: the judge model (needs at least 8K context) and the red-team model (needs at least 64K). `Qwen3-8B` fits the judge. No checked model yet meets the 64K need.
+| `Qwen/Qwen3.5-9B-Base` on Tinker | Base model (no chat tuning). Context window 64K. Prefill $0.30 per 1M tokens, cached prefill $0.06, sample $0.807, train $1.463 (Tinker models page, read 2026-11-14). |
+| `Qwen/Qwen3.5-35B-A3B-Base` on Tinker | Base model. Context window 64K. Prefill $0.54 per 1M tokens, cached prefill $0.108, sample $1.335, train $1.177 (same page). Not chosen. |
+
+**Decision (issue #3).** The judge and the red team both use `Qwen/Qwen3.5-9B-Base`.
+
+- Judge: needs at least 8K context. The 64K window covers it. Judge batch cost: 1,100 × about 8K prefill tokens × $0.30 per 1M ≈ $2.64, within the $3 estimate above.
+- Red team: needs at least 64K context. The 9B model has it, at about 40% lower sampling cost than the 35B model. The 35B model stays available for a later comparison.
+- `Qwen/Qwen3-8B` was used for the sampling call only. Its 32K window is too small for the red team. Whether it is a base model was not confirmed, so it is not used for the judge.
+- Not yet measured: a local 8K-token speed test. Ollama returned about 4,100 tokens for the 8K prompt, so this is recorded as a gap. The local model runs development checks only.
 
 Every LLM call goes through one cached client: the key is a hash of the full request, and responses are stored on disk ([ADR 0004](adr/0004-llm-call-cache.md)). Agent experiments skip trials whose result file already exists, so an interrupted run can resume.
 
@@ -256,7 +264,7 @@ Module names inside `src/grader_proof/` are decided per issue, not up front. `ma
 
 1. Is `resolved` computed with the standard SWE-bench rules on `FAIL_TO_PASS` and `PASS_TO_PASS`? The card does not say.
 2. Does `gen_tests_correct = 1` mean all of the agent's tests behave correctly, or at least one?
-3. Answered in part (issue #3): the Python SDK serves the base model `Qwen/Qwen3-8B` without a training run (section 6). Still open: whether the OpenAI-compatible endpoint also serves base models, which model fits the red team (at least 64K tokens of context), and whether a local 8K-token prompt measurement is still needed.
+3. Answered in part (issue #3): the Python SDK serves a base model without a training run. Judge and red team both use `Qwen/Qwen3.5-9B-Base` (section 6). Still open: whether the OpenAI-compatible endpoint also serves base models, and whether `Qwen/Qwen3-8B` is a base model (it was used for the sampling call only).
 4. Answered for one image (issue #2): `12rambau__sepal_ui-411` runs under Colima with Rosetta, unpacks to 8.34 GB, and passes the gold patch on its test file (section 6). Still open: whether other images behave the same, and whether the full test suite runs, since `tests/test_gee.py` needs an Earth Engine login in this image.
 5. Can an interrupted Harbor job resume, or do we resume at the trial level ourselves?
 6. In the 2,004 "correct self-check, still unresolved" trajectories, how many failed because the patch broke a `PASS_TO_PASS` test rather than missing a `FAIL_TO_PASS` test? The labeled sample can answer this for a few.
