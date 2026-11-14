@@ -38,7 +38,11 @@ def wilson_interval(successes: int, n: int, confidence: float = 0.95) -> tuple[f
     scale = 1 + z**2 / n
     centre = (p + z**2 / (2 * n)) / scale
     half_width = z * sqrt(p * (1 - p) / n + z**2 / (4 * n**2)) / scale
-    return max(0.0, centre - half_width), min(1.0, centre + half_width)
+    # With no successes the true lower limit is 0 (and 1 for all successes); floating-point
+    # rounding can miss it by about 1e-17, so set those limits exactly.
+    lower = 0.0 if successes == 0 else max(0.0, centre - half_width)
+    upper = 1.0 if successes == n else min(1.0, centre + half_width)
+    return lower, upper
 
 
 def bootstrap_ci[T](
