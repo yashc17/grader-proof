@@ -1,0 +1,5 @@
+exit_category,trajectories,instances,resolved,with_self_check,pass_rate_unresolved
+infrastructure_error,80,72,28,42,0.6296296296296297
+stuck_in_loop,252,228,20,146,0.8102189781021898
+submit,60739,6251,31020,26150,0.7240297922383379
+turn_limit,6003,1768,1093,5051,0.5868030192354516
