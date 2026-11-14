@@ -1,0 +1,62 @@
+name: oracle-check
+
+on:
+  workflow_dispatch:
+    inputs:
+      tasks:
+        description: Space-separated task folder names under tasks/. Empty means every task.
+        default: ""
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    outputs:
+      tasks: ${{ steps.list.outputs.tasks }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - id: list
+        env:
+          REQUESTED: ${{ inputs.tasks }}
+        run: |
+          names="${REQUESTED:-$(ls tasks)}"
+          echo "tasks=$(printf '%s\n' $names | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+
+  oracle:
+    needs: list
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        task: ${{ fromJSON(needs.list.outputs.tasks) }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv sync --locked
+
+      # The runner has 14 GB free and the task image unpacks to 8 GB. Removing preinstalled
+      # SDKs that no task uses frees about 25 GB.
+      - name: Free disk
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - run: uv tool install harbor==0.26.0
+
+      - name: Run the oracle 3 times
+        run: |
+          for run in 1 2 3; do
+            harbor run -p "tasks/${{ matrix.task }}" -a oracle -o "runs/run-$run" -n 1 -y \
+              || echo "run $run failed"
+            df -h / | tail -1
+          done
+
+      - name: Write result file
+        run: uv run python -m grader_proof.oracle_check collect "${{ matrix.task }}"
+
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: oracle-check-${{ matrix.task }}
+          path: oracle-check/
+          if-no-files-found: error
