@@ -1,8 +1,6 @@
 name: oracle-check
 
 on:
-  push:
-    branches: [m2/20-oracle-check-workflow]
   workflow_dispatch:
     inputs:
       tasks:
@@ -36,12 +34,8 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.3
       - run: uv sync --locked
 
-      # The runner has 14 GB free and the task image unpacks to 8 GB. Removing preinstalled
-      # SDKs that no task uses frees about 25 GB.
-      - name: Free disk
-        run: |
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
-          df -h /
+      - name: Disk before images
+        run: df -h /
 
       - run: uv tool install harbor==0.26.0
 
