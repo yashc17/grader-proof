@@ -45,6 +45,7 @@ class Price:
 # Tinker list prices, dated 2026-10-19. Add a model here before estimating its cost.
 PRICES: dict[str, Price] = {
     "Qwen/Qwen3-8B": Price(prefill=0.195, sample=0.60),
+    "Qwen/Qwen3.5-9B-Base": Price(prefill=0.30, sample=0.807),
 }
 
 
