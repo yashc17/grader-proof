@@ -29,7 +29,7 @@ RQ1 changed during planning. The original plan assumed the dataset's "generated 
 
 Source: [`nebius/SWE-rebench-openhands-trajectories`](https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories), CC-BY-4.0. Instance metadata and images come from [`nebius/SWE-rebench`](https://huggingface.co/datasets/nebius/SWE-rebench), CC-BY-4.0. Each repository keeps its own license.
 
-The facts below were checked on 2026-11-13 against the dataset card and a scan of the parquet's small columns. M1 regenerates them with a `make` target.
+The facts below were checked on 2026-11-13 against the dataset card and a scan of the parquet's small columns. `make data-facts` regenerates them (pinned revisions in `src/grader_proof/data_facts.py`) and writes `results/data_facts.json`, `results/data_facts_by_repo.csv` and `results/data_facts_by_exit_status.csv`. Every value in the table was reproduced exactly.
 
 | Fact | Value |
 |---|---|
@@ -58,7 +58,7 @@ Self-check against upstream result, for the 31,389 trajectories with a self-chec
 | **not resolved** | 11,773 | 5,253 |
 | **resolved** | 10,868 | 3,495 |
 
-So 69% of unresolved trajectories with a self-check passed it. In 2,004 of those, the self-check was also correct, meaning it separates the original code from the gold patch, and the patch still failed upstream. These counts pool trajectories across instances, so they ignore that some instances are harder than others. M1 recomputes them with instance-clustered intervals.
+So 69.1% (95% interval 68.0–70.3) of unresolved trajectories with a self-check passed it, against 75.7% (74.5–76.8) of resolved ones. Of the trajectories that passed their self-check, 52.0% (50.6–53.5) were unresolved. In 2,004 of the unresolved trajectories that passed, the self-check was also correct, meaning it separates the original code from the gold patch, and the patch still failed upstream. These counts pool trajectories across instances. The intervals are percentile bootstrap intervals that resample whole instances (10,000 resamples, seed 0), so they account for some instances being harder than others.
 
 ## 4. Methods
 
