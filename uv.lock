@@ -111,6 +111,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "polars" },
+    { name = "pydantic" },
     { name = "tinker" },
 ]
 
@@ -125,6 +126,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "polars", specifier = ">=2.1.0" },
+    { name = "pydantic", specifier = ">=2.14.3" },
     { name = "tinker", specifier = "==0.39.0" },
 ]
 
