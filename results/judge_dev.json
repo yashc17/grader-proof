@@ -1,0 +1,151 @@
+{
+ "items": 30,
+ "rules_fired": 8,
+ "labels": {
+  "model_failure": 23,
+  "unclear": 2,
+  "task_underspecified": 5
+ },
+ "frozen_version": "judge-v2",
+ "versions": [
+  {
+   "version": "judge-v1",
+   "triager": {
+    "items": 30,
+    "scored": 28,
+    "human_unclear": 2,
+    "triager_unclear": 0,
+    "agreement": 0.6428571428571429,
+    "kappa": 0.06976744186046516,
+    "low": -0.09374999999999975,
+    "high": 0.2413793103448275,
+    "confusion": {
+     "model_failure -> model_failure": 18,
+     "model_failure -> upstream_tests_wrong": 5,
+     "task_underspecified -> model_failure": 3,
+     "task_underspecified -> upstream_tests_wrong": 2,
+     "unclear -> model_failure": 2
+    }
+   },
+   "judge_alone": {
+    "items": 22,
+    "scored": 20,
+    "human_unclear": 2,
+    "triager_unclear": 0,
+    "agreement": 0.5,
+    "kappa": 0.02439024390243905,
+    "low": -0.14285714285714285,
+    "high": 0.2156862745098039,
+    "confusion": {
+     "model_failure -> model_failure": 10,
+     "model_failure -> upstream_tests_wrong": 5,
+     "task_underspecified -> model_failure": 3,
+     "task_underspecified -> upstream_tests_wrong": 2,
+     "unclear -> model_failure": 2
+    }
+   },
+   "outcomes": {
+    "parsed": 22
+   },
+   "prompt_tokens": 130058,
+   "completion_tokens": 6600,
+   "dollars": 0.044343600000000004
+  },
+  {
+   "version": "judge-v2",
+   "triager": {
+    "items": 30,
+    "scored": 28,
+    "human_unclear": 2,
+    "triager_unclear": 0,
+    "agreement": 0.6785714285714286,
+    "kappa": 0.21739130434782614,
+    "low": -0.09374999999999975,
+    "high": 0.5348837209302324,
+    "confusion": {
+     "model_failure -> model_failure": 17,
+     "model_failure -> task_underspecified": 3,
+     "model_failure -> upstream_tests_wrong": 3,
+     "task_underspecified -> model_failure": 2,
+     "task_underspecified -> task_underspecified": 2,
+     "task_underspecified -> upstream_tests_wrong": 1,
+     "unclear -> model_failure": 1,
+     "unclear -> task_underspecified": 1
+    }
+   },
+   "judge_alone": {
+    "items": 22,
+    "scored": 20,
+    "human_unclear": 2,
+    "triager_unclear": 0,
+    "agreement": 0.55,
+    "kappa": 0.142857142857143,
+    "low": -0.176470588235294,
+    "high": 0.47916666666666663,
+    "confusion": {
+     "model_failure -> model_failure": 9,
+     "model_failure -> task_underspecified": 3,
+     "model_failure -> upstream_tests_wrong": 3,
+     "task_underspecified -> model_failure": 2,
+     "task_underspecified -> task_underspecified": 2,
+     "task_underspecified -> upstream_tests_wrong": 1,
+     "unclear -> model_failure": 1,
+     "unclear -> task_underspecified": 1
+    }
+   },
+   "outcomes": {
+    "parsed": 22
+   },
+   "prompt_tokens": 136482,
+   "completion_tokens": 6600,
+   "dollars": 0.0462708
+  },
+  {
+   "version": "judge-v3",
+   "triager": {
+    "items": 30,
+    "scored": 28,
+    "human_unclear": 2,
+    "triager_unclear": 0,
+    "agreement": 0.75,
+    "kappa": 0.11711711711711714,
+    "low": -0.1428571428571428,
+    "high": 0.5234042553191488,
+    "confusion": {
+     "model_failure -> model_failure": 20,
+     "model_failure -> task_underspecified": 1,
+     "model_failure -> upstream_tests_wrong": 2,
+     "task_underspecified -> model_failure": 4,
+     "task_underspecified -> task_underspecified": 1,
+     "unclear -> model_failure": 1,
+     "unclear -> task_underspecified": 1
+    }
+   },
+   "judge_alone": {
+    "items": 22,
+    "scored": 20,
+    "human_unclear": 2,
+    "triager_unclear": 0,
+    "agreement": 0.65,
+    "kappa": 0.06666666666666672,
+    "low": -0.21212121212121218,
+    "high": 0.47368421052631593,
+    "confusion": {
+     "model_failure -> model_failure": 12,
+     "model_failure -> task_underspecified": 1,
+     "model_failure -> upstream_tests_wrong": 2,
+     "task_underspecified -> model_failure": 4,
+     "task_underspecified -> task_underspecified": 1,
+     "unclear -> model_failure": 1,
+     "unclear -> task_underspecified": 1
+    }
+   },
+   "outcomes": {
+    "parsed": 22
+   },
+   "prompt_tokens": 138088,
+   "completion_tokens": 6600,
+   "dollars": 0.046752600000000005
+  }
+ ]
+}
