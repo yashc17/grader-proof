@@ -7,6 +7,7 @@ and leave out every held-out function, and the held-out patch must then give exa
 full test patch gives.
 """
 
+import argparse
 import json
 import re
 import subprocess
@@ -96,7 +97,6 @@ def measure(row: dict[str, Any]) -> dict[str, Any]:
         "instance_id": row["instance_id"],
         "tests": len(row["FAIL_TO_PASS"]),
         "functions": len(functions),
-        "wanted": len(functions) // 2,
         "held": 0,
         "check": None,
     }
@@ -111,30 +111,26 @@ def measure(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
-    def outcome(r: dict[str, Any]) -> str:
-        if r["functions"] == 1:
-            return "one_function"
-        if r["held"] == r["wanted"]:
-            return "full_half_held_out"
-        return "part_held_out" if r["held"] else "none_held_out"
-
+    several = [r for r in results if r["functions"] >= 2]
     return {
         "instances": len(results),
         "one_fail_to_pass_test": sum(r["tests"] == 1 for r in results),
-        "one_fail_to_pass_function": sum(r["functions"] == 1 for r in results),
-        "outcomes": dict(Counter(outcome(r) for r in results).most_common()),
-        "functions_wanted": sum(r["wanted"] for r in results),
-        "functions_held_out": sum(r["held"] for r in results),
+        "one_fail_to_pass_function": len(results) - len(several),
+        "several_functions_half_held_out": sum(r["held"] > 0 for r in several),
+        "several_functions_refused": sum(r["held"] == 0 for r in several),
         "patch_checks": dict(Counter(r["check"] for r in results if r["check"]).most_common()),
     }
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--processes", type=int, default=2, help="worker processes (default 2)")
+    args = parser.parse_args()
     rows = pl.read_parquet(
         DATA_DIR / "swe-rebench/*.parquet",
         columns=["instance_id", "FAIL_TO_PASS", "test_patch", "docker_image"],
     )
-    with Pool() as pool:
+    with Pool(args.processes) as pool:
         results = pool.map(measure, rows.iter_rows(named=True), chunksize=50)
     in_trajectories = set(
         pl.scan_parquet(DATA_DIR / "trajectories/trajectories.parquet")

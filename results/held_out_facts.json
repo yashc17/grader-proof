@@ -3,48 +3,30 @@
     "instances": 21336,
     "one_fail_to_pass_test": 9320,
     "one_fail_to_pass_function": 10511,
-    "outcomes": {
-      "one_function": 10511,
-      "full_half_held_out": 5553,
-      "none_held_out": 3479,
-      "part_held_out": 1793
-    },
-    "functions_wanted": 78221,
-    "functions_held_out": 19027,
+    "several_functions_half_held_out": 5553,
+    "several_functions_refused": 5272,
     "patch_checks": {
-      "ok": 7346
+      "ok": 5553
     }
   },
   "trajectory_instances": {
     "instances": 6306,
     "one_fail_to_pass_test": 3789,
     "one_fail_to_pass_function": 4237,
-    "outcomes": {
-      "one_function": 4237,
-      "full_half_held_out": 1054,
-      "none_held_out": 874,
-      "part_held_out": 141
-    },
-    "functions_wanted": 5098,
-    "functions_held_out": 1732,
+    "several_functions_half_held_out": 1054,
+    "several_functions_refused": 1015,
     "patch_checks": {
-      "ok": 1195
+      "ok": 1054
     }
   },
   "trajectory_instances_with_image": {
     "instances": 5731,
     "one_fail_to_pass_test": 3413,
     "one_fail_to_pass_function": 3825,
-    "outcomes": {
-      "one_function": 3825,
-      "full_half_held_out": 967,
-      "none_held_out": 810,
-      "part_held_out": 129
-    },
-    "functions_wanted": 4763,
-    "functions_held_out": 1599,
+    "several_functions_half_held_out": 967,
+    "several_functions_refused": 939,
     "patch_checks": {
-      "ok": 1096
+      "ok": 967
     }
   },
   "failed_checks": []
