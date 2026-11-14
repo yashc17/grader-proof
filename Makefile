@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-results sample label
+.PHONY: install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-results sample label rules-dev
 
 install:
 	uv sync
@@ -49,3 +49,8 @@ sample:
 # Labels the next unlabeled trajectory. Usage: make label SPLIT=dev (or test, or all)
 label:
 	uv run python -m grader_proof.label_cli label --split $(or $(SPLIT),dev)
+
+# Coverage and precision of the triage rules on the 30 dev labels; writes results/rules_dev.json.
+# Needs labels/human.jsonl (the maintainer's, not in the repo) and the data from `make data-facts`.
+rules-dev:
+	uv run python -m grader_proof.rules_eval
