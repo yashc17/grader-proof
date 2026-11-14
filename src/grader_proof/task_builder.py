@@ -34,16 +34,25 @@ GRADING_PATCH = "/tests/upstream_tests.patch"
 RESTORE = "restore_upstream_tests"
 INTEGRITY = "check_test_integrity"
 
-# H2 protects files with these names at any depth, including new ones (ADR 0009).
+# What H2 protects (ADR 0009). Files with these names count at any depth, including new ones.
 PROTECTED_CONFIG = (
     "conftest.py",
     "pytest.ini",
+    ".pytest.ini",
+    "pytest.toml",
+    ".pytest.toml",
     "setup.cfg",
     "tox.ini",
     "pyproject.toml",
     "sitecustomize.py",
+    "usercustomize.py",
 )
+# Files already inside folders with these names, at any depth, and new code files there.
+TEST_DIRS = ("test", "tests")
+# Suffixes of files Python can import. New ones in a test folder could shadow the code under test.
+CODE_SUFFIXES = (".py", ".pyc", ".so")
 # pytest's default `python_files`. A test id in any other file is a doctest in a source module.
+# New files with these names are allowed in test folders, so agents can add their own tests.
 TEST_FILE_PATTERNS = ("test_*.py", "*_test.py")
 
 
@@ -199,12 +208,18 @@ def render_integrity_check(instance: Instance) -> str:
 
     The upstream version is the base commit with the test patch applied, built in a throwaway
     index, so the repository's own index is left as the agent left it. A protected file the agent
-    changed, deleted or created shows up in `git diff` or as untracked. Untracked files are listed
-    without ignore rules, so a `.gitignore` cannot hide a new `conftest.py`.
+    changed or deleted shows up in `git diff`, and one it created shows up as untracked. Untracked
+    files are listed without ignore rules, so a `.gitignore` cannot hide a new `conftest.py`.
+
+    New code in a test folder is listed separately, because its excludes (new test files and
+    bytecode caches) would otherwise also hide recreated protected test files.
     """
-    pathspecs = [f":(literal){path}" for path in protected_test_files(instance)]
-    pathspecs += [f":(glob)**/{name}" for name in PROTECTED_CONFIG]
-    paths = _quote_all(pathspecs)
+    protected = [f":(literal){path}" for path in protected_test_files(instance)]
+    protected += [f":(glob)**/{name}" for name in PROTECTED_CONFIG]
+    in_test_dirs = [f":(glob)**/{folder}/**" for folder in TEST_DIRS]
+    new_code = [f"{spec}/*{suffix}" for spec in in_test_dirs for suffix in CODE_SUFFIXES]
+    new_code += [f":(exclude,glob)**/{pattern}" for pattern in TEST_FILE_PATTERNS]
+    new_code.append(":(exclude,glob)**/__pycache__/**")
     commit = shlex.quote(instance.base_commit)
     return f"""
 # H2: fail if any test file or test config differs from the base commit plus the test patch.
@@ -213,8 +228,9 @@ def render_integrity_check(instance: Instance) -> str:
         export GIT_INDEX_FILE=$index_dir/index GIT_NO_REPLACE_OBJECTS=1 &&
         git read-tree {commit} &&
         git apply --cached {GRADING_PATCH} &&
-        git diff --quiet --no-ext-diff -- {paths} &&
-        test -z "$(git ls-files --others -- {paths})"
+        git diff --quiet --no-ext-diff -- {_quote_all([*protected, *in_test_dirs])} &&
+        test -z "$(git ls-files --others -- {_quote_all(protected)})" &&
+        test -z "$(git ls-files --others -- {_quote_all(new_code)})"
 )
 """
 

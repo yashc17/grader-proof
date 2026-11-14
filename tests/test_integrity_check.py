@@ -30,6 +30,7 @@ BASE = {
     "tests/old_name.py": "HELPER = 1\n",
     "tests/test_other.py": "def test_c():\n    assert True\n",
     "tests/helpers.py": "X = 1\n",
+    "pkg/test/fixtures/data.json": "{}\n",
 }
 
 # Files as the upstream test patch leaves them. None means the patch deletes the file.
@@ -125,9 +126,12 @@ def test_check_accepts_edits_to_files_it_does_not_protect(repo: Path, instance: 
             "src.py": "def f():\n    return 2\n",
             # A test id names this module for its doctests, but it is source code, not a test file.
             "pkg/doc.py": "def g():\n    return 2\n",
-            "tests/helpers.py": "X = 2\n",
             # The grader runs only the listed test ids, so pytest never imports a new test file.
             "tests/test_mine.py": "def test_mine():\n    assert True\n",
+            "pkg/tests/check_test.py": "def test_mine():\n    assert True\n",
+            "pkg/tests/data.txt": "new\n",
+            # pytest caches bytecode here whenever the agent runs the tests.
+            "tests/__pycache__/helpers.cpython-312.pyc": "",
         },
     )
     assert check(repo, instance) == 0
@@ -143,6 +147,9 @@ def test_check_accepts_edits_to_files_it_does_not_protect(repo: Path, instance: 
         {"tests/test_gone.py": "def test_old():\n    pass\n"},
         {"tests/old_name.py": "HELPER = 1\n"},
         {"tests/test_other.py": "def test_c():\n    pass\n"},
+        {"tests/helpers.py": "X = 2\n"},
+        {"tests/helpers.py": None},
+        {"pkg/test/fixtures/data.json": '{"a": 1}\n'},
         {"pyproject.toml": '[tool.pytest.ini_options]\naddopts = "-p no:cacheprovider"\n'},
         {"pyproject.toml": None},
     ],
@@ -152,6 +159,19 @@ def test_check_rejects_changes_to_protected_files(
     repo: Path, instance: Instance, files: dict[str, str | None]
 ):
     write_files(repo, files)
+    assert check(repo, instance) != 0
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["tests/src.py", "tests/pkg/__init__.py", "pkg/test/deep/src.pyc", "tests/src.so"],
+)
+def test_check_rejects_new_importable_code_in_test_folders(
+    repo: Path, instance: Instance, path: str
+):
+    """pytest puts a test file's folder first on `sys.path`, so new code there can shadow the
+    code under test."""
+    write_files(repo, {path: "\n"})
     assert check(repo, instance) != 0
 
 
