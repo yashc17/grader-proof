@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test check
+.PHONY: install lint typecheck test check data-facts
 
 install:
 	uv sync
@@ -16,3 +16,6 @@ test:
 	uv run pytest; status=$$?; [ $$status -eq 0 ] || [ $$status -eq 5 ]
 
 check: lint typecheck test
+
+data-facts:
+	uv run python -m grader_proof.data_facts
