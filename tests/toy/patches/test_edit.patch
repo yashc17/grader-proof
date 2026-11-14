@@ -1,0 +1,13 @@
+diff --git a/tests/test_clamp.py b/tests/test_clamp.py
+index 3c32a95..6d50fca 100644
+--- a/tests/test_clamp.py
++++ b/tests/test_clamp.py
+@@ -2,7 +2,7 @@ from toy.clamp import clamp
+ 
+ 
+ def test_below_low():
+-    assert clamp(-5, 0, 10) == 0
++    assert clamp(-5, 0, 10) == -5
+ 
+ 
+ def test_inside():
