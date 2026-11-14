@@ -2,7 +2,7 @@ diff --git a/tests/test_clamp.py b/tests/test_clamp.py
 new file mode 100644
 --- /dev/null
 +++ b/tests/test_clamp.py
-@@ -0,0 +1,13 @@
+@@ -0,0 +1,17 @@
 +from toy.clamp import clamp
 +
 +
@@ -16,3 +16,7 @@ new file mode 100644
 +
 +def test_above_high():
 +    assert clamp(20, 0, 10) == 10
++
++
++def test_below_negative_low():
++    assert clamp(-20, -10, 10) == -10

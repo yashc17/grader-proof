@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test check data-facts h2-gold-patches task oracle-results sample label
+.PHONY: install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-results sample label
 
 install:
 	uv sync
@@ -24,7 +24,12 @@ data-facts:
 h2-gold-patches:
 	uv run python -m grader_proof.h2_gold_patches
 
-# Usage: make task ID=12rambau__sepal_ui-411 [CONDITION=h1]
+# Measures how many instances H3 can hold tests out of, and checks its patches (ADR 0010).
+# Needs the parquet files that `make data-facts` downloads.
+held-out-facts:
+	uv run python -m grader_proof.held_out_facts
+
+# Usage: make task ID=12rambau__sepal_ui-411 [CONDITION=h1|h2|h3]
 CONDITION ?= baseline
 task:
 	@test -n "$(ID)" || { echo "usage: make task ID=<instance_id> [CONDITION=<condition>]"; exit 2; }

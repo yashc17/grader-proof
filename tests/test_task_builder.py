@@ -3,9 +3,12 @@ from pathlib import Path
 
 import pytest
 
+from grader_proof.held_out import hold_out
 from grader_proof.task_builder import (
+    HELD_OUT_PATCH,
     INTEGRITY,
     RESTORE,
+    RESTORE_HELD_OUT,
     FileChange,
     Instance,
     parse_file_changes,
@@ -60,6 +63,7 @@ def test_task_dir_name_is_lowercase_and_names_the_condition():
     assert task_dir_name("Org__Repo-12", "baseline") == "org__repo-12__baseline"
     assert task_dir_name("Org__Repo-12", "h1") == "org__repo-12__h1"
     assert task_dir_name("Org__Repo-12", "h2") == "org__repo-12__h2"
+    assert task_dir_name("Org__Repo-12", "h3") == "org__repo-12__h3"
 
 
 MODIFIED = """\
@@ -272,3 +276,76 @@ def test_write_task_replaces_an_existing_task(instance: Instance, tmp_path: Path
     stale.write_text("old")
     write_task(instance, tmp_path)
     assert not stale.exists()
+
+
+H3_PATCH = """\
+diff --git a/tests/test_y.py b/tests/test_y.py
+new file mode 100644
+index 0000000..3333333
+--- /dev/null
++++ b/tests/test_y.py
+@@ -0,0 +1,10 @@
++def test_one():
++    assert True
++
++
++def test_two():
++    assert True
++
++
++def test_old():
++    assert True
+"""
+
+H3_ROW = {
+    **ROW,
+    "test_patch": H3_PATCH,
+    "FAIL_TO_PASS": ["tests/test_y.py::test_one", "tests/test_y.py::test_two[a]"],
+    "PASS_TO_PASS": ["tests/test_y.py::test_old"],
+}
+
+
+def test_h3_test_sh_restores_held_out_tests_then_runs_every_test():
+    script = render_test_sh(Instance.from_row(H3_ROW), "h3")
+    assert f"{RESTORE_HELD_OUT}() {{" in script
+    assert (
+        f"if {RESTORE_HELD_OUT} && pytest --no-header -rA tests/test_y.py::test_one "
+        "'tests/test_y.py::test_two[a]' tests/test_y.py::test_old; then"
+    ) in script
+    assert f"git apply {HELD_OUT_PATCH}" in script
+
+
+def test_write_task_h3_shows_the_agent_only_the_visible_tests(tmp_path: Path):
+    instance = Instance.from_row(H3_ROW)
+    split = hold_out(instance.instance_id, instance.test_patch, instance.fail_to_pass)
+    task = write_task(instance, tmp_path, "h3")
+    assert task == tmp_path / "org__repo-12__h3"
+    assert (task / "environment/upstream_tests.patch").read_text() == split.visible_patch
+    assert (task / "tests/held_out_tests.patch").read_text() == split.held_out_patch
+    assert not (task / "tests/upstream_tests.patch").exists()
+
+
+def test_write_task_h3_records_the_split_in_the_task_metadata(tmp_path: Path):
+    instance = Instance.from_row(H3_ROW)
+    split = hold_out(instance.instance_id, instance.test_patch, instance.fail_to_pass)
+    config = tomllib.loads((write_task(instance, tmp_path, "h3") / "task.toml").read_text())
+    assert config["metadata"] == {
+        "visible_fail_to_pass": list(split.visible),
+        "held_out_fail_to_pass": list(split.held_out),
+    }
+    assert len(split.visible) == len(split.held_out) == 1
+
+
+def test_write_task_h3_refuses_an_instance_with_nothing_to_hold_out(
+    instance: Instance, tmp_path: Path
+):
+    with pytest.raises(ValueError, match="no FAIL_TO_PASS test"):
+        write_task(instance, tmp_path, "h3")
+
+
+def test_other_conditions_have_no_task_metadata(instance: Instance, tmp_path: Path):
+    for condition in ("baseline", "h1", "h2"):
+        config = tomllib.loads(
+            (write_task(instance, tmp_path, condition) / "task.toml").read_text()
+        )
+        assert "metadata" not in config
