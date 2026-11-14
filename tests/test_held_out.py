@@ -290,6 +290,18 @@ def test_hold_out_skips_functions_it_cannot_hide(test_patch: str):
         assert split.visible == ("tests/test_mod.py::test_existing",)
 
 
+def test_hold_out_refuses_when_fewer_than_half_can_be_held_out(test_patch: str):
+    """H3 always holds out half, so a result under H3 means the same thing on every task."""
+    f2p = [
+        "tests/test_mod.py::test_existing",
+        "tests/test_mod.py::TestOld::test_a",
+        "tests/test_other.py::test_x",
+        "tests/test_new.py::test_two",
+    ]
+    with pytest.raises(ValueError, match="only 1 of the 2"):
+        hold_out("a", test_patch, f2p)
+
+
 def test_hold_out_refuses_when_nothing_can_be_held_out(test_patch: str):
     with pytest.raises(ValueError, match="no FAIL_TO_PASS test"):
         hold_out("a", test_patch, ["tests/test_new.py::test_one"])

@@ -411,15 +411,16 @@ def hold_out(instance_id: str, test_patch: str, fail_to_pass: Sequence[str]) -> 
     """Holds out half of the FAIL_TO_PASS test functions, rounded down, so at least one stays.
 
     Functions are tried in an order seeded with the instance id; one that cannot be hidden is
-    skipped. Raises ValueError if none can be held out.
+    skipped. Raises ValueError if fewer than half can be held out, or none.
     """
     functions = sorted({function_of(t) for t in fail_to_pass})
+    wanted = len(functions) // 2
     files = parse_patch(test_patch)
     chosen: list[str] = []
     blocks: list[Block] = []
     cut = ("", "")
     for function in random.Random(instance_id).sample(functions, len(functions)):
-        if len(chosen) == len(functions) // 2:
+        if len(chosen) == wanted:
             break
         try:
             block = find_function(files, function)
@@ -431,6 +432,11 @@ def hold_out(instance_id: str, test_patch: str, fail_to_pass: Sequence[str]) -> 
         cut = patches
     if not chosen:
         raise ValueError(f"{instance_id}: no FAIL_TO_PASS test can be held out")
+    if len(chosen) < wanted:
+        raise ValueError(
+            f"{instance_id}: only {len(chosen)} of the {wanted} FAIL_TO_PASS functions "
+            "to hold out can be hidden"
+        )
     held = tuple(t for t in fail_to_pass if function_of(t) in chosen)
     visible = tuple(t for t in fail_to_pass if function_of(t) not in chosen)
     return HeldOut(visible, held, *cut)
