@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test check
+.PHONY: install lint typecheck test check task
 
 install:
 	uv sync
@@ -16,3 +16,8 @@ test:
 	uv run pytest; status=$$?; [ $$status -eq 0 ] || [ $$status -eq 5 ]
 
 check: lint typecheck test
+
+# Usage: make task ID=12rambau__sepal_ui-411
+task:
+	@test -n "$(ID)" || { echo "usage: make task ID=<instance_id>"; exit 2; }
+	uv run python -m grader_proof.task_builder $(ID)
