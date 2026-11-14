@@ -167,6 +167,20 @@ storage_mb = 10240
 {metadata}"""
 
 
+# SWE-rebench images are full clones, so the fix and the upstream tests are reachable from other
+# refs (ADR 0011). This keeps the branch HEAD points to, which sits at the base commit, and drops
+# everything else: other refs, the remote (so nothing can be fetched), the reflog and the
+# objects only those refs reached. H1, H2 and H3 read the base commit, which stays.
+STRIP_FUTURE_HISTORY = r"""RUN current=$(git symbolic-ref -q HEAD || true) \
+    && git for-each-ref --format='delete %(refname)' \
+        | grep -vxF "delete $current" \
+        | git update-ref --no-deref --stdin \
+    && for remote in $(git remote); do git remote remove "$remote"; done \
+    && rm -rf .git/FETCH_HEAD .git/ORIG_HEAD .git/refs/original \
+    && git reflog expire --expire=now --expire-unreachable=now --all \
+    && git gc --prune=now --quiet"""
+
+
 def render_dockerfile(instance: Instance) -> str:
     return f"""FROM {instance.docker_image}
 
@@ -174,6 +188,8 @@ WORKDIR /testbed
 
 COPY upstream_tests.patch /tmp/upstream_tests.patch
 RUN git apply /tmp/upstream_tests.patch && rm /tmp/upstream_tests.patch
+
+{STRIP_FUTURE_HISTORY}
 """
 
 

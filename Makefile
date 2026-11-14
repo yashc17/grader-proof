@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-results sample label
+.PHONY: install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-results sample label history-reads
 
 install:
 	uv sync
@@ -49,3 +49,8 @@ sample:
 # Labels the next unlabeled trajectory. Usage: make label SPLIT=dev (or test, or all)
 label:
 	uv run python -m grader_proof.label_cli label --split $(or $(SPLIT),dev)
+
+# Counts trajectories whose commands read git history beyond HEAD (issue #56, ADR 0011).
+# Needs the data that data-facts downloads.
+history-reads:
+	uv run python -m grader_proof.history_reads
