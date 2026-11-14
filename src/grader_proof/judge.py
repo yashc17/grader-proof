@@ -21,8 +21,8 @@ from grader_proof.trajectory import CHARS_PER_TOKEN, Trajectory, clip, condense
 
 JUDGE_MODEL = "Qwen/Qwen3.5-9B-Base"
 PROMPTS_DIR = Path(__file__).parent / "judge_prompts"
-FROZEN_VERSION = "judge-v1"
-FROZEN_SHA256 = "f28c62842fcc613d1d6e0a87908a529dae8b87b21605dbb7027262f4a7332ecd"
+FROZEN_VERSION = "judge-v2"
+FROZEN_SHA256 = "1a5d9c3ca10a03eac4ea819517c0b5aa314daa369f5e11f685494d4c4938d87b"
 
 MAX_TOKENS = 300
 SEED = 0
