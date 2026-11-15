@@ -161,7 +161,7 @@ Cash budget is $0 ([ADR 0005](adr/0005-zero-cost-compute.md)).
 |---|---|
 | Develop and debug tasks; run agents | Laptop: Apple M3, 16 GB RAM, about 79 GB free disk. Containers run in Colima (MIT) with Rosetta x86 emulation. |
 | Oracle checks and replays | GitHub Actions on the public repo: free x86 runners with 4 CPUs, 16 GB RAM, 6 hours per job, 20 jobs at once. Disk measured on one run (2026-11-14, runner image `ubuntu-26.04`): 145 GB total, 106 GB free before the task image pull, 98 GB free after. |
-| LLM judge development | Local open model of 8–9B parameters, served on the laptop by Ollama or MLX. |
+| LLM judge development | Planned: a local 8–9B model on Ollama or MLX. Used: `Qwen/Qwen3.5-9B-Base` on Tinker (issue #13), because the local model cut an 8K prompt to about 4,100 tokens in #3. Three prompt versions on 22 dev items cost $0.137. |
 | LLM judge final run, red team, M4 | Tinker sampling on open-weight models, paid from the maintainer's grant, capped at $50. |
 
 Cost estimates use Tinker list prices from 2026-10-19 and are checked with a one-run pilot before every batch:
