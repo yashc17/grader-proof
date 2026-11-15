@@ -54,6 +54,7 @@ class Projection(BaseModel):
 
     model: str
     instruction: str | None
+    agent_kwargs: dict[str, object]
     trials: int
     mean_cost_usd: float
     projected_runs: int
@@ -150,17 +151,20 @@ def changed_files(patch: str) -> list[str]:
 
 
 def project(trials: list[TrialRecord]) -> list[Projection]:
-    """One projection per model and instruction, in the order they first appear."""
-    groups: dict[tuple[str, str | None], list[TrialRecord]] = {}
+    """One projection per model, instruction and agent settings, in the order they first appear."""
+    groups: dict[str, list[TrialRecord]] = {}
     for trial in trials:
-        groups.setdefault((trial.model, trial.instruction), []).append(trial)
+        key = json.dumps([trial.model, trial.instruction, trial.agent_kwargs], sort_keys=True)
+        groups.setdefault(key, []).append(trial)
     projections: list[Projection] = []
-    for (model, instruction), group in groups.items():
+    for group in groups.values():
+        first = group[0]
         mean_cost = sum(t.cost_usd for t in group) / len(group)
         projections.append(
             Projection(
-                model=model,
-                instruction=instruction,
+                model=first.model,
+                instruction=first.instruction,
+                agent_kwargs=first.agent_kwargs,
                 trials=len(group),
                 mean_cost_usd=mean_cost,
                 projected_runs=ADAPTIVE_RUNS,
@@ -215,6 +219,7 @@ def main() -> None:
             f"{p.model}, {p.instruction}: {p.trials} trials, mean ${p.mean_cost_usd:.4f} per run, "
             f"${p.projected_cost_usd:.2f} for {p.projected_runs} runs"
         )
+        print(f"  {json.dumps(p.agent_kwargs)}")
 
 
 if __name__ == "__main__":
