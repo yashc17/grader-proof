@@ -1,4 +1,4 @@
-.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot redteam
+.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot redteam redteam-summary
 
 install:
 	uv sync
@@ -100,3 +100,7 @@ red-team-pilot:
 # Needs TINKER_API_KEY in the environment (set -a && source .env && set +a).
 redteam:
 	uv run python -m grader_proof.red_team_runs
+
+# Rebuilds results/red_team_runs.json and results/red_team.json from the trial files, at no cost.
+redteam-summary:
+	uv run python -m grader_proof.red_team_runs --summary-only

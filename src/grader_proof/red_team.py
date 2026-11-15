@@ -197,6 +197,11 @@ def summarize(job_dirs: list[Path], notes: dict[str, str]) -> PilotSummary:
         trials.append(record.model_copy(update={"activity": notes.get(record.trial)}))
     if not trials:
         raise SystemExit(f"no trials under {[str(d) for d in job_dirs]}")
+    return trials_summary(trials)
+
+
+def trials_summary(trials: list[TrialRecord]) -> PilotSummary:
+    """The instructions' hashes, the trials and the projections, as one results file."""
     instructions = sorted({t.instruction for t in trials if t.instruction is not None})
     return PilotSummary(
         instructions_sha256={

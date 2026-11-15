@@ -15,12 +15,13 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 
-from grader_proof.red_team import TrialRecord, read_trial_with_patch
+from grader_proof.red_team import PilotSummary, TrialRecord, read_trial_with_patch, trials_summary
 
 CONDITIONS = ("baseline", "all")
 TRIALS = 3
@@ -48,6 +49,7 @@ RUNS_DIR = Path("runs/red-team-runs")
 RESULTS_DIR = Path("results/red_team_runs")
 NOTES = Path("results/red_team_runs_notes.json")
 SUMMARY = Path("results/red_team_runs.json")
+ADAPTIVE = Path("results/red_team.json")  # same schema as results/red_team_pilot.json, read by #32
 
 
 class TrialKey(BaseModel):
@@ -189,6 +191,17 @@ def summarize_runs(
     )
 
 
+def adaptive_summary(runs: list[RunRecord], notes: dict[str, str]) -> PilotSummary:
+    """The trials that have a record, in the schema `red_team.summarize` writes."""
+    return trials_summary(
+        [
+            run.record.model_copy(update={"activity": notes.get(run.key.name)})
+            for run in runs
+            if run.record is not None
+        ]
+    )
+
+
 def harbor_command(task_dir: Path, job_dir: Path) -> list[str]:
     return [
         *("uvx", "--from", "harbor[tinker]==0.26.0", "harbor", "run"),
@@ -260,11 +273,16 @@ def write_summary(planned: int) -> RunsSummary:
     notes = TypeAdapter(dict[str, str]).validate_json(NOTES.read_text()) if NOTES.exists() else {}
     summary = summarize_runs(RESULTS_DIR, planned, notes)
     SUMMARY.write_text(summary.model_dump_json(indent=2) + "\n")
+    if runs := load_runs(RESULTS_DIR):
+        ADAPTIVE.write_text(adaptive_summary(runs, notes).model_dump_json(indent=2) + "\n")
     return summary
 
 
 def main() -> None:
     planned = planned_trials(instances(TASKS_DIR))
+    if "--summary-only" in sys.argv:
+        write_summary(len(planned))
+        return
     todo = pending(planned, RESULTS_DIR)
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     _, spent = spend([run.record for run in load_runs(RESULTS_DIR) if run.record is not None])

@@ -8,6 +8,7 @@ from grader_proof.red_team_runs import (
     MAX_CALL_USD,
     RunRecord,
     TrialKey,
+    adaptive_summary,
     instances,
     is_infra_failure,
     pending,
@@ -122,3 +123,19 @@ def test_summary_counts_rewards_retries_and_failures(tmp_path: Path) -> None:
     assert (summary.planned, summary.done, summary.retried, summary.failed) == (6, 3, 2, 1)
     assert summary.rewards == {"baseline": {"1": 1, "0": 1}, "all": {}}
     assert summary.spend_usd == pytest.approx(0.3)
+
+
+def test_adaptive_summary_uses_the_pilot_schema_with_one_record_per_trial() -> None:
+    keys = planned_trials(["a__a-1"])
+    runs = [
+        RunRecord(key=keys[0], attempts=1, record=record(reward=1, cost_usd=0.1)),
+        RunRecord(key=keys[3], attempts=2, record=None, failure="no trial result"),
+    ]
+
+    summary = adaptive_summary(runs, {keys[0].name: "edited a test"})
+
+    assert [t.reward for t in summary.trials] == [1]
+    assert summary.trials[0].activity == "edited a test"
+    assert summary.trials[0].task == "demo__demo-1__baseline"
+    assert list(summary.instructions_sha256) == ["prompts/red-team-v2.md"]
+    assert summary.projections[0].trials == 1
