@@ -5,8 +5,10 @@ import pytest
 
 from grader_proof.held_out import hold_out
 from grader_proof.task_builder import (
+    CHECK_PROPERTY,
     HELD_OUT_PATCH,
     INTEGRITY,
+    PROPERTY_CHECK,
     RESTORE,
     RESTORE_HELD_OUT,
     FileChange,
@@ -69,6 +71,7 @@ def test_task_dir_name_is_lowercase_and_names_the_condition():
     assert task_dir_name("Org__Repo-12", "h1") == "org__repo-12__h1"
     assert task_dir_name("Org__Repo-12", "h2") == "org__repo-12__h2"
     assert task_dir_name("Org__Repo-12", "h3") == "org__repo-12__h3"
+    assert task_dir_name("Org__Repo-12", "h4") == "org__repo-12__h4"
 
 
 MODIFIED = """\
@@ -414,3 +417,62 @@ def test_write_task_all_uses_the_h3_workspace_and_ships_both_patches(tmp_path: P
 def test_write_task_all_refuses_an_instance_h3_refuses(instance: Instance, tmp_path: Path):
     with pytest.raises(ValueError, match="no FAIL_TO_PASS test"):
         write_task(instance, tmp_path, "all")
+
+
+PROPERTY = "import sys\n\nsys.exit(0)\n"
+
+
+def write_property(properties_dir: Path, instance_id: str) -> Path:
+    properties_dir.mkdir(exist_ok=True)
+    path = properties_dir / f"{instance_id}.py"
+    path.write_text(PROPERTY)
+    return path
+
+
+def test_h4_test_sh_checks_the_property_then_runs_the_tests(instance: Instance):
+    script = render_test_sh(instance, "h4", has_property=True)
+    assert f"{CHECK_PROPERTY}() {{" in script
+    assert f"python -I {PROPERTY_CHECK}" in script
+    assert (
+        f"if {CHECK_PROPERTY} && pytest --no-header -rA 'tests/test_x.py::test_new[a b]' "
+        "tests/test_x.py::test_old; then"
+    ) in script
+
+
+def test_write_task_h4_ships_the_property_check_to_the_grader(instance: Instance, tmp_path: Path):
+    properties = tmp_path / "properties"
+    write_property(properties, instance.instance_id)
+    baseline = write_task(instance, tmp_path, "baseline", properties_dir=properties)
+    h4 = write_task(instance, tmp_path, "h4", properties_dir=properties)
+    assert h4 == tmp_path / "org__repo-12__h4"
+    assert (h4 / "tests/property_check.py").read_text() == PROPERTY
+    assert not (baseline / "tests/property_check.py").exists()
+    for name in ("environment/Dockerfile", "environment/upstream_tests.patch", "instruction.md"):
+        assert (h4 / name).read_text() == (baseline / name).read_text()
+
+
+def test_write_task_h4_refuses_an_instance_without_a_property_check(
+    instance: Instance, tmp_path: Path
+):
+    with pytest.raises(ValueError, match="no property check"):
+        write_task(instance, tmp_path, "h4", properties_dir=tmp_path / "properties")
+
+
+def test_all_test_sh_runs_the_property_check_after_h1_where_one_exists():
+    script = render_test_sh(Instance.from_row(H3_ROW), "all", has_property=True)
+    assert (
+        f"if {RESTORE_HELD_OUT} && {INTEGRITY} && {RESTORE} && {CHECK_PROPERTY} && pytest "
+    ) in script
+
+
+def test_write_task_all_adds_h4_only_where_a_property_check_exists(tmp_path: Path):
+    instance = Instance.from_row(H3_ROW)
+    properties = tmp_path / "properties"
+    without = write_task(instance, tmp_path / "without", "all", properties_dir=properties)
+    assert CHECK_PROPERTY not in (without / "tests/test.sh").read_text()
+    assert not (without / "tests/property_check.py").exists()
+
+    write_property(properties, instance.instance_id)
+    with_h4 = write_task(instance, tmp_path / "with", "all", properties_dir=properties)
+    assert f"{CHECK_PROPERTY} && pytest" in (with_h4 / "tests/test.sh").read_text()
+    assert (with_h4 / "tests/property_check.py").read_text() == PROPERTY
