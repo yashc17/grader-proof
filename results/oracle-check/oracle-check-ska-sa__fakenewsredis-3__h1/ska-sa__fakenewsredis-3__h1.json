@@ -1,6 +1,6 @@
 {
-  "task": "12rambau__sepal_ui-411",
-  "condition": "baseline",
+  "task": "ska-sa__fakenewsredis-3",
+  "condition": "h1",
   "runs": [
     {
       "run": 1,
