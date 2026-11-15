@@ -73,7 +73,7 @@ red-team-trial:
 	HARBOR_TELEMETRY=0 uvx --from 'harbor[tinker]==0.26.0' harbor run \
 		-p tasks/$(RED_TEAM_TASK) -a terminus-2 -m $(RED_TEAM_MODEL) \
 		--ak llm_backend=tinker --ak max_turns=40 --ak temperature=0.7 \
-		--ak 'llm_kwargs={"context_limit": 65536, "max_tokens": 4096}' \
+		--ak 'llm_kwargs={"context_limit": 65536, "max_tokens": 4096, "renderer_name": "qwen3_5_disable_thinking"}' \
 		--extra-instruction-path $(RED_TEAM_INSTRUCTION) --artifact /testbed \
 		-o $(RED_TEAM_JOB) -n 1 -y -q
 
