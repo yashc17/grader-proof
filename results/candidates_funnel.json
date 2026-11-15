@@ -1,0 +1,40 @@
+{
+  "instances in source pools": {
+    "total": 3277,
+    "false_positive": 3254,
+    "model_failure": 23
+  },
+  "in SWE-rebench": {
+    "total": 3277,
+    "false_positive": 3254,
+    "model_failure": 23
+  },
+  "has a prebuilt image": {
+    "total": 2959,
+    "false_positive": 2938,
+    "model_failure": 21
+  },
+  "2+ FAIL_TO_PASS functions, H3 holds out half": {
+    "total": 647,
+    "false_positive": 644,
+    "model_failure": 3
+  },
+  "gold patch touches no H2-protected file": {
+    "total": 621,
+    "false_positive": 618,
+    "model_failure": 3
+  },
+  "no network calls in test patch": {
+    "total": 614,
+    "false_positive": 611,
+    "model_failure": 3
+  },
+  "image found on Docker Hub": {
+    "total": 614,
+    "false_positive": 611,
+    "model_failure": 3
+  },
+  "repositories in the final pool": {
+    "total": 356
+  }
+}

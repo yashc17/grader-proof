@@ -1,0 +1,56 @@
+diff --git a/dissect/cstruct/types/structure.py b/dissect/cstruct/types/structure.py
+index 817876d..bc52136 100644
+--- a/dissect/cstruct/types/structure.py
++++ b/dissect/cstruct/types/structure.py
+@@ -2,6 +2,7 @@ from __future__ import annotations
+ 
+ import io
+ from contextlib import contextmanager
++from enum import Enum
+ from functools import lru_cache
+ from operator import attrgetter
+ from textwrap import dedent
+@@ -380,10 +381,15 @@ class Structure(BaseType, metaclass=StructureMetaType):
+         return getattr(self, item)
+ 
+     def __repr__(self) -> str:
+-        values = [
+-            f"{k}={hex(self[k]) if (issubclass(f.type, int) and not issubclass(f.type, Pointer)) else repr(self[k])}"
+-            for k, f in self.__class__.fields.items()
+-        ]
++        values = []
++        for name, field in self.__class__.fields.items():
++            value = self[name]
++            if issubclass(field.type, int) and not issubclass(field.type, (Pointer, Enum)):
++                value = hex(value)
++            else:
++                value = repr(value)
++            values.append(f"{name}={value}")
++
+         return f"<{self.__class__.__name__} {' '.join(values)}>"
+ 
+ 
+diff --git a/dissect/cstruct/utils.py b/dissect/cstruct/utils.py
+index e01b628..76a1ee2 100644
+--- a/dissect/cstruct/utils.py
++++ b/dissect/cstruct/utils.py
+@@ -3,8 +3,10 @@ from __future__ import annotations
+ import pprint
+ import string
+ import sys
++from enum import Enum
+ from typing import Iterator
+ 
++from dissect.cstruct.types.pointer import Pointer
+ from dissect.cstruct.types.structure import Structure
+ 
+ COLOR_RED = "\033[1;31m"
+@@ -158,7 +160,7 @@ def _dumpstruct(
+         ci += 1
+ 
+         value = getattr(structure, field.name)
+-        if isinstance(value, str):
++        if isinstance(value, (str, Pointer, Enum)):
+             value = repr(value)
+         elif isinstance(value, int):
+             value = hex(value)

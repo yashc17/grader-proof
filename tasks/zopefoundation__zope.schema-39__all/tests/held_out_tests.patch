@@ -1,0 +1,13 @@
+diff --git a/src/zope/schema/tests/test__bootstrapfields.py b/src/zope/schema/tests/test__bootstrapfields.py
+--- a/src/zope/schema/tests/test__bootstrapfields.py
++++ b/src/zope/schema/tests/test__bootstrapfields.py
+@@ -364,6 +364,9 @@ class FieldTests(unittest.TestCase):
+         field.set(inst, 'AFTER')
+         self.assertEqual(inst.extant, 'AFTER')
+ 
++    def test_is_hashable(self):
++        field = self._makeOne()
++        hash(field)  # doesn't raise
+ 
+     def test_equal_instances_have_same_hash(self):
+         # Equal objects should have equal hashes

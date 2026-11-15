@@ -1,0 +1,20 @@
+diff --git a/test/git/test_git.py b/test/git/test_git.py
+--- a/test/git/test_git.py
++++ b/test/git/test_git.py
+@@ -149,6 +149,16 @@ class Keywords(unittest.TestCase):
+         v = self.parse(" (HEAD, 2.0,master  , otherbranch ) ", " full ",
+                        date=date)
+         self.assertEqual(v["date"], result)
++
++    def test_date_gpg(self):
++        date = """
++        gpg: Signature information
++        gpg: ...
++        2017-07-24 16:03:40 +0200"""
++        result = "2017-07-24T16:03:40+0200"
++        v = self.parse(" (HEAD, 2.0,master  , otherbranch ) ", " full ",
++                       date=date)
++        self.assertEqual(v["date"], result)
+ 
+ expected_renders = """
+ closest-tag: 1.0

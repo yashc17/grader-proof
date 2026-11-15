@@ -1,0 +1,68 @@
+diff --git a/releasenotes/notes/fix-local-context-overwrite-94190ba06a481631.yaml b/releasenotes/notes/fix-local-context-overwrite-94190ba06a481631.yaml
+new file mode 100644
+index 0000000..ff2ba7e
+--- /dev/null
++++ b/releasenotes/notes/fix-local-context-overwrite-94190ba06a481631.yaml
+@@ -0,0 +1,4 @@
++---
++fixes:
++  - |
++    Avoid overwriting local contexts when applying the retry decorator.
+diff --git a/tenacity/__init__.py b/tenacity/__init__.py
+index 7de36d4..06251ed 100644
+--- a/tenacity/__init__.py
++++ b/tenacity/__init__.py
+@@ -329,13 +329,19 @@ class BaseRetrying(ABC):
+             f, functools.WRAPPER_ASSIGNMENTS + ("__defaults__", "__kwdefaults__")
+         )
+         def wrapped_f(*args: t.Any, **kw: t.Any) -> t.Any:
+-            return self(f, *args, **kw)
++            # Always create a copy to prevent overwriting the local contexts when
++            # calling the same wrapped functions multiple times in the same stack
++            copy = self.copy()
++            wrapped_f.statistics = copy.statistics  # type: ignore[attr-defined]
++            return copy(f, *args, **kw)
+ 
+         def retry_with(*args: t.Any, **kwargs: t.Any) -> WrappedFn:
+             return self.copy(*args, **kwargs).wraps(f)
+ 
+-        wrapped_f.retry = self  # type: ignore[attr-defined]
++        # Preserve attributes
++        wrapped_f.retry = wrapped_f  # type: ignore[attr-defined]
+         wrapped_f.retry_with = retry_with  # type: ignore[attr-defined]
++        wrapped_f.statistics = {}  # type: ignore[attr-defined]
+ 
+         return wrapped_f  # type: ignore[return-value]
+ 
+diff --git a/tenacity/asyncio/__init__.py b/tenacity/asyncio/__init__.py
+index 6d63ebc..38b76c7 100644
+--- a/tenacity/asyncio/__init__.py
++++ b/tenacity/asyncio/__init__.py
+@@ -175,18 +175,23 @@ class AsyncRetrying(BaseRetrying):
+                 raise StopAsyncIteration
+ 
+     def wraps(self, fn: WrappedFn) -> WrappedFn:
+-        fn = super().wraps(fn)
++        wrapped = super().wraps(fn)
+         # Ensure wrapper is recognized as a coroutine function.
+ 
+         @functools.wraps(
+             fn, functools.WRAPPER_ASSIGNMENTS + ("__defaults__", "__kwdefaults__")
+         )
+         async def async_wrapped(*args: t.Any, **kwargs: t.Any) -> t.Any:
+-            return await fn(*args, **kwargs)
++            # Always create a copy to prevent overwriting the local contexts when
++            # calling the same wrapped functions multiple times in the same stack
++            copy = self.copy()
++            async_wrapped.statistics = copy.statistics  # type: ignore[attr-defined]
++            return await copy(fn, *args, **kwargs)
+ 
+         # Preserve attributes
+-        async_wrapped.retry = fn.retry  # type: ignore[attr-defined]
+-        async_wrapped.retry_with = fn.retry_with  # type: ignore[attr-defined]
++        async_wrapped.retry = async_wrapped  # type: ignore[attr-defined]
++        async_wrapped.retry_with = wrapped.retry_with  # type: ignore[attr-defined]
++        async_wrapped.statistics = {}  # type: ignore[attr-defined]
+ 
+         return async_wrapped  # type: ignore[return-value]
+ 
