@@ -26,7 +26,7 @@ from grader_proof.judge import (
     prompt_versions,
 )
 from grader_proof.label_cli import SWE_REBENCH
-from grader_proof.labeling import LABELS_PATH, SAMPLE_PATH, SampleItem
+from grader_proof.labeling import LABELS_PATH, SAMPLE_PATH, Candidate
 from grader_proof.llm import PRICES, CachedClient
 from grader_proof.rules_eval import load_dev_items, load_trajectories
 from grader_proof.stats import bootstrap_ci, cohens_kappa
@@ -106,7 +106,7 @@ def combine(rule_verdicts: Sequence[Verdict | None], judge_classes: Sequence[str
     return [next(judged) if v is None else v.failure_class for v in rule_verdicts]
 
 
-def load_tasks(items: Sequence[SampleItem]) -> dict[str, dict[str, Any]]:
+def load_tasks(items: Sequence[Candidate]) -> dict[str, dict[str, Any]]:
     ids = list({item.instance_id for item in items})
     rows = (
         pl.scan_parquet(SWE_REBENCH)

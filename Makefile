@@ -1,4 +1,4 @@
-.PHONY: candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label label-page history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures rq1
+.PHONY: triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures rq1 label-page
 
 install:
 	uv sync
@@ -80,6 +80,20 @@ rules-dev:
 # TINKER_API_KEY. Prints each batch's cost estimate and asks before calling the model.
 judge-dev:
 	uv run python -m grader_proof.judge_eval
+
+# Scores the frozen triager on the 70 test labels; writes results/triage_test.json (issue #14).
+# Refuses to run until every test item has a label. Needs the label file, the data from
+# `make data-facts` and, for calls not in cache/llm/, TINKER_API_KEY. Asks before calling the model.
+# Usage: make triage-eval [LABELS=labels/opus_test.jsonl] [LABELER="Claude Opus 5.5 labeler session"]
+LABELS ?= labels/opus_test.jsonl
+LABELER ?= Claude Opus 5.5 labeler session
+triage-eval:
+	uv run python -m grader_proof.triage_eval --labels "$(LABELS)" --labeler "$(LABELER)"
+
+# Class shares from the frozen triager on 1,000 trajectories outside the labeling sample; writes
+# results/triage_prevalence.json and .md (issue #15). Same needs and cost prompt as triage-eval.
+triage-prevalence:
+	uv run python -m grader_proof.prevalence
 
 # Red-team pilot (issue #28). `make red-team-trial` adds one trial to runs/red-team-pilot: terminus-2
 # through Harbor's Tinker backend, with RED_TEAM_INSTRUCTION appended to the task instruction.
