@@ -1,0 +1,241 @@
+{
+ "trajectory_id": "chatcmpl-f414c5b4f5a4d7ed46ecf14a3b8dec9c",
+ "instance_id": "conda-forge__conda-smithy-1925",
+ "repo": "conda-forge/conda-smithy",
+ "trajectory": [
+  {
+   "content": "You are OpenHands agent, a helpful AI assistant that can interact with a computer to solve tasks.\n\n<ROLE>\nYour primary role is to assist users by executing commands, modifying code, and solving technical problems effectively. You should be thorough, methodical, and prioritize quality over speed.\n* If the user asks a question, like \"why is X happening\", don't try to fix the problem. Just give an answer to the question.\n</ROLE>\n\n<EFFICIENCY>\n* Each action you take is somewhat expensive. Wherever p...[cut]",
+   "name": null,
+   "role": "system",
+   "tool_call_id": null,
+   "tool_calls": null
+  },
+  {
+   "content": "<uploaded_files>\n/workspace/conda-forge__conda-smithy__3.35\n</uploaded_files>\n\nI've uploaded a python code repository in the directory conda-forge__conda-smithy__3.35. Consider the following issue description:\n\n<issue_description>\nLinter hint about `{{ stdlib(\"c\") }}` variable is incorrect for noarch packages\n### Solution to issue cannot be found in the documentation.\r\n\r\n- [X] I checked the documentation.\r\n\r\n### Issue\r\n\r\nPlatform-specific noarch packages that use `__osx` receive a hint that they...[cut]",
+   "name": null,
+   "role": "user",
+   "tool_call_id": null,
+   "tool_calls": null
+  },
+  {
+   "content": "I'll help you implement the necessary changes to fix the linter hint issue about `{{ stdlib(\"c\") }}` for noarch packages. Let me start by following the phases you outlined.\n\n## Phase 1. READING: Understanding the Problem\n\n",
+   "name": null,
+   "role": "assistant",
+   "tool_call_id": null,
+   "tool_calls": [
+    {
+     "function": {
+      "arguments": "{\"thought\": \"Let me carefully read and understand the issue:\\n\\n1. The problem is about a linter hint in conda-smithy that incorrectly suggests adding `{{ stdlib(\\\"c\\\") }}` dependency for noarch packages\\n2. Specifically, platform-specific noarch packages that use `__osx` receive this hint, but they are noarch and do...[cut]\"}",
+      "name": "think"
+     },
+     "id": "chatcmpl-tool-02fefa16352a431e9a424861e561f95e",
+     "type": "function"
+    }
+   ]
+  },
+  {
+   "content": "Your thought has been logged.",
+   "name": "think",
+   "role": "tool",
+   "tool_call_id": "chatcmpl-tool-02fefa16352a431e9a424861e561f95e",
+   "tool_calls": null
+  },
+  {
+   "content": "Let me reword the problem in clearer terms:\n\n**Problem Statement:**\nThe conda-smithy linter incorrectly suggests adding `{{ stdlib(\"c\") }}` as a dependency for noarch packages that use `__osx` selectors. Since noarch packages are architecture-independent, they should not require platform-specific standard library dependencies.\n\n**Technical Details:**\n- **File affected:** `conda_smithy/lint_recipe.py` \n- **Line reference:** Around line 885\n- **Error:** Linter hint suggests platform-specific depen...[cut]",
+   "name": null,
+   "role": "assistant",
+   "tool_call_id": null,
+   "tool_calls": [
+    {
+     "function": {
+      "arguments": "{\"command\": \"view\", \"path\": \"/workspace/conda-forge__conda-smithy__3.35\"}",
+      "name": "str_replace_editor"
+     },
+     "id": "chatcmpl-tool-16e200f36d36488f863a7f25f5e92257",
+     "type": "function"
+    }
+   ]
+  },
+  {
+   "content": "Here's the files and directories up to 2 levels deep in /workspace/conda-forge__conda-smithy__3.35, excluding hidden items:\n/workspace/conda-forge__conda-smithy__3.35\n...[cut]...\nrge__conda-smithy__3.35/tests/test_feedstock_tokens.py\n/workspace/conda-forge__conda-smithy__3.35/tests/test_lint_recipe.py\n/workspace/conda-forge__conda-smithy__3.35/tests/test_variant_algebra.py\n\n10 hidden files/directories in this directory are excluded. You can use 'ls -la /workspace/conda-forge__conda-smithy__3.35' to see them.",
+   "name": "str_replace_editor",
+   "role": "tool",
+   "tool_call_id": "chatcmpl-tool-16e200f36d36488f863a7f25f5e92257",
+   "tool_calls": null
+  },
+  {
+   "content": "ImportError while loading conftest '/workspace/conda-forge__conda-smithy__3.35/tests/conftest.py'.\ntests/conftest.py:10: in <module>\n    from conda_build.utils import copy_into\nE   ModuleNotFoundError: No module named 'conda_build'\n[The command completed with exit code 4.]\n[Current working directory: /workspace/conda-forge__conda-smithy__3.35]\n[Python interpreter: /opt/conda/envs/testbed/bin/python]\n[Command finished with exit code 4]",
+   "name": "execute_bash",
+   "role": "tool",
+   "tool_call_id": "chatcmpl-tool-c158ccdda6f1418c994629d6b253cd19",
+   "tool_calls": null
+  },
+  {
+   "content": "Let me install the required dependencies:\n\n",
+   "name": null,
+   "role": "assistant",
+   "tool_call_id": null,
+   "tool_calls": [
+    {
+     "function": {
+      "arguments": "{\"path\": \"/workspace/conda-forge__conda-smithy__3.35/requirements.txt\", \"command\": \"view\"}",
+      "name": "str_replace_editor"
+     },
+     "id": "chatcmpl-tool-4182a3fc738a46c58241597e0b48a5b1",
+     "type": "function"
+    }
+   ]
+  },
+  {
+   "content": "ERROR:\nInvalid `path` parameter: /workspace/conda-forge__conda-smithy__3.35/requirements.txt. The path /workspace/conda-forge__conda-smithy__3.35/requirements.txt does not exist. Please provide a valid path.",
+   "name": "str_replace_editor",
+   "role": "tool",
+   "tool_call_id": "chatcmpl-tool-4182a3fc738a46c58241597e0b48a5b1",
+   "tool_calls": null
+  },
+  {
+   "content": "",
+   "name": null,
+   "role": "assistant",
+   "tool_call_id": null,
+   "tool_calls": [
+    {
+     "function": {
+      "arguments": "{\"path\": \"/workspace/conda-forge__conda-smithy__3.35/setup.py\", \"command\": \"view\"}",
+      "name": "str_replace_editor"
+     },
+     "id": "chatcmpl-tool-613680241bd343db861ae80d333475ff",
+     "type": "function"
+    }
+   ]
+  },
+  {
+   "content": "Here's the result of running `cat -n` on /workspace/conda-forge__conda-smithy__3.35/setup.py:\n     1\tfrom setuptools import setup\n     2\t\n     3\tsetup()\n     4\t\n",
+   "name": "str_replace_editor",
+   "role": "tool",
+   "tool_call_id": "chatcmpl-tool-613680241bd343db861ae80d333475ff",
+   "tool_calls": null
+  },
+  {
+   "content": "",
+   "name": null,
+   "role": "assistant",
+   "tool_call_id": null,
+   "tool_calls": [
+    {
+     "function": {
+      "arguments": "{\"path\": \"/workspace/conda-forge__conda-smithy__3.35/pyproject.toml\", \"command\": \"view\"}",
+      "name": "str_replace_editor"
+     },
+     "id": "chatcmpl-tool-9b6bef89738449f0a91df4f1b7e3818c",
+     "type": "function"
+    }
+   ]
+  },
+  {
+   "content": "Here's the result of running `cat -n` on /workspace/conda-forge__conda-smithy__3.35/pyproject.toml:\n     1\t[build-system]\n     2\trequires = [\n     3\t    \"setuptools>=\n...[cut]...\n [\n    47\t    \"legacy_circle: Test designed to run as if prior to the azure migration\",\n    48\t    \"legacy_travis: Test designed to run as if prior to the azure migration\",\n    49\t    \"legacy_appveyor: Test designed to run as if prior to the azure migration\",\n    50\t    \"cli: CLI tests outside of test/test_cli.py\",\n    51\t]\n    52\t\n",
+   "name": "str_replace_editor",
+   "role": "tool",
+   "tool_call_id": "chatcmpl-tool-9b6bef89738449f0a91df4f1b7e3818c",
+   "tool_calls": null
+  },
+  {
+   "content": "Let me install the required dependencies:\n\n",
+   "name": null,
+   "role": "assistant",
+   "tool_call_id": null,
+   "tool_calls": [
+    {
+     "function": {
+      "arguments": "{\"command\": \"cd /workspace/conda-forge__conda-smithy__3.35 && pip install conda-build ruamel.yaml\"}",
+      "name": "execute_bash"
+     },
+     "id": "chatcmpl-tool-858141bae9194861a276b5635774eed0",
+     "type": "function"
+    }
+   ]
+  },
+  {
+   "content": "ERROR: Ignored the following yanked versions: 1.19.1, 1.19.2, 1.20.1, 2.1.5\nERROR: Could not find a version that satisfies the requirement conda-build (from versions: none)\nERROR: No matching distribution found for conda-build\n[The command completed with exit code 1.]\n[Current working directory: /workspace/conda-forge__conda-smithy__3.35]\n[Python interpreter: /opt/conda/envs/testbed/bin/python]\n[Command finished with exit code 1]",
+   "name": "execute_bash",
+   "role": "tool",
+   "tool_call_id": "chatcmpl-tool-858141bae9194861a276b5635774eed0",
+   "tool_calls": null
+  },
+  {
+   "content": "Let me try installing via conda:\n\n",
+   "name": null,
+   "role": "assistant",
+   "tool_call_id": null,
+   "tool_calls": [
+    {
+     "function": {
+      "arguments": "{\"command\": \"cd /workspace/conda-forge__conda-smithy__3.35 && conda install conda-build -y\"}",
+      "name": "execute_bash"
+     },
+     "id": "chatcmpl-tool-e6d190965eb643019889ddebc90fc463",
+     "type": "function"
+    }
+   ]
+  },
+  {
+   "content": "Retrieving notices: ...working... done\nChannels:\n - conda-forge\n - nodefaults\n - defaults\nPlatform: linux-64\nCollecting package metadata (repodata.json): done\nSolving\n...[cut]...\n_0\n\n\n\nDownloading and Extracting Packages:\n\nPreparing transaction: done\nVerifying transaction: done\nExecuting transaction: done\n[The command completed with exit code 0.]\n[Current working directory: /workspace/conda-forge__conda-smithy__3.35]\n[Python interpreter: /opt/conda/envs/testbed/bin/python]\n[Command finished with exit code 0]",
+   "name": "execute_bash",
+   "role": "tool",
+   "tool_call_id": "chatcmpl-tool-e6d190965eb643019889ddebc90fc463",
+   "tool_calls": null
+  },
+  {
+   "content": "Now let's try to run the tests:\n\n",
+   "name": null,
+   "role": "assistant",
+   "tool_call_id": null,
+   "tool_calls": [
+    {
+     "function": {
+      "arguments": "{\"command\": \"cd /workspace/conda-forge__conda-smithy__3.35 && python -m pytest tests/test_lint_recipe.py -v -k \\\"stdlib\\\" --tb=short\"}",
+      "name": "execute_bash"
+     },
+     "id": "chatcmpl-tool-ea6297b2ca7a4aaca30e93fa080bd682",
+     "type": "function"
+    }
+   ]
+  },
+  {
+   "content": "======================================================================================================================================================================\n...[cut]...\n===============================================================================================================================\n[The command completed with exit code 0.]\n[Current working directory: /workspace/conda-forge__conda-smithy__3.35]\n[Python interpreter: /opt/conda/envs/testbed/bin/python]\n[Command finished with exit code 0]",
+   "name": "execute_bash",
+   "role": "tool",
+   "tool_call_id": "chatcmpl-tool-ea6297b2ca7a4aaca30e93fa080bd682",
+   "tool_calls": null
+  },
+  {
+   "content": "Great! Now let's run a broader test to make sure our environment is working:\n\n",
+   "name": null,
+   "role": "assistant",
+   "tool_call_id": null,
+   "tool_calls": [
+    {
+     "function": {
+      "arguments": "{\"command\": \"cd /workspace/conda-forge__conda-smithy__3.35 && python -c \\\"import conda_smithy.lint_recipe; print('Import successful')\\\"\"}",
+      "name": "execute_bash"
+     },
+     "id": "chatcmpl-tool-ce260e7a38b64a67879ee08bfc1df8b0",
+     "type": "function"
+    }
+   ]
+  },
+  {
+   "content": "Import successful\n[The command completed with exit code 0.]\n[Current working directory: /workspace/conda-forge__conda-smithy__3.35]\n[Python interpreter: /opt/conda/envs/testbed/bin/python]\n[Command finished with exit code 0]",
+   "name": "execute_bash",
+   "role": "tool",
+   "tool_call_id": "chatcmpl-tool-ce260e7a38b64a67879ee08bfc1df8b0",
+   "tool_calls": null
+  }
+ ],
+ "model_patch": "diff --git a/conda_smithy/lint_recipe.py b/conda_smithy/lint_recipe.py\nindex e16868b0..10bb6258 100644\n--- a/conda_smithy/lint_recipe.py\n+++ b/conda_smithy/lint_recipe.py\n@@ -882,7 +882,7 @@ def lintify_meta_yaml(\n         \"the respective platform as necessary. For further details, please see \"\n         \"https://github.com/conda-forge/conda-forge.github.io/issues/2102.\"\n     )\n-    if any(req.startswith(\"__osx\") for req in run_reqs + constraints):\n+    if noarch_value is None and any(req.startswith(\"__osx\") for req in run_reqs + constraints):\n         if osx_hint not in hints:\n             hints.append(osx_hint)\n \ndiff --git a/reproduce_issue.py b/reproduce_issue.py\nnew file mode 100644\nindex 00000000..5f20a908\n--- /dev/null\n+++ b/reproduce_issue.py\n@@ -0,0 +1,155 @@\n+#!/usr/bin/env python3\n+\"\"\"\n+Script to reproduce the issue where noarch packages incorrectly get stdlib hint for __osx usage.\n+\"\"\"\n+\n+import io\n+import os\n+import tempfile\n+import shutil\n+from contextlib import contextmanager\n+\n+import conda_smithy.lint_recipe as linter\n+\n+@contextmanager\n+def tmp_directory():\n+    tmp_dir = tempfile.mkdtemp(\"recipe_\")\n+    yield tmp_dir\n+    shutil.rmtree(tmp_dir)\n+\n+def test_noarch_with_osx_constraint_should_not_get_stdlib_hint():\n+    \"\"\"Test that noarch packages with __osx constraints don't get stdlib hint.\"\"\"\n+    \n+    print(\"Testing noarch package with __osx constraint...\")\n+    \n+    with tmp_directory() as recipe_dir:\n+        # Create a noarch recipe that uses __osx constraint\n+        with io.open(os.path.join(recipe_dir, \"meta.yaml\"), \"w\") as fh:\n+            fh.write(\"\"\"\n+package:\n+  name: test-package\n+  version: 1.0.0\n+\n+build:\n+  noarch: python\n+\n+requirements:\n+  host:\n+    - python\n+    - pip\n+  run:\n+    - python\n+  run_constrained:\n+    - __osx >=10.9  # [osx and x86_64]\n+\n+test:\n+  imports:\n+    - test_package\n+\n+about:\n+  home: https://github.com/test/test-package\n+  summary: A test package\n+  license: MIT\n+\"\"\")\n+        \n+        # Run the linter\n+        lints, hints = linter.main(recipe_dir, return_hints=True)\n+        \n+        # Print results for debugging\n+        print(f\"Lints: {lints}\")\n+        print(f\"Hints: {hints}\")\n+        \n+        # Check if the osx hint (which suggests stdlib) is present\n+        osx_hint = \"You're setting a constraint on the `__osx` virtual package directly\"\n+        stdlib_mention = \"{{ stdlib(\\\"c\\\") }}\"\n+        \n+        has_osx_hint = any(h.startswith(osx_hint) for h in hints)\n+        has_stdlib_in_osx_hint = any(stdlib_mention in h for h in hints if h.startswith(osx_hint))\n+        \n+        print(f\"Has osx hint: {has_osx_hint}\")\n+        print(f\"Has stdlib mention in osx hint: {has_stdlib_in_osx_hint}\")\n+        \n+        # For noarch packages, we should NOT get the osx hint that suggests stdlib\n+        if has_osx_hint and has_stdlib_in_osx_hint:\n+            print(\"\u274c BUG REPRODUCED: Noarch package incorrectly gets osx hint suggesting stdlib!\")\n+            return True\n+        else:\n+            print(\"\u2705 Noarch package correctly does NOT get osx hint suggesting stdlib\")\n+            return False\n+\n+def test_regular_package_with_osx_constraint_should_get_stdlib_hint():\n+    \"\"\"Test that regular (non-noarch) packages with __osx constraints DO get stdlib hint.\"\"\"\n+    \n+    print(\"\\nTesting regular package with __osx constraint...\")\n+    \n+    with tmp_directory() as recipe_dir:\n+        # Create a regular (non-noarch) recipe that uses __osx constraint\n+        with io.open(os.path.join(recipe_dir, \"meta.yaml\"), \"w\") as fh:\n+            fh.write(\"\"\"\n+package:\n+  name: test-package\n+  version: 1.0.0\n+\n+requirements:\n+  host:\n+    - python\n+    - pip\n+  run:\n+    - python\n+  run_constrained:\n+    - __osx >=10.9  # [osx and x86_64]\n+\n+test:\n+  imports:\n+    - test_package\n+\n+about:\n+  home: https://github.com/test/test-package  \n+  summary: A test package\n+  license: MIT\n+\"\"\")\n+        \n+        # Run the linter\n+        lints, hints = linter.main(recipe_dir, return_hints=True)\n+        \n+        # Print results for debugging\n+        print(f\"Lints: {lints}\")\n+        print(f\"Hints: {hints}\")\n+        \n+        # Check if the osx hint (which suggests stdlib) is present\n+        osx_hint = \"You're setting a constraint on the `__osx` virtual package directly\"\n+        stdlib_mention = \"{{ stdlib(\\\"c\\\") }}\"\n+        \n+        has_osx_hint = any(h.startswith(osx_hint) for h in hints)\n+        has_stdlib_in_osx_hint = any(stdlib_mention in h for h in hints if h.startswith(osx_hint))\n+        \n+        print(f\"Has osx hint: {has_osx_hint}\")\n+        print(f\"Has stdlib mention in osx hint: {has_stdlib_in_osx_hint}\")\n+        \n+        # For regular packages, we currently GET the osx hint (this shows the issue exists)\n+        if has_osx_hint and has_stdlib_in_osx_hint:\n+            print(\"\u2139\ufe0f  Regular package gets osx hint suggesting stdlib (shows current behavior)\")\n+            return True\n+        else:\n+            print(\"\u26a0\ufe0f  Regular package does not get osx hint (unexpected)\")\n+            return False\n+\n+if __name__ == \"__main__\":\n+    print(\"Reproducing the noarch stdlib hint issue...\\n\")\n+    \n+    # Test the bug case\n+    bug_reproduced = test_noarch_with_osx_constraint_should_not_get_stdlib_hint()\n+    \n+    # Test the correct case  \n+    correct_case_works = test_regular_package_with_osx_constraint_should_get_stdlib_hint()\n+    \n+    print(f\"\\n--- SUMMARY ---\")\n+    print(f\"Noarch package gets incorrect hint: {bug_reproduced}\")\n+    print(f\"Regular package gets hint (current behavior): {correct_case_works}\")\n+    \n+    if bug_reproduced:\n+        print(\"\\n\ud83d\udc1b ISSUE CONFIRMED: Noarch packages incorrectly receive osx hint suggesting stdlib!\")\n+        exit(1)\n+    else:\n+        print(\"\\n\u2705 Noarch package correctly avoids the hint\")\n+        exit(0)\n\\ No newline at end of file\ndiff --git a/test_edge_cases.py b/test_edge_cases.py\nnew file mode 100644\nindex 00000000..cd32557a\n--- /dev/null\n+++ b/test_edge_cases.py\n@@ -0,0 +1,128 @@\n+#!/usr/bin/env python3\n+\"\"\"\n+Test edge cases for the noarch stdlib hint fix.\n+\"\"\"\n+\n+import io\n+import os\n+import tempfile\n+import shutil\n+from contextlib import contextmanager\n+\n+import conda_smithy.lint_recipe as linter\n+\n+@contextmanager\n+def tmp_directory():\n+    tmp_dir = tempfile.mkdtemp(\"recipe_\")\n+    yield tmp_dir\n+    shutil.rmtree(tmp_dir)\n+\n+def test_noarch_generic_with_osx():\n+    \"\"\"Test noarch: generic package with __osx constraint.\"\"\"\n+    print(\"Testing noarch: generic with __osx...\")\n+    \n+    with tmp_directory() as recipe_dir:\n+        with io.open(os.path.join(recipe_dir, \"meta.yaml\"), \"w\") as fh:\n+            fh.write(\"\"\"\n+package:\n+  name: test-package\n+  version: 1.0.0\n+\n+build:\n+  noarch: generic\n+\n+requirements:\n+  run_constrained:\n+    - __osx >=10.9\n+\n+about:\n+  home: https://example.com\n+  summary: Test package\n+  license: MIT\n+\"\"\")\n+        \n+        lints, hints = linter.main(recipe_dir, return_hints=True)\n+        osx_hint = \"You're setting a constraint on the `__osx` virtual package directly\"\n+        has_osx_hint = any(h.startswith(osx_hint) for h in hints)\n+        print(f\"  Noarch generic with __osx hint: {has_osx_hint} (should be False)\")\n+        return has_osx_hint\n+\n+def test_noarch_python_in_run_section():\n+    \"\"\"Test noarch package with __osx in run section (not run_constrained).\"\"\"\n+    print(\"Testing noarch with __osx in run section...\")\n+    \n+    with tmp_directory() as recipe_dir:\n+        with io.open(os.path.join(recipe_dir, \"meta.yaml\"), \"w\") as fh:\n+            fh.write(\"\"\"\n+package:\n+  name: test-package\n+  version: 1.0.0\n+\n+build:\n+  noarch: python\n+\n+requirements:\n+  host:\n+    - python\n+  run:\n+    - python\n+    - __osx >=10.9\n+\n+about:\n+  home: https://example.com\n+  summary: Test package\n+  license: MIT\n+\"\"\")\n+        \n+        lints, hints = linter.main(recipe_dir, return_hints=True)\n+        osx_hint = \"You're setting a constraint on the `__osx` virtual package directly\"\n+        has_osx_hint = any(h.startswith(osx_hint) for h in hints)\n+        print(f\"  Noarch python with __osx in run: {has_osx_hint} (should be False)\")\n+        return has_osx_hint\n+\n+def test_regular_package_without_osx():\n+    \"\"\"Test regular package without __osx constraint (should not get hint).\"\"\"\n+    print(\"Testing regular package without __osx...\")\n+    \n+    with tmp_directory() as recipe_dir:\n+        with io.open(os.path.join(recipe_dir, \"meta.yaml\"), \"w\") as fh:\n+            fh.write(\"\"\"\n+package:\n+  name: test-package\n+  version: 1.0.0\n+\n+requirements:\n+  host:\n+    - python\n+  run:\n+    - python\n+\n+about:\n+  home: https://example.com\n+  summary: Test package\n+  license: MIT\n+\"\"\")\n+        \n+        lints, hints = linter.main(recipe_dir, return_hints=True)\n+        osx_hint = \"You're setting a constraint on the `__osx` virtual package directly\"\n+        has_osx_hint = any(h.startswith(osx_hint) for h in hints)\n+        print(f\"  Regular package without __osx hint: {has_osx_hint} (should be False)\")\n+        return has_osx_hint\n+\n+if __name__ == \"__main__\":\n+    print(\"Testing edge cases...\\n\")\n+    \n+    results = []\n+    results.append(test_noarch_generic_with_osx())\n+    results.append(test_noarch_python_in_run_section())\n+    results.append(test_regular_package_without_osx())\n+    \n+    # All should be False except the existing test case\n+    print(f\"\\nResults: {results}\")\n+    \n+    if any(results):\n+        print(\"\u274c Some edge cases failed\")\n+        exit(1)\n+    else:\n+        print(\"\u2705 All edge cases passed\")\n+        exit(0)\n\\ No newline at end of file\ndiff --git a/test_noarch_osx_fix.py b/test_noarch_osx_fix.py\nnew file mode 100644\nindex 00000000..af8d6668\n--- /dev/null\n+++ b/test_noarch_osx_fix.py\n@@ -0,0 +1,65 @@\n+#!/usr/bin/env python3\n+\"\"\"\n+Test to verify that noarch packages don't get the osx stdlib hint.\n+This test should be added to the official test suite.\n+\"\"\"\n+\n+import io\n+import os\n+import tempfile\n+import shutil\n+from contextlib import contextmanager\n+\n+import conda_smithy.lint_recipe as linter\n+\n+@contextmanager\n+def tmp_directory():\n+    tmp_dir = tempfile.mkdtemp(\"recipe_\")\n+    yield tmp_dir\n+    shutil.rmtree(tmp_dir)\n+\n+def test_noarch_packages_do_not_get_osx_stdlib_hint():\n+    \"\"\"Test that noarch packages with __osx constraints don't get the stdlib hint.\"\"\"\n+    expected_message = \"You're setting a constraint on the `__osx` virtual\"\n+    \n+    with tmp_directory() as recipe_dir:\n+        with io.open(os.path.join(recipe_dir, \"meta.yaml\"), \"w\") as fh:\n+            fh.write(\"\"\"\n+                package:\n+                   name: foo\n+                build:\n+                  noarch: python\n+                requirements:\n+                  run_constrained:\n+                    # since we're in an f-string: double up braces (2->4)\n+                    - __osx >={{ MACOSX_DEPLOYMENT_TARGET|default(\"10.9\") }}  # [osx and x86_64]\n+                \"\"\")\n+            \n+        _, hints = linter.main(recipe_dir, return_hints=True)\n+        # Noarch packages should NOT get the osx hint\n+        assert not any(h.startswith(expected_message) for h in hints)\n+\n+def test_regular_packages_do_get_osx_stdlib_hint():\n+    \"\"\"Test that regular (non-noarch) packages with __osx constraints DO get the stdlib hint.\"\"\"\n+    expected_message = \"You're setting a constraint on the `__osx` virtual\"\n+    \n+    with tmp_directory() as recipe_dir:\n+        with io.open(os.path.join(recipe_dir, \"meta.yaml\"), \"w\") as fh:\n+            fh.write(\"\"\"\n+                package:\n+                   name: foo\n+                requirements:\n+                  run_constrained:\n+                    # since we're in an f-string: double up braces (2->4)\n+                    - __osx >={{ MACOSX_DEPLOYMENT_TARGET|default(\"10.9\") }}  # [osx and x86_64]\n+                \"\"\")\n+            \n+        _, hints = linter.main(recipe_dir, return_hints=True)\n+        # Regular packages SHOULD get the osx hint\n+        assert any(h.startswith(expected_message) for h in hints)\n+\n+if __name__ == \"__main__\":\n+    print(\"Running noarch osx hint fix tests...\")\n+    test_noarch_packages_do_not_get_osx_stdlib_hint()\n+    test_regular_packages_do_get_osx_stdlib_hint()\n+    print(\"\u2705 All tests passed!\")\n\\ No newline at end of file",
+ "exit_status": "submit",
+ "resolved": 0,
+ "gen_tests_correct": 0.0,
+ "pred_passes_gen_tests": 1.0,
+ "full_message_count": 97
+}

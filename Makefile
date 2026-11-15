@@ -1,4 +1,4 @@
-.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads
+.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev
 
 install:
 	uv sync
@@ -60,3 +60,8 @@ candidates:
 # Needs the data that data-facts downloads.
 history-reads:
 	uv run python -m grader_proof.history_reads
+
+# Coverage and precision of the triage rules on the 30 dev labels; writes results/rules_dev.json.
+# Needs labels/human.jsonl (the maintainer's, not in the repo) and the data from `make data-facts`.
+rules-dev:
+	uv run python -m grader_proof.rules_eval
