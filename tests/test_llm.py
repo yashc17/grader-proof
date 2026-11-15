@@ -9,6 +9,7 @@ from grader_proof.llm import (
     Request,
     Response,
     estimate_batch,
+    max_prompt_tokens,
     request_key,
     run_batch,
 )
@@ -114,10 +115,39 @@ def test_estimate_counts_only_uncached_requests(tmp_path: Path) -> None:
     client.complete(cached)
     estimate = estimate_batch(client, [cached, fresh])
     assert estimate.requests == 1
-    assert estimate.prompt_tokens == 100  # 400 characters at 4 per token
+    assert estimate.prompt_tokens == 216  # 400 characters at 2 per token, plus the chat template
     assert estimate.completion_tokens == 100  # max_tokens is the upper bound
-    expected = 100 * 0.195 / 1e6 + 100 * 0.60 / 1e6
+    expected = 216 * 0.195 / 1e6 + 100 * 0.60 / 1e6
     assert estimate.dollars == pytest.approx(expected)
+
+
+def test_estimate_bounds_the_worst_cached_judge_prompt(tmp_path: Path) -> None:
+    """Issue #74: a 24,246-character ASCII judge prompt used 11,299 prompt tokens."""
+    client = CachedClient(FakeTransport(), tmp_path)
+    worst = make_request(messages=({"role": "user", "content": "x" * 24_246},), chat_template=False)
+    assert estimate_batch(client, [worst]).prompt_tokens >= 11_299
+
+
+def test_prompt_bound_counts_ascii_at_two_characters_and_other_text_by_utf8_bytes() -> None:
+    assert (
+        max_prompt_tokens(
+            make_request(messages=({"role": "user", "content": "abcde"},), chat_template=False)
+        )
+        == 3
+    )
+    # "é" is 2 UTF-8 bytes and "中" is 3: a byte-level tokenizer spends at most one token per byte.
+    assert (
+        max_prompt_tokens(
+            make_request(messages=({"role": "user", "content": "é中"},), chat_template=False)
+        )
+        == 5
+    )
+
+
+def test_prompt_bound_adds_the_chat_template_only_for_chat_requests() -> None:
+    two = ({"role": "system", "content": ""}, {"role": "user", "content": ""})
+    assert max_prompt_tokens(make_request(messages=two, chat_template=False)) == 0
+    assert max_prompt_tokens(make_request(messages=two)) == 24
 
 
 def test_estimate_rejects_a_model_without_a_price(tmp_path: Path) -> None:
