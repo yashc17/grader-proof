@@ -124,17 +124,18 @@ Needs, by kind:
 | `replay-results` | Downloads a replay run into the replay set. | Actions (`replay` workflow) |
 | `rq3` | Writes the RQ3 table from the replay, adaptive and oracle results and the exploit verdicts. | maintainer (exploit verdicts) |
 | `figures` | Draws the figures from the RQ3 table. | none |
+| `rq1` | Writes the RQ1 table from the test labels. | none |
 
 Targets on branches not yet merged into `main`:
 
 | Target | What it does | Needs |
 |---|---|---|
-| `rq1` (PR #72) | Writes the RQ1 table from the test labels. | none |
+| `label-agreement` (PR #80) | Compares two label files: self-agreement, and Opus against the maintainer on dev. | maintainer (dev labels) for the default files |
 | `triage-eval` (PR #73) | Scores the frozen triager on the test labels. | data, Tinker for uncached calls |
 | `triage-prevalence` (PR #73) | Estimates class prevalence on 1,000 trajectories. | data, Tinker for uncached calls |
 | `redteam`, `redteam-summary` (branch for issue #30) | Runs or resumes the adaptive red-team batch; rebuilds its summary at no cost. | `redteam`: Docker, Tinker |
-| `rq4-runs` (#33) | Runs or resumes the RQ4 batch: each model on All, 3 trials per task, within a `BUDGET` the maintainer approves. | Docker, Tinker |
-| `rq4` (#33) | Writes the RQ4 table from the saved trials. | none |
+| `rq4-runs` (PR #78) | Runs or resumes the RQ4 batch: each model on All, 3 trials per task, within a `BUDGET` the maintainer approves. | Docker, Tinker |
+| `rq4` (PR #78) | Writes the RQ4 table from the saved trials. | none |
 
 ## License
 
