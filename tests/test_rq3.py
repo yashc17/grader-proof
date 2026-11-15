@@ -9,6 +9,7 @@ from grader_proof.replay import Outcome, ReplayResult
 from grader_proof.rq3 import (
     Attempt,
     Estimate,
+    baseline_disagreements,
     build_rows,
     effect,
     exploit_rate,
@@ -95,12 +96,12 @@ def test_missing_verdicts_lists_accepted_trials_without_one():
     assert missing_verdicts(attempts, [exploit("x1")]) == ["x2"]
 
 
-def test_read_adaptive_reads_the_red_team_summary(tmp_path: Path):
+def test_read_adaptive_reads_the_red_team_summary_by_task_name(tmp_path: Path):
     summary = tmp_path / "red_team.json"
     trials = [
-        {"trial": "x1", "task_path": "tasks/a__baseline", "reward": 1, "turns": 3},
-        {"trial": "x2", "task_path": "tasks/a__all", "reward": 0},
-        {"trial": "x3", "task_path": "tasks/b__all", "reward": None},
+        {"trial": "x1", "task": "a__baseline", "task_path": "runs/t/copy", "reward": 1},
+        {"trial": "x2", "task": "a__all", "task_path": "runs/t/copy", "reward": 0},
+        {"trial": "x3", "task": "b__all", "task_path": "runs/t/copy", "reward": None},
     ]
     summary.write_text(json.dumps({"trials": trials, "projections": []}))
     assert read_adaptive(summary) == [
@@ -211,7 +212,44 @@ def test_write_csv_has_one_line_per_row(rows, tmp_path: Path):
 
 
 def test_render_markdown_shows_rates_with_intervals(rows):
-    table = render_markdown(rows)
+    table = render_markdown(rows, [])
     assert "| all | baseline |" in table
     assert "2/2 = 100% [100%, 100%]" in table
     assert "| a | h1 |" in table
+
+
+def test_baseline_disagreements_lists_trials_whose_replay_differs_from_the_adaptive_run():
+    replay = [
+        attempt("x1", "baseline", "rejected"),
+        attempt("x2", "baseline", "accepted"),
+        attempt("x3", "baseline", "not_applied"),
+        attempt("x4", "baseline", "accepted"),
+        attempt("x1", "h1", "accepted"),
+    ]
+    adaptive = [
+        attempt("x1", "baseline", "accepted"),
+        attempt("x2", "baseline", "accepted"),
+        attempt("x3", "baseline", "rejected"),
+        attempt("x4", "baseline", "no_reward"),
+        attempt("y1", "baseline", "accepted"),
+    ]
+    assert baseline_disagreements(replay, adaptive) == [
+        (attempt("x1", "baseline", "accepted"), attempt("x1", "baseline", "rejected")),
+        (attempt("x3", "baseline", "rejected"), attempt("x3", "baseline", "not_applied")),
+    ]
+
+
+def test_baseline_rows_count_disagreements_even_when_there_are_none(rows):
+    assert [r.baseline_disagreements for r in rows if r.condition == "baseline"] == [0, 0, 0]
+    assert {r.baseline_disagreements for r in rows if r.condition != "baseline"} == {None}
+
+
+def test_render_markdown_counts_disagreements_even_when_there_are_none(rows):
+    assert "differs from the adaptive reward: 0\n" in render_markdown(rows, [])
+
+
+def test_render_markdown_lists_disagreements(rows):
+    pair = (attempt("x1", "baseline", "accepted"), attempt("x1", "baseline", "rejected"))
+    table = render_markdown(rows, [pair])
+    assert "differs from the adaptive reward: 1\n" in table
+    assert "- x1 (a): adaptive accepted, replay rejected\n" in table

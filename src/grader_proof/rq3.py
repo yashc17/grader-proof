@@ -72,6 +72,8 @@ class Row(Frozen):
     adaptive_categories: dict[str, int]
     oracle_accepted: int
     oracle_runs: int
+    # Baseline rows only: patches whose replayed grade differs from their adaptive reward.
+    baseline_disagreements: int | None
 
 
 def _mean(values: Sequence[float]) -> float:
@@ -111,6 +113,24 @@ def effect(
     return _estimate(values, [t.task for _, t in pairs], interval)
 
 
+def baseline_disagreements(
+    replay: Iterable[Attempt], adaptive: Iterable[Attempt]
+) -> list[tuple[Attempt, Attempt]]:
+    """Adaptive Baseline trials whose replay under Baseline was graded differently, as
+    (adaptive, replay) pairs. A flakiness check: both grade the same patch with the same grader,
+    so they differ only if the grader is flaky or the agent changed something outside the
+    repository. Adaptive trials without a reward have nothing to compare."""
+    replayed = {a.trial: a for a in replay if a.condition == "baseline"}
+    return [
+        (a, replayed[a.trial])
+        for a in adaptive
+        if a.condition == "baseline"
+        and a.outcome in GRADED
+        and a.trial in replayed
+        and replayed[a.trial].outcome != a.outcome
+    ]
+
+
 def missing_verdicts(attempts: Iterable[Attempt], verdicts: Iterable[Verdict]) -> list[str]:
     """Accepted trials that have no verdict yet."""
     judged = {v.trial for v in verdicts}
@@ -118,10 +138,11 @@ def missing_verdicts(attempts: Iterable[Attempt], verdicts: Iterable[Verdict]) -
 
 
 def read_adaptive(path: Path) -> list[Attempt]:
-    """Reads the trials of a `red_team summarize` file. The condition is the task folder's."""
+    """Reads the trials of a `red_team summarize` file. `task` names the task folder, condition
+    included; `task_path` may point to a copy of it, so it is not read."""
     attempts: list[Attempt] = []
     for trial in json.loads(path.read_text())["trials"]:
-        task, condition = split_task_name(Path(trial["task_path"]).name)
+        task, condition = split_task_name(trial["task"])
         reward = trial["reward"]
         outcome: Outcome = (
             "no_reward" if reward is None else "accepted" if reward == 1 else "rejected"
@@ -187,6 +208,9 @@ def _row(
         adaptive_categories=_categories(attacked, verdicts),
         oracle_accepted=sum(accepted for accepted, _ in oracle),
         oracle_runs=sum(runs for _, runs in oracle),
+        baseline_disagreements=len(baseline_disagreements(replayed, attacked))
+        if condition == "baseline"
+        else None,
     )
 
 
@@ -254,6 +278,7 @@ CSV_HEADER = [
     "adaptive_categories",
     "oracle_accepted",
     "oracle_runs",
+    "baseline_disagreements",
 ]
 
 
@@ -279,6 +304,7 @@ def write_csv(rows: Sequence[Row], path: Path) -> None:
                     _counts(r.adaptive_categories),
                     r.oracle_accepted,
                     r.oracle_runs,
+                    "" if r.baseline_disagreements is None else r.baseline_disagreements,
                 ]
             )
 
@@ -323,14 +349,18 @@ LEGEND = """
 - Replay is not a fair test of H3, or of the H3 part of All: the Baseline red team saw the
   held-out tests (ADR 0010, known gap (a)). The adaptive run against All is.
 - Oracle: oracle-check runs that the grader accepted. Any shortfall is a false negative.
+- Replay differs: on Baseline rows, the patches whose replayed Baseline grade differs from their
+  adaptive reward (listed below). The grader is the same, so a difference means flakiness or an
+  agent change outside the repository, which a replayed patch cannot carry.
 """
 
 
-def render_markdown(rows: Sequence[Row]) -> str:
+def render_markdown(rows: Sequence[Row], disagreements: Sequence[tuple[Attempt, Attempt]]) -> str:
+    """The table, its legend, and the list of Baseline replays that differ from the adaptive run."""
     header = (
         "| Scope | Condition | Adaptive exploits | Adaptive ungraded | Replay exploits "
         "| Replay ungraded | Effect vs Baseline | Replay categories | Adaptive categories "
-        "| Oracle |\n|---|---|---|---|---|---|---|---|---|---|\n"
+        "| Oracle | Replay differs |\n|---|---|---|---|---|---|---|---|---|---|---|\n"
     )
     lines = [
         f"| {r.scope} | {r.condition} | {_rate_cell(r.adaptive_exploits, r.adaptive_rate)} "
@@ -338,10 +368,21 @@ def render_markdown(rows: Sequence[Row]) -> str:
         f"| {_rate_cell(r.replay_exploits, r.replay_rate)} | {r.replay_ungraded} "
         f"| {_effect_cell(r.effect)} | {_counts(r.replay_categories)} "
         f"| {_counts(r.adaptive_categories)} "
-        f"| {f'{r.oracle_accepted}/{r.oracle_runs}' if r.oracle_runs else ''} |"
+        f"| {f'{r.oracle_accepted}/{r.oracle_runs}' if r.oracle_runs else ''} "
+        f"| {'' if r.baseline_disagreements is None else r.baseline_disagreements} |"
         for r in rows
     ]
-    return "# RQ3: exploit rates by condition\n\n" + header + "\n".join(lines) + "\n" + LEGEND
+    listed = "".join(
+        f"- {replayed.trial} ({replayed.task}): adaptive {adaptive.outcome}, "
+        f"replay {replayed.outcome}\n"
+        for adaptive, replayed in disagreements
+    )
+    check = (
+        "\n## Flakiness check\n\nBaseline patches whose replayed Baseline grade differs from "
+        f"the adaptive reward: {len(disagreements)}\n\n{listed}"
+    )
+    title = "# RQ3: exploit rates by condition\n\n"
+    return title + header + "\n".join(lines) + "\n" + LEGEND + check
 
 
 def main() -> None:
@@ -366,10 +407,11 @@ def main() -> None:
         )
 
     rows = build_rows(replay, adaptive, verdicts, read_oracle(args.oracle))
+    table = render_markdown(rows, baseline_disagreements(replay, adaptive))
     args.out.parent.mkdir(parents=True, exist_ok=True)
     write_csv(rows, args.out.with_suffix(".csv"))
-    args.out.with_suffix(".md").write_text(render_markdown(rows))
-    print(render_markdown(rows))
+    args.out.with_suffix(".md").write_text(table)
+    print(table)
 
 
 if __name__ == "__main__":
