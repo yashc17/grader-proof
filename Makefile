@@ -1,4 +1,4 @@
-.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures
+.PHONY: candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures
 
 install:
 	uv sync
@@ -47,6 +47,11 @@ oracle-check:
 # Draws labels/sample.jsonl (100 unresolved trajectories, 30 dev and 70 test). Keeps an existing file.
 sample:
 	uv run python -m grader_proof.label_cli sample
+
+# Writes labels/fact_sheets/test/: one page of facts per test item and index.html (issue #9).
+# The pages hold no label. Needs the data that data-facts downloads.
+fact-sheets:
+	uv run python -m grader_proof.fact_sheet
 
 # Labels the next unlabeled trajectory. Usage: make label SPLIT=dev (or test, or all)
 label:
