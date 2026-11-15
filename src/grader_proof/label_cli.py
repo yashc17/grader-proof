@@ -39,7 +39,8 @@ TRAJECTORIES = DATA_DIR / "trajectories/trajectories.parquet"
 SWE_REBENCH = DATA_DIR / "swe-rebench/*.parquet"
 
 
-def command_sample(seed: int, force: bool) -> None:
+def unresolved_candidates() -> list[Candidate]:
+    """Every unresolved trajectory in the data."""
     rows = (
         pl.scan_parquet(TRAJECTORIES)
         .filter(pl.col("resolved") == 0)
@@ -47,7 +48,7 @@ def command_sample(seed: int, force: bool) -> None:
         .collect()
         .iter_rows()
     )
-    candidates = [
+    return [
         Candidate(
             trajectory_id=trajectory_id,
             instance_id=instance_id,
@@ -55,7 +56,10 @@ def command_sample(seed: int, force: bool) -> None:
         )
         for trajectory_id, instance_id, passed in rows
     ]
-    sample = draw_sample(candidates, seed)
+
+
+def command_sample(seed: int, force: bool) -> None:
+    sample = draw_sample(unresolved_candidates(), seed)
     if SAMPLE_PATH.exists() and not force:
         print(f"{SAMPLE_PATH} already exists; it is left as it is. Use --force to redraw.")
         return
