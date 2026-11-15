@@ -16,6 +16,9 @@ htmlcov/
 data/
 runs/
 
+# Fact sheets quote dataset content at length (issue #9); make fact-sheets rebuilds them.
+labels/fact_sheets/
+
 # OS and editors
 .DS_Store
 .idea/
