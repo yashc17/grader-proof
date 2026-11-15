@@ -70,9 +70,9 @@ So 69.1% (95% interval 68.0–70.3) of unresolved trajectories with a self-check
 
 **Labeling sample.** 100 unresolved trajectories drawn uniformly with a fixed seed, at most one per instance, so class frequencies match the data. Before labeling, each is assigned at random to *dev* (30) or *test* (70). About a third will be self-check false positives, so the same labels feed RQ1.
 
-**Labeling tool.** A terminal tool that shows the issue text, a condensed trajectory (commands, errors, the last observations), the agent's patch next to the gold patch, and the `FAIL_TO_PASS` names. It records one failure class, a one-line note, and, for self-check false positives, why the self-check was fooled. Labels are appended to a JSONL file, so labeling can stop and resume at any point. The codebook and precedence order are in [ADR 0003](adr/0003-failure-class-taxonomy.md).
+**Labeling tool.** A terminal tool that shows the issue text, a condensed trajectory (commands, errors, the last observations), the agent's patch next to the gold patch, and the `FAIL_TO_PASS` names. It records one failure class, a one-line note, and, for self-check false positives, why the self-check was fooled. Labels are appended to a JSONL file, so labeling can stop and resume at any point. The codebook and precedence order are in [ADR 0003](adr/0003-failure-class-taxonomy.md). The maintainer labels the 30 dev items. Claude Opus 5.5 labels the 70 test items, blind to the maintainer's labels and to every triager output, from the same evidence plus label-free fact sheets ([ADR 0015](adr/0015-opus-test-labels.md)). Its decision rules are in `docs/codebook.md`.
 
-**Self-agreement.** About a week after labeling, the maintainer re-labels 20 random items without seeing the first answers. Cohen's κ between the two passes estimates how consistent the labels are, which is roughly the best κ a triager can reach.
+**Self-agreement.** A second, fresh Opus session re-labels 20 random test items without seeing the first labels. Cohen's κ between the two passes estimates how consistent the labels are, which is roughly the best κ a triager can reach. Opus also labels the 30 dev items blind; its κ against the maintainer's dev labels shows how close the two labelers are (ADR 0015).
 
 **Triager.**
 1. Rules run first and only fire on clear evidence, for example an `ImportError` on the repository's own package before any edit, a failed dependency install, or a network error in an observation. A rule either assigns a class or abstains.
@@ -233,7 +233,7 @@ Every LLM call goes through one cached client: the key is a hash of the full req
 | Disk fills up (79 GB free). The pilot image unpacks to 8.34 GB, more than the 3–4 GB assumed. | Twelve images at that size would not fit. Prune after each batch and keep fewer images on disk; prefer small images. |
 | Tinker's OpenAI-compatible endpoint is documented for checkpoints, not base models. | A pilot issue checks this first. Fallbacks: call Tinker's Python SDK through a thin client, or run the red team on a local model and report that limit. |
 | The red team rarely exploits. | That is a result. Report it, with the attempts it made. |
-| Labels come from one person. | Publish the codebook and labels, measure self-agreement, and state it as a limitation. |
+| Test labels come from one model (Claude Opus 5.5), not a person. | Publish the codebook, labels and evidence; measure Opus self-agreement and Opus-against-maintainer κ on dev; state it as a limitation (ADR 0015). |
 | Upstream tests are flaky. | The 3-of-3 oracle filter, and flaky tests are dropped from the grader. |
 | Time runs out. | Cut in this order: RL stretch, RQ4 down to one model or dropped, H4, tasks from 12 to 8. The hand labels and the Baseline/hardening/oracle comparison are never cut. |
 
@@ -257,7 +257,7 @@ docs/
   task-log.md      notes on converting each instance (M2)
 src/grader_proof/  library code, one module per job
 tests/             unit tests for parsing, metrics and grader logic
-labels/            hand labels, JSONL (ground truth, committed)
+labels/            dev labels (maintainer) and test labels (Opus), JSONL (ground truth, committed)
 tasks/             generated Harbor tasks, one folder per instance and condition (committed)
 results/           small CSV and JSON outputs of experiments (committed)
 figures/           SVG and PNG built from results/ by plotting.py
