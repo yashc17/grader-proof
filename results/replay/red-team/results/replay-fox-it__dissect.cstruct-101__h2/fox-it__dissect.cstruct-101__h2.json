@@ -1,0 +1,26 @@
+[
+  {
+    "task": "fox-it__dissect.cstruct-101",
+    "trial": "fox-it__dissect.cstruct-101__bas__QeRvRkf",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "fox-it__dissect.cstruct-101",
+    "trial": "fox-it__dissect.cstruct-101__bas__X726eGr",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "fox-it__dissect.cstruct-101",
+    "trial": "fox-it__dissect.cstruct-101__bas__oLFyqTg",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": [
+      "tests/test_utils.py::test_dumpstruct_enum[True]",
+      "tests/test_utils.py::test_dumpstruct_enum[False]"
+    ]
+  }
+]

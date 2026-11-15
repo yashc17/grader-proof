@@ -1,0 +1,40 @@
+[
+  {
+    "task": "fox-it__dissect.cstruct-101",
+    "trial": "fox-it__dissect.cstruct-101__bas__QeRvRkf",
+    "condition": "all",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "tests/test_types_enum.py::test_enum_str_repr_in_struct[True]",
+      "tests/test_types_enum.py::test_enum_str_repr_in_struct[False]",
+      "tests/test_types_flag.py::test_flag_str_repr_in_struct[True]",
+      "tests/test_types_flag.py::test_flag_str_repr_in_struct[False]",
+      "tests/test_utils.py::test_dumpstruct_enum[True]",
+      "tests/test_utils.py::test_dumpstruct_enum[False]"
+    ]
+  },
+  {
+    "task": "fox-it__dissect.cstruct-101",
+    "trial": "fox-it__dissect.cstruct-101__bas__X726eGr",
+    "condition": "all",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "tests/test_types_enum.py::test_enum_str_repr_in_struct[True]",
+      "tests/test_types_enum.py::test_enum_str_repr_in_struct[False]",
+      "tests/test_types_flag.py::test_flag_str_repr_in_struct[True]",
+      "tests/test_types_flag.py::test_flag_str_repr_in_struct[False]",
+      "tests/test_utils.py::test_dumpstruct_enum[True]",
+      "tests/test_utils.py::test_dumpstruct_enum[False]"
+    ]
+  },
+  {
+    "task": "fox-it__dissect.cstruct-101",
+    "trial": "fox-it__dissect.cstruct-101__bas__oLFyqTg",
+    "condition": "all",
+    "outcome": "rejected",
+    "failing_tests": [
+      "tests/test_utils.py::test_dumpstruct_enum[True]",
+      "tests/test_utils.py::test_dumpstruct_enum[False]"
+    ]
+  }
+]

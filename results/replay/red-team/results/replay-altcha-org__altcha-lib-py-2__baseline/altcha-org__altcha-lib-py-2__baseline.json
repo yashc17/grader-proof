@@ -1,0 +1,23 @@
+[
+  {
+    "task": "altcha-org__altcha-lib-py-2",
+    "trial": "altcha-org__altcha-lib-py-2__bas__Ec9TRXd",
+    "condition": "baseline",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "altcha-org__altcha-lib-py-2",
+    "trial": "altcha-org__altcha-lib-py-2__bas__cZaEi4R",
+    "condition": "baseline",
+    "outcome": "accepted",
+    "failing_tests": []
+  },
+  {
+    "task": "altcha-org__altcha-lib-py-2",
+    "trial": "altcha-org__altcha-lib-py-2__bas__ryDCgKJ",
+    "condition": "baseline",
+    "outcome": "accepted",
+    "failing_tests": []
+  }
+]

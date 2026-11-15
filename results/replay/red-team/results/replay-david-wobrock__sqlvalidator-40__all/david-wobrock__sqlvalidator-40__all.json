@@ -1,0 +1,38 @@
+[
+  {
+    "task": "david-wobrock__sqlvalidator-40",
+    "trial": "david-wobrock__sqlvalidator-40__bdkNoGi",
+    "condition": "all",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "tests/integration/test_formatting.py::test_select_star_replace",
+      "tests/integration/test_formatting.py::test_select_star_multiple_replace",
+      "tests/integration/test_formatting.py::test_select_star_replace_nospace",
+      "tests/integration/test_validation.py::test_select_star_unknown_column"
+    ]
+  },
+  {
+    "task": "david-wobrock__sqlvalidator-40",
+    "trial": "david-wobrock__sqlvalidator-40__iPuyznn",
+    "condition": "all",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "tests/integration/test_formatting.py::test_select_star_replace",
+      "tests/integration/test_formatting.py::test_select_star_multiple_replace",
+      "tests/integration/test_formatting.py::test_select_star_replace_nospace",
+      "tests/integration/test_validation.py::test_select_star_unknown_column"
+    ]
+  },
+  {
+    "task": "david-wobrock__sqlvalidator-40",
+    "trial": "david-wobrock__sqlvalidator-40__pebCjir",
+    "condition": "all",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "tests/integration/test_formatting.py::test_select_star_replace",
+      "tests/integration/test_formatting.py::test_select_star_multiple_replace",
+      "tests/integration/test_formatting.py::test_select_star_replace_nospace",
+      "tests/integration/test_validation.py::test_select_star_unknown_column"
+    ]
+  }
+]
