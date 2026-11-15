@@ -1,4 +1,4 @@
-.PHONY: triage-eval triage-prevalence candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot
+.PHONY: triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures
 
 install:
 	uv sync
@@ -47,6 +47,11 @@ oracle-check:
 # Draws labels/sample.jsonl (100 unresolved trajectories, 30 dev and 70 test). Keeps an existing file.
 sample:
 	uv run python -m grader_proof.label_cli sample
+
+# Writes labels/fact_sheets/test/: one page of facts per test item and index.html (issue #9).
+# The pages hold no label. Needs the data that data-facts downloads.
+fact-sheets:
+	uv run python -m grader_proof.fact_sheet
 
 # Labels the next unlabeled trajectory. Usage: make label SPLIT=dev (or test, or all)
 label:
@@ -107,3 +112,37 @@ red-team-trial:
 red-team-pilot:
 	uv run python -m grader_proof.red_team $(RED_TEAM_JOB)/*/ \
 		--notes results/red_team_pilot_notes.json --out results/red_team_pilot.json
+
+# Replay (issue #32). A replay set is results/replay/$(REPLAY_SET): the saved Baseline red-team
+# patches, regraded under every condition by the replay workflow on Actions.
+# `make replay-export JOBS="runs/<job> ..." [SUMMARY=results/red_team.json]` copies each Baseline
+# trial's patch.diff into the set; with SUMMARY, exactly the Baseline trials that file lists.
+# Commit the set, push, then run: gh workflow run replay.yml --ref <branch> -f set=$(REPLAY_SET)
+# `make replay-results` downloads the latest replay run (or RUN=<run id>) into the set.
+REPLAY_SET ?= red-team
+replay-export:
+	@test -n "$(JOBS)" || { echo "usage: make replay-export JOBS=<job dirs> [REPLAY_SET=<set>]"; exit 2; }
+	uv run python -m grader_proof.replay export $(JOBS) --set results/replay/$(REPLAY_SET) \
+		$(if $(SUMMARY),--summary $(SUMMARY))
+
+replay-results:
+	@test -n "$(REPLAY_SET)" || { echo "REPLAY_SET is empty"; exit 2; }
+	rm -rf results/replay/$(REPLAY_SET)/results
+	gh run download $${RUN:-$$(gh run list --workflow replay.yml --limit 1 --json databaseId --jq '.[0].databaseId')} --pattern 'replay-*' --dir results/replay/$(REPLAY_SET)/results
+
+# RQ3 table (results/rq3.csv and .md): exploit rates, effects with 95% task-clustered intervals,
+# exploit categories and oracle acceptance, for all tasks and per task. Reads the replay set, the
+# adaptive red-team summary (ADAPTIVE=, empty to leave it out), labels/exploit_verdicts.jsonl
+# and results/oracle-check. Fails if an accepted patch has no verdict yet.
+ADAPTIVE ?= results/red_team.json
+RQ3_OUT ?= results/rq3
+rq3:
+	uv run python -m grader_proof.rq3 --replay results/replay/$(REPLAY_SET)/results \
+		$(if $(ADAPTIVE),--adaptive $(ADAPTIVE)) --out $(RQ3_OUT)
+
+# Figures for the write-up (issue #34), as SVG and PNG in figures/, from the table `make rq3` writes.
+# Pilot check, never committed: make figures RQ3_TABLE=results/replay/pilot/rq3.csv FIGURES=figures/pilot LABEL=pilot
+RQ3_TABLE ?= results/rq3.csv
+FIGURES ?= figures
+figures:
+	uv run python -m grader_proof.plotting --table $(RQ3_TABLE) --out $(FIGURES) $(if $(LABEL),--label $(LABEL))

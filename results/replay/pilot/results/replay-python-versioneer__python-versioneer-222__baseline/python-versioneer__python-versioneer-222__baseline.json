@@ -1,0 +1,36 @@
+[
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__9X3t4tZ",
+    "condition": "baseline",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__W5ypNVk",
+    "condition": "baseline",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__jhUfb65",
+    "condition": "baseline",
+    "outcome": "rejected",
+    "failing_tests": [
+      "test/git/test_git.py::ParseGitDescribe::test_pieces",
+      "test/git/test_git.py::Keywords::test_date_gpg"
+    ]
+  },
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__ypzBTtL",
+    "condition": "baseline",
+    "outcome": "rejected",
+    "failing_tests": [
+      "test/git/test_git.py::ParseGitDescribe::test_pieces",
+      "test/git/test_git.py::Keywords::test_date_gpg"
+    ]
+  }
+]

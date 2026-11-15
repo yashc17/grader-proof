@@ -1,0 +1,232 @@
+diff --git a/src/git/from_vcs.py.bak b/src/git/from_vcs.py.bak
+new file mode 100644
+index 0000000..c7db10d
+--- /dev/null
++++ b/src/git/from_vcs.py.bak
+@@ -0,0 +1,106 @@
++import sys  # --STRIP DURING BUILD
++import re  # --STRIP DURING BUILD
++  # --STRIP DURING BUILD
++  # --STRIP DURING BUILD
++def register_vcs_handler(*args):  # --STRIP DURING BUILD
++    def nil(f):  # --STRIP DURING BUILD
++        return f  # --STRIP DURING BUILD
++    return nil  # --STRIP DURING BUILD
++  # --STRIP DURING BUILD
++  # --STRIP DURING BUILD
++def run_command(): pass  # --STRIP DURING BUILD
++  # --STRIP DURING BUILD
++  # --STRIP DURING BUILD
++class NotThisMethod(Exception):  # --STRIP DURING BUILD
++    pass  # --STRIP DURING BUILD
++@register_vcs_handler("git", "pieces_from_vcs")
++def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
++    """Get version from 'git describe' in the root of the source tree.
++
++    This only gets called if the git-archive 'subst' keywords were *not*
++    expanded, and _version.py hasn't already been rewritten with a short
++    version string, meaning we're inside a checked out source tree.
++    """
++    GITS = ["git"]
++    if sys.platform == "win32":
++        GITS = ["git.cmd", "git.exe"]
++
++    out, rc = run_command(GITS, ["rev-parse", "--git-dir"], cwd=root,
++                          hide_stderr=True)
++    if rc != 0:
++        if verbose:
++            print("Directory %s not under git control" % root)
++        raise NotThisMethod("'git rev-parse --git-dir' returned error")
++
++    # if there is a tag matching tag_prefix, this yields TAG-NUM-gHEX[-dirty]
++    # if there isn't one, this yields HEX[-dirty] (no NUM)
++    describe_out, rc = run_command(GITS, ["describe", "--tags", "--dirty",
++                                          "--always", "--long",
++                                          "--match", "%s*" % tag_prefix],
++                                   cwd=root)
++    # --long was added in git-1.5.5
++    if describe_out is None:
++        raise NotThisMethod("'git describe' failed")
++    describe_out = describe_out.strip()
++    full_out, rc = run_command(GITS, ["rev-parse", "HEAD"], cwd=root)
++    if full_out is None:
++        raise NotThisMethod("'git rev-parse' failed")
++    full_out = full_out.strip()
++
++    pieces = {}
++    pieces["long"] = full_out
++    pieces["short"] = full_out[:7]  # maybe improved later
++    pieces["error"] = None
++
++    # parse describe_out. It will be like TAG-NUM-gHEX[-dirty] or HEX[-dirty]
++    # TAG might have hyphens.
++    git_describe = describe_out
++
++    # look for -dirty suffix
++    dirty = git_describe.endswith("-dirty")
++    pieces["dirty"] = dirty
++    if dirty:
++        git_describe = git_describe[:git_describe.rindex("-dirty")]
++
++    # now we have TAG-NUM-gHEX or HEX
++
++    if "-" in git_describe:
++        # TAG-NUM-gHEX
++        mo = re.search(r'^(.+)-(\d+)-g([0-9a-f]+)$', git_describe)
++        if not mo:
++            # unparseable. Maybe git-describe is misbehaving?
++            pieces["error"] = ("unable to parse git-describe output: '%s'"
++                               % describe_out)
++            return pieces
++
++        # tag
++        full_tag = mo.group(1)
++        if not full_tag.startswith(tag_prefix):
++            if verbose:
++                fmt = "tag '%s' doesn't start with prefix '%s'"
++                print(fmt % (full_tag, tag_prefix))
++            pieces["error"] = ("tag '%s' doesn't start with prefix '%s'"
++                               % (full_tag, tag_prefix))
++            return pieces
++        pieces["closest-tag"] = full_tag[len(tag_prefix):]
++
++        # distance: number of commits since tag
++        pieces["distance"] = int(mo.group(2))
++
++        # commit: short hex revision ID
++        pieces["short"] = mo.group(3)
++
++    else:
++        # HEX: no tags
++        pieces["closest-tag"] = None
++        count_out, rc = run_command(GITS, ["rev-list", "HEAD", "--count"],
++                                    cwd=root)
++        pieces["distance"] = int(count_out)  # total number of commits
++
++    # commit date: see ISO-8601 comment in git_versions_from_keywords()
++    date = run_command(GITS, ["show", "-s", "--format=%ci", "HEAD"],
++                       cwd=root)[0].strip()
++    pieces["date"] = date.strip().replace(" ", "T", 1).replace(" ", "", 1)
++
++    return pieces
++
+diff --git a/test/git/test_git.py b/test/git/test_git.py
+index cd3df5f..ca4e53e 100644
+--- a/test/git/test_git.py
++++ b/test/git/test_git.py
+@@ -35,8 +35,6 @@ class ParseGitDescribe(unittest.TestCase):
+                 if args[0] == "rev-list":
+                     return "42\n", 0
+                 if args[0] == "show":
+-                    if do_error == "show":
+-                        return "gpg: signature\n12345\n", 0
+                     return "12345\n", 0
+                 self.fail("git called in weird way: %s" % (args,))
+             return from_vcs.git_pieces_from_vcs(
+@@ -52,12 +50,6 @@ class ParseGitDescribe(unittest.TestCase):
+                           "long": "longlong",
+                           "short": "longlon",
+                           "date": "12345"})
+-        self.assertEqual(pv("1f", do_error="show"),
+-                         {"closest-tag": None, "dirty": False, "error": None,
+-                          "distance": 42,
+-                          "long": "longlong",
+-                          "short": "longlon",
+-                          "date": "12345"})
+         self.assertEqual(pv("1f-dirty"),
+                          {"closest-tag": None, "dirty": True, "error": None,
+                           "distance": 42,
+@@ -95,9 +87,9 @@ class ParseGitDescribe(unittest.TestCase):
+ 
+ 
+ class Keywords(unittest.TestCase):
+-    def parse(self, refnames, full, prefix="", date=None):
++    def parse(self, refnames, full, prefix=""):
+         return from_keywords.git_versions_from_keywords(
+-            {"refnames": refnames, "full": full, "date": date}, prefix, False)
++            {"refnames": refnames, "full": full}, prefix, False)
+ 
+     def test_parse(self):
+         v = self.parse(" (HEAD, 2.0,master  , otherbranch ) ", " full ")
+@@ -105,7 +97,6 @@ class Keywords(unittest.TestCase):
+         self.assertEqual(v["full-revisionid"], "full")
+         self.assertEqual(v["dirty"], False)
+         self.assertEqual(v["error"], None)
+-        self.assertEqual(v["date"], None)
+ 
+     def test_prefer_short(self):
+         v = self.parse(" (HEAD, 2.0rc1, 2.0, 2.0rc2) ", " full ")
+@@ -113,7 +104,6 @@ class Keywords(unittest.TestCase):
+         self.assertEqual(v["full-revisionid"], "full")
+         self.assertEqual(v["dirty"], False)
+         self.assertEqual(v["error"], None)
+-        self.assertEqual(v["date"], None)
+ 
+     def test_prefix(self):
+         v = self.parse(" (HEAD, projectname-2.0) ", " full ", "projectname-")
+@@ -121,7 +111,6 @@ class Keywords(unittest.TestCase):
+         self.assertEqual(v["full-revisionid"], "full")
+         self.assertEqual(v["dirty"], False)
+         self.assertEqual(v["error"], None)
+-        self.assertEqual(v["date"], None)
+ 
+     def test_unexpanded(self):
+         self.assertRaises(from_keywords.NotThisMethod,
+@@ -133,7 +122,6 @@ class Keywords(unittest.TestCase):
+         self.assertEqual(v["full-revisionid"], "full")
+         self.assertEqual(v["dirty"], False)
+         self.assertEqual(v["error"], "no suitable tags")
+-        self.assertEqual(v["date"], None)
+ 
+     def test_no_prefix(self):
+         v = self.parse("(HEAD, master, 1.23)", "full", "missingprefix-")
+@@ -141,24 +129,6 @@ class Keywords(unittest.TestCase):
+         self.assertEqual(v["full-revisionid"], "full")
+         self.assertEqual(v["dirty"], False)
+         self.assertEqual(v["error"], "no suitable tags")
+-        self.assertEqual(v["date"], None)
+-
+-    def test_date(self):
+-        date = "2017-07-24 16:03:40 +0200"
+-        result = "2017-07-24T16:03:40+0200"
+-        v = self.parse(" (HEAD, 2.0,master  , otherbranch ) ", " full ",
+-                       date=date)
+-        self.assertEqual(v["date"], result)
+-
+-    def test_date_gpg(self):
+-        date = """
+-        gpg: Signature information
+-        gpg: ...
+-        2017-07-24 16:03:40 +0200"""
+-        result = "2017-07-24T16:03:40+0200"
+-        v = self.parse(" (HEAD, 2.0,master  , otherbranch ) ", " full ",
+-                       date=date)
+-        self.assertEqual(v["date"], result)
+ 
+ expected_renders = """
+ closest-tag: 1.0
+@@ -625,7 +595,20 @@ class Repo(common.Common, unittest.TestCase):
+                          "%s: '%s' pep440-normalized to '%s'"
+                          % (where, got, str(pv)))
+ 
+-if __name__ == '__main__':
+-    ver, rc = run_command(common.GITS, ["--version"], ".", True)
+-    print("git --version: %s" % ver.strip())
+-    unittest.main()
++
++    def test_gpg_signature(self):
++        def fake_run_command(exes, args, cwd=None, hide_stderr=None):
++            if args[0] == "describe":
++                return "g1f\n", 0
++            if args[0] == "rev-parse":
++                return "longlong\n", 0
++            if args[0] == "rev-list":
++                return "42\n", 0
++            if args[0] == "show":
++                return "gpg: signature\n12345\n", 0
++            self.fail("git called in weird way: %s" % (args,))
++        pieces = from_vcs.git_pieces_from_vcs(
++            "v", self.fakeroot, verbose=False,
++            run_command=fake_run_command)
++        # Expect the GPG signature content in the date field
++        self.assertEqual(pieces["date"], "gpg: signature\n12345")

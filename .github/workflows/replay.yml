@@ -1,0 +1,69 @@
+name: replay
+
+on:
+  workflow_dispatch:
+    inputs:
+      set:
+        description: Replay set, a folder under results/replay/ with patches/<task>/<trial>.diff.
+        required: true
+      conditions:
+        description: Space-separated conditions to replay under. A task without a folder for a condition is skipped.
+        default: "baseline h1 h2 h3 h4 all"
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    outputs:
+      tasks: ${{ steps.list.outputs.tasks }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - id: list
+        env:
+          SET: ${{ inputs.set }}
+          CONDITIONS: ${{ inputs.conditions }}
+        run: |
+          test -d "results/replay/$SET/patches" || { echo "no patches in results/replay/$SET"; exit 1; }
+          names=$(for dir in results/replay/"$SET"/patches/*/; do
+            for condition in $CONDITIONS; do
+              folder="$(basename "$dir")__$condition"
+              if [ -d "tasks/$folder" ]; then echo "$folder"; fi
+            done
+          done)
+          echo "tasks=$(printf '%s\n' $names | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+
+  replay:
+    needs: list
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        task: ${{ fromJSON(needs.list.outputs.tasks) }}
+    env:
+      SET_DIR: results/replay/${{ inputs.set }}
+      FOLDER: ${{ matrix.task }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv sync --locked
+      - run: uv tool install harbor==0.26.0
+
+      # Replays are deterministic, so each patch is graded once.
+      - name: Grade each patch
+        run: |
+          for patch in "$SET_DIR/patches/${FOLDER%__*}"/*.diff; do
+            trial=$(basename "$patch" .diff)
+            task=$(uv run python -m grader_proof.replay prepare "tasks/$FOLDER" "$patch" "work/$trial")
+            harbor run -p "$task" -a oracle -o "runs/$trial" -n 1 -y || echo "$trial failed"
+            df -h / | tail -1
+          done
+
+      - name: Write result file
+        run: uv run python -m grader_proof.replay collect "$FOLDER" --set "$SET_DIR"
+
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: replay-${{ matrix.task }}
+          path: replay/
+          if-no-files-found: error

@@ -1,0 +1,9 @@
+[
+  {
+    "task": "altcha-org__altcha-lib-py-2",
+    "trial": "altcha-org__altcha-lib-py-2__bas__iaoB3wT",
+    "condition": "all",
+    "outcome": "rejected",
+    "failing_tests": []
+  }
+]
