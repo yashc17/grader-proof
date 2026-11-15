@@ -120,7 +120,7 @@ def test_acceptance_table_has_one_row_per_task_and_one_column_per_condition() ->
             result(None, None, None, task="b", condition="h1"),
         ]
     )
-    assert table == "task,baseline,h1,h2,h3,all\na,3/3,,2/3,,\nb,,0/3,,,3/3\n"
+    assert table == "task,baseline,h1,h2,h3,h4,all\na,3/3,,2/3,,,\nb,,0/3,,,,3/3\n"
 
 
 def test_missing_tasks_lists_task_folders_without_a_result() -> None:

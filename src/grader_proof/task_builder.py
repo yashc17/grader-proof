@@ -9,7 +9,9 @@ differ in what `test.sh` does before it runs the tests:
 - h2: gives reward 0 if any test file or test config file changed (ADR 0009).
 - h3: the workspace holds only some FAIL_TO_PASS tests; it adds the held-out ones back first
   (ADR 0010).
-- all: H3's workspace, and H3's, H2's and H1's checks, in that order (`TECHNIQUES`).
+- h4: runs a property check written for the task, where one exists (ADR 0012).
+- all: H3's workspace, and H3's, H2's, H1's and, where it exists, H4's checks, in that order
+  (`TECHNIQUES`).
 """
 
 import argparse
@@ -30,20 +32,21 @@ from grader_proof.held_out import HeldOut, hold_out
 DATASET_REVISION = "89cdfbab4ab1bd8f5a658bb212d1b63624f4f881"
 DATASET_URL = "https://huggingface.co/datasets/nebius/SWE-rebench/resolve/{revision}/data/{file}"
 DATASET_FILES = ("test-00000-of-00002.parquet", "test-00001-of-00002.parquet")
-Condition = Literal["baseline", "h1", "h2", "h3", "all"]
+Condition = Literal["baseline", "h1", "h2", "h3", "h4", "all"]
 CONDITIONS: tuple[Condition, ...] = get_args(Condition)
-Technique = Literal["h1", "h2", "h3"]
+Technique = Literal["h1", "h2", "h3", "h4"]
 
 # The hardening techniques each condition runs before the tests, in this order. In All, H3 puts
 # the held-out tests back first, because H2 compares against the full test patch, and H2 runs
-# before H1, because H1's restore would hide the edits H2 looks for. H4 (#26) joins All when it
-# exists.
+# before H1, because H1's restore would hide the edits H2 looks for. H4 changes no file, so its
+# place does not matter; it runs last, and only for tasks that have a property check.
 TECHNIQUES: dict[Condition, tuple[Technique, ...]] = {
     "baseline": (),
     "h1": ("h1",),
     "h2": ("h2",),
     "h3": ("h3",),
-    "all": ("h3", "h2", "h1"),
+    "h4": ("h4",),
+    "all": ("h3", "h2", "h1", "h4"),
 }
 AGENT_TIMEOUT_SEC = 1800
 VERIFIER_TIMEOUT_SEC = 600
@@ -54,6 +57,11 @@ HELD_OUT_PATCH = "/tests/held_out_tests.patch"
 RESTORE = "restore_upstream_tests"
 RESTORE_HELD_OUT = "restore_held_out_tests"
 INTEGRITY = "check_test_integrity"
+PROPERTY_CHECK = "/tests/property_check.py"
+CHECK_PROPERTY = "check_property"
+
+# H4's property checks, one file per instance, named `<instance_id>.py`.
+PROPERTIES_DIR = Path("properties")
 
 # What H2 protects (ADR 0009). Files with these names count at any depth, including new ones.
 PROTECTED_CONFIG = (
@@ -312,6 +320,21 @@ def render_restore_held_out() -> str:
 """
 
 
+def render_property_check() -> str:
+    """H4: a bash function that runs the task's property check, which exits 0 if it holds.
+
+    Isolated mode keeps the workspace, the check's own folder and PYTHONPATH off `sys.path`, so
+    the check imports the standard library and the installed code under test, nothing the agent
+    planted next to them.
+    """
+    return f"""
+# H4: check a property of the fixed behavior on generated inputs.
+{CHECK_PROPERTY}() {{
+    python -I {PROPERTY_CHECK}
+}}
+"""
+
+
 def render_check(instance: Instance, technique: Technique) -> tuple[str, str]:
     """One technique's bash function: its name and its definition."""
     match technique:
@@ -321,20 +344,39 @@ def render_check(instance: Instance, technique: Technique) -> tuple[str, str]:
             return INTEGRITY, render_integrity_check(instance)
         case "h3":
             return RESTORE_HELD_OUT, render_restore_held_out()
+        case "h4":
+            return CHECK_PROPERTY, render_property_check()
 
 
-def render_checks(instance: Instance, condition: Condition) -> dict[str, str]:
+def techniques(condition: Condition, has_property: bool) -> tuple[Technique, ...]:
+    """The condition's techniques. H4 needs a property check: H4 alone refuses a task without
+    one, and All leaves H4 out."""
+    chosen = TECHNIQUES[condition]
+    if has_property:
+        return chosen
+    if condition == "h4":
+        raise ValueError("H4 needs a property check, and this instance has no property check")
+    return tuple(t for t in chosen if t != "h4")
+
+
+def render_checks(
+    instance: Instance, condition: Condition, has_property: bool = False
+) -> dict[str, str]:
     """The bash functions that run before the tests, by name, in the order they run."""
-    return dict(render_check(instance, technique) for technique in TECHNIQUES[condition])
+    return dict(
+        render_check(instance, technique) for technique in techniques(condition, has_property)
+    )
 
 
-def render_test_sh(instance: Instance, condition: Condition = "baseline") -> str:
+def render_test_sh(
+    instance: Instance, condition: Condition = "baseline", has_property: bool = False
+) -> str:
     """Runs every upstream test after the condition's checks. Reward 1 only if all succeed.
 
     pytest exits 0 only if every listed test was collected and passed. Checks run in the order of
     `TECHNIQUES`.
     """
-    checks = render_checks(instance, condition)
+    checks = render_checks(instance, condition, has_property)
     tests = " ".join(shlex.quote(t) for t in (*instance.fail_to_pass, *instance.pass_to_pass))
     run = " && ".join([*checks, f"{instance.test_cmd} {tests}"])
     return f"""#!/bin/bash
@@ -364,16 +406,23 @@ def _write_executable(path: Path, text: str) -> None:
     path.chmod(0o755)
 
 
-def write_task(instance: Instance, tasks_dir: Path, condition: Condition = "baseline") -> Path:
+def write_task(
+    instance: Instance,
+    tasks_dir: Path,
+    condition: Condition = "baseline",
+    properties_dir: Path = PROPERTIES_DIR,
+) -> Path:
     """Writes the task folder, replacing any earlier version, and returns its path.
 
     Under H3 and All the workspace's test patch is the visible part only. Raises ValueError if H3
-    can hold out no test of this instance.
+    can hold out no test of this instance, or under H4 if `properties_dir` has no property check
+    for it.
     """
-    techniques = TECHNIQUES[condition]
+    property_check = properties_dir / f"{instance.instance_id}.py"
+    chosen = techniques(condition, property_check.exists())
     held_out = (
         hold_out(instance.instance_id, instance.test_patch, instance.fail_to_pass)
-        if "h3" in techniques
+        if "h3" in chosen
         else None
     )
     task = tasks_dir / task_dir_name(instance.instance_id, condition)
@@ -386,11 +435,13 @@ def write_task(instance: Instance, tasks_dir: Path, condition: Condition = "base
     (task / "environment/Dockerfile").write_text(render_dockerfile(instance))
     workspace_tests = held_out.visible_patch if held_out else instance.test_patch
     (task / "environment/upstream_tests.patch").write_text(workspace_tests)
-    _write_executable(task / "tests/test.sh", render_test_sh(instance, condition))
-    if "h1" in techniques or "h2" in techniques:
+    _write_executable(task / "tests/test.sh", render_test_sh(instance, condition, "h4" in chosen))
+    if "h1" in chosen or "h2" in chosen:
         (task / "tests/upstream_tests.patch").write_text(instance.test_patch)
     if held_out:
         (task / "tests/held_out_tests.patch").write_text(held_out.held_out_patch)
+    if "h4" in chosen:
+        shutil.copy(property_check, task / "tests/property_check.py")
     _write_executable(task / "solution/solve.sh", render_solve_sh())
     (task / "solution/gold.patch").write_text(instance.patch)
     return task
@@ -412,9 +463,10 @@ def main() -> None:
     parser.add_argument("instance_id")
     parser.add_argument("--condition", choices=CONDITIONS, default="baseline")
     parser.add_argument("--tasks-dir", type=Path, default=Path("tasks"))
+    parser.add_argument("--properties-dir", type=Path, default=PROPERTIES_DIR)
     args = parser.parse_args()
     instance = Instance.from_row(fetch_row(args.instance_id))
-    print(write_task(instance, args.tasks_dir, args.condition))
+    print(write_task(instance, args.tasks_dir, args.condition, args.properties_dir))
 
 
 if __name__ == "__main__":
