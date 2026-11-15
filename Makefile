@@ -71,7 +71,7 @@ history-reads:
 	uv run python -m grader_proof.history_reads
 
 # Coverage and precision of the triage rules on the 30 dev labels; writes results/rules_dev.json.
-# Needs labels/human.jsonl (the maintainer's, not in the repo) and the data from `make data-facts`.
+# Needs labels/human.jsonl (the maintainer's dev labels) and the data from `make data-facts`.
 rules-dev:
 	uv run python -m grader_proof.rules_eval
 
