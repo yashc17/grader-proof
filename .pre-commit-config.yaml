@@ -7,9 +7,9 @@ repos:
       - id: check-toml
       - id: check-yaml
       - id: end-of-file-fixer
-        exclude: ^(tasks/|tests/toy/.*\.patch$)
+        exclude: ^(tasks/|results/replay/.*\.diff$|tests/toy/.*\.patch$)
       - id: trailing-whitespace
-        exclude: ^(tasks/|tests/toy/.*\.patch$)
+        exclude: ^(tasks/|results/replay/.*\.diff$|tests/toy/.*\.patch$)
 
   # Local hooks run the versions pinned in uv.lock, so pre-commit and CI cannot disagree.
   - repo: local

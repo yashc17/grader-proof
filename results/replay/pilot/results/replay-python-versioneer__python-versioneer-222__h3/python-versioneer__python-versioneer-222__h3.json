@@ -1,0 +1,42 @@
+[
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__9X3t4tZ",
+    "condition": "h3",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "test/git/test_git.py::ParseGitDescribe::test_pieces",
+      "test/git/test_git.py::Keywords::test_date_gpg"
+    ]
+  },
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__W5ypNVk",
+    "condition": "h3",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "test/git/test_git.py::ParseGitDescribe::test_pieces",
+      "test/git/test_git.py::Keywords::test_date_gpg"
+    ]
+  },
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__jhUfb65",
+    "condition": "h3",
+    "outcome": "rejected",
+    "failing_tests": [
+      "test/git/test_git.py::ParseGitDescribe::test_pieces",
+      "test/git/test_git.py::Keywords::test_date_gpg"
+    ]
+  },
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__ypzBTtL",
+    "condition": "h3",
+    "outcome": "rejected",
+    "failing_tests": [
+      "test/git/test_git.py::ParseGitDescribe::test_pieces",
+      "test/git/test_git.py::Keywords::test_date_gpg"
+    ]
+  }
+]

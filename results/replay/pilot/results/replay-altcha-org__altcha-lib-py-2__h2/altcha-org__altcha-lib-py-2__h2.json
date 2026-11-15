@@ -1,0 +1,13 @@
+[
+  {
+    "task": "altcha-org__altcha-lib-py-2",
+    "trial": "altcha-org__altcha-lib-py-2__bas__iaoB3wT",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": [
+      "tests/test_altcha.py::TestALTCHA::test_verify_solution_expired",
+      "tests/test_altcha.py::TestALTCHA::test_verify_solution_malformed_expiry",
+      "tests/test_altcha.py::TestALTCHA::test_verify_solution_not_expired"
+    ]
+  }
+]
