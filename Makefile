@@ -73,10 +73,13 @@ judge-dev:
 	uv run python -m grader_proof.judge_eval
 
 # Scores the frozen triager on the 70 test labels; writes results/triage_test.json (issue #14).
-# Refuses to run until every test item has a label. Needs labels/human.jsonl, the data from
+# Refuses to run until every test item has a label. Needs the label file, the data from
 # `make data-facts` and, for calls not in cache/llm/, TINKER_API_KEY. Asks before calling the model.
+# Usage: make triage-eval [LABELS=labels/opus_test.jsonl] [LABELER="Claude Opus 5.5 labeler session"]
+LABELS ?= labels/opus_test.jsonl
+LABELER ?= Claude Opus 5.5 labeler session
 triage-eval:
-	uv run python -m grader_proof.triage_eval
+	uv run python -m grader_proof.triage_eval --labels "$(LABELS)" --labeler "$(LABELER)"
 
 # Class shares from the frozen triager on 1,000 trajectories outside the labeling sample; writes
 # results/triage_prevalence.json and .md (issue #15). Same needs and cost prompt as triage-eval.

@@ -116,19 +116,25 @@ def test_evaluate_scores_the_triager_and_both_baselines_and_lists_disagreements(
     ]
     rule_verdicts = [rule(EB), None, None, None, rule(MF), None]
     judge_results = [judged(MF), judged(MF), judged(MF, "wrong"), judged(TU)]
-    report = evaluate(items, labels, rule_verdicts, judge_results)
+    report = evaluate(
+        items, labels, rule_verdicts, judge_results, labeler="Opus", label_file="opus.jsonl"
+    )
 
     assert report.items == 6
+    assert (report.labeler, report.label_file) == ("Opus", "opus.jsonl")
     assert report.triager.scored == 5  # t5 is unclear
     assert report.triager.human_unclear == 1
     assert report.majority_class == MF
     assert report.majority.kappa == 0
     assert report.rules_alone.confusion["model_failure -> abstain"] == 2
-    assert report.rules_fired == 2
+    # Both rules that fired match the label: coverage 2 of 6, precision 2 of 2.
+    assert (report.rules.coverage.successes, report.rules.coverage.n) == (2, 6)
+    assert report.rules.precision is not None
+    assert (report.rules.precision.successes, report.rules.precision.n) == (2, 2)
     # Only scored items count: t5 (human unclear) is not listed.
     (disagreement,) = report.disagreements
     assert disagreement.trajectory_id == "t3"
-    assert (disagreement.human, disagreement.predicted) == (TU, MF)
+    assert (disagreement.labeled, disagreement.predicted) == (TU, MF)
     assert disagreement.note == "note t3"
     assert disagreement.evidence == "wrong"
     assert report.self_agreement is None

@@ -72,8 +72,8 @@ def load_labeled_items(
     unparsed. Raises ValueError if an item of the split has no label yet."""
     if not labels_path.exists():
         raise FileNotFoundError(
-            f"{labels_path} not found. It holds the maintainer's hand labels and is not in the "
-            "repository; copy it from the maintainer's checkout to run this target."
+            f"{labels_path} not found. It holds hand labels, which are not in the repository; "
+            "copy it from the labeler's checkout to run this target."
         )
     chosen = {item.trajectory_id: item for item in read_sample(sample_path) if item.split == split}
     labels: dict[str, Label] = {}

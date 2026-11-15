@@ -1,15 +1,19 @@
 """Scores the frozen triager on the 70 test labels and writes results/triage_test.json (#14).
 
-Run with `make triage-eval`, once, after the maintainer has labeled every test item. The triager is
-the rules, then the frozen judge prompt on every item the rules abstain on. The report holds
-Cohen's kappa with its 95% bootstrap interval, the confusion matrix, precision and recall per
-class, two baselines (the rules alone and always the most common class) and every disagreement
-with the triager's evidence. `unclear` on either side is left out of kappa and counted (ADR 0003).
+Run with `make triage-eval`, once, after every test item has a label. The labels come from the
+file `--labels` names, by default the Claude Opus 5.5 labeler session's `labels/opus_test.jsonl`;
+the report's header names the labeler. The triager is the rules, then the frozen judge prompt on
+every item the rules abstain on. The report holds Cohen's kappa with its 95% bootstrap interval,
+the confusion matrix, precision and recall per class, two baselines (the rules alone and always
+the most common class), the rules' coverage and their precision on the items they fire on, and
+every disagreement with the triager's evidence. `unclear` on either side is left out of kappa and
+counted (ADR 0003).
 
 The target refuses to run while any test item lacks a label, so no prediction for a test item
 exists before the labels are final.
 """
 
+import argparse
 import hashlib
 import sys
 from collections import Counter
@@ -28,13 +32,17 @@ from grader_proof.judge import (
     load_prompt,
 )
 from grader_proof.judge_eval import KappaScore, load_tasks, score
-from grader_proof.labeling import FAILURE_CLASSES, LABELS_PATH, SAMPLE_PATH, Candidate, Label
+from grader_proof.labeling import FAILURE_CLASSES, SAMPLE_PATH, Candidate, Label
 from grader_proof.llm import PRICES, CachedClient, ask_on_terminal
+from grader_proof.rules_eval import Report as RulesReport
+from grader_proof.rules_eval import evaluate as evaluate_rules
 from grader_proof.rules_eval import load_labeled_items, load_trajectories
 from grader_proof.tinker_transport import TinkerTransport
 from grader_proof.triage_rules import Verdict, triage
 
 RESULTS_PATH = Path("results/triage_test.json")
+LABELS_PATH = Path("labels/opus_test.jsonl")
+LABELER = "Claude Opus 5.5 labeler session"
 # The rules-alone baseline's class for an item every rule abstains on. It never matches a label.
 ABSTAIN = "abstain"
 SCORED_CLASSES = [c for c in FAILURE_CLASSES if c != "unclear"]
@@ -64,7 +72,7 @@ class ClassScore(Frozen):
 class Disagreement(Frozen):
     trajectory_id: str
     instance_id: str
-    human: str
+    labeled: str
     note: str
     predicted: str
     source: str
@@ -73,13 +81,15 @@ class Disagreement(Frozen):
 
 
 class Report(Frozen):
+    labeler: str
+    label_file: str
     items: int
     labels: dict[str, int]
     frozen_version: str
-    rules_fired: int
     triager: KappaScore
     classes: dict[str, ClassScore]
     rules_alone: KappaScore
+    rules: RulesReport  # coverage, and precision on the items a rule fires on
     majority_class: str
     majority: KappaScore
     self_agreement: KappaScore | None  # from the maintainer's re-labels (#10), once they exist
@@ -191,6 +201,8 @@ def evaluate(
     labels: Sequence[Label],
     rule_verdicts: Sequence[Verdict | None],
     judge_results: Sequence[JudgeResult],
+    labeler: str,
+    label_file: str,
 ) -> Report:
     humans = [label.failure_class for label in labels]
     found = predictions(rule_verdicts, judge_results)
@@ -198,13 +210,15 @@ def evaluate(
     scored = [(h, p) for h, p in pairs if "unclear" not in (h, p)]
     majority = majority_baseline(humans)
     return Report(
+        labeler=labeler,
+        label_file=label_file,
         items=len(items),
         labels=dict(Counter(humans)),
         frozen_version=FROZEN_VERSION,
-        rules_fired=sum(v is not None for v in rule_verdicts),
         triager=score(pairs),
         classes=class_scores(scored),
         rules_alone=score(list(zip(humans, rules_alone(rule_verdicts), strict=True))),
+        rules=evaluate_rules(list(zip(labels, rule_verdicts, strict=True))),
         majority_class=majority[0],
         majority=score(list(zip(humans, majority, strict=True))),
         self_agreement=None,
@@ -214,7 +228,7 @@ def evaluate(
             Disagreement(
                 trajectory_id=item.trajectory_id,
                 instance_id=item.instance_id,
-                human=label.failure_class,
+                labeled=label.failure_class,
                 note=label.note,
                 predicted=prediction.failure_class,
                 source=prediction.source,
@@ -238,8 +252,12 @@ def describe(name: str, result: KappaScore) -> str:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Score the frozen triager on the test labels.")
+    parser.add_argument("--labels", type=Path, default=LABELS_PATH, help="the test label file")
+    parser.add_argument("--labeler", default=LABELER, help="who wrote the labels")
+    args = parser.parse_args()
     try:
-        labeled = load_labeled_items(SAMPLE_PATH, LABELS_PATH, "test")
+        labeled = load_labeled_items(SAMPLE_PATH, args.labels, "test")
     except (FileNotFoundError, ValueError) as error:
         sys.exit(f"{error}\nThe triager runs on the test items only once every one is labeled.")
     items = [item for item, _ in labeled]
@@ -247,14 +265,22 @@ def main() -> None:
     ran = run_triager(CachedClient(TinkerTransport()), items)
     if ran is None:
         sys.exit("Batch declined; nothing written.")
-    report = evaluate(items, labels, *ran)
+    report = evaluate(items, labels, *ran, labeler=args.labeler, label_file=str(args.labels))
     RESULTS_PATH.parent.mkdir(exist_ok=True)
     RESULTS_PATH.write_text(report.model_dump_json(indent=1) + "\n")
+    rules = report.rules
+    precision = rules.precision
+    print(f"labels: {report.label_file}, by {report.labeler}")
     print(describe("triager", report.triager))
     print(describe("rules alone", report.rules_alone))
+    print(
+        f"rules fired on {rules.coverage.successes} of {rules.coverage.n} items "
+        f"({rules.coverage.rate:.0%}); precision on those: "
+        + ("none fired" if precision is None else f"{precision.successes} of {precision.n}")
+    )
     print(describe(f"always {report.majority_class}", report.majority))
     print(
-        f"unclear: human {report.triager.human_unclear}, triager {report.triager.triager_unclear}"
+        f"unclear: labels {report.triager.human_unclear}, triager {report.triager.triager_unclear}"
     )
     print(f"{len(report.disagreements)} disagreements; wrote {RESULTS_PATH}")
 
