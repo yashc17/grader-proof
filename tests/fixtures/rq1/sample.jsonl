@@ -1,0 +1,7 @@
+{"trajectory_id": "fake-1", "instance_id": "org__a-1", "self_check_passed": true, "split": "test"}
+{"trajectory_id": "fake-2", "instance_id": "org__b-2", "self_check_passed": true, "split": "test"}
+{"trajectory_id": "fake-3", "instance_id": "org__c-3", "self_check_passed": true, "split": "test"}
+{"trajectory_id": "fake-4", "instance_id": "org__d-4", "self_check_passed": true, "split": "test"}
+{"trajectory_id": "fake-5", "instance_id": "org__e-5", "self_check_passed": false, "split": "test"}
+{"trajectory_id": "fake-6", "instance_id": "org__f-6", "self_check_passed": null, "split": "test"}
+{"trajectory_id": "fake-7", "instance_id": "org__g-7", "self_check_passed": true, "split": "test"}

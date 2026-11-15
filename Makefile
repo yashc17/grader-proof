@@ -1,4 +1,4 @@
-.PHONY: triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures
+.PHONY: triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures rq1
 
 install:
 	uv sync
@@ -146,3 +146,10 @@ RQ3_TABLE ?= results/rq3.csv
 FIGURES ?= figures
 figures:
 	uv run python -m grader_proof.plotting --table $(RQ3_TABLE) --out $(FIGURES) $(if $(LABEL),--label $(LABEL))
+
+# RQ1 table (issue #16): why self-checks were fooled, from labels only. Writes $(RQ1_OUT).csv and
+# .md: each fooled_reason with its count and share of the labeled self-check false positives.
+LABELS ?= labels/opus_test.jsonl
+RQ1_OUT ?= results/rq1
+rq1:
+	uv run python -m grader_proof.rq1 --labels $(LABELS) --out $(RQ1_OUT)
