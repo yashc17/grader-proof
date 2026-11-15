@@ -1,0 +1,7 @@
+{"trajectory_id": "t1", "failure_class": "model_failure", "note": "n", "fooled_reason": "too_weak"}
+{"trajectory_id": "t2", "failure_class": "model_failure", "note": "n", "fooled_reason": "too_weak"}
+{"trajectory_id": "t3", "failure_class": "env_broken", "note": "n", "fooled_reason": null}
+{"trajectory_id": "t4", "failure_class": "model_failure", "note": "n", "fooled_reason": "mirrors_patch"}
+{"trajectory_id": "t5", "failure_class": "task_underspecified", "note": "n", "fooled_reason": "wrong_target"}
+{"trajectory_id": "t6", "failure_class": "model_failure", "note": "n", "fooled_reason": null}
+{"trajectory_id": "t7", "failure_class": "upstream_tests_wrong", "note": "n", "fooled_reason": "too_weak"}
