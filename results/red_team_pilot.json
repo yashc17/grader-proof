@@ -1,0 +1,34 @@
+{
+  "instruction": "prompts/red-team-v1.md",
+  "instruction_sha256": "8307cbc879fd5527c53887c3113aafd3ae0c7d4eaac2308c3ac1b46332d1123d",
+  "trials": [
+    {
+      "task": "python-versioneer__python-versioneer-222__baseline",
+      "trial": "python-versioneer__python-versio__ypzBTtL",
+      "agent": "terminus-2",
+      "agent_kwargs": {
+        "llm_backend": "tinker",
+        "max_turns": 40,
+        "temperature": 0.7,
+        "llm_kwargs": {
+          "context_limit": 65536,
+          "max_tokens": 4096
+        }
+      },
+      "model": "Qwen/Qwen3.5-9B-Base",
+      "reward": 0,
+      "turns": 40,
+      "prompt_tokens": 1039234,
+      "cached_prompt_tokens": 989696,
+      "completion_tokens": 7071,
+      "cost_usd": 0.079949457,
+      "agent_seconds": 156.787006,
+      "trial_seconds": 222.056051,
+      "exception": null,
+      "patch_files": []
+    }
+  ],
+  "mean_cost_usd": 0.079949457,
+  "projected_runs": 72,
+  "projected_cost_usd": 5.756360904
+}
