@@ -1,0 +1,15 @@
+[agent]
+timeout_sec = 1800
+
+[verifier]
+timeout_sec = 600
+
+[environment]
+build_timeout_sec = 1800
+cpus = 1
+memory_mb = 4096
+storage_mb = 10240
+
+[metadata]
+visible_fail_to_pass = ["synapse/tests/test_cortex.py::CortexTest::test_cortex_caching_del_tufo"]
+held_out_fail_to_pass = ["synapse/tests/test_lib_storm.py::StormTest::test_storm_delnode_caching"]

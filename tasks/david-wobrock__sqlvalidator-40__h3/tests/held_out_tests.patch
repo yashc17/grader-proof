@@ -1,0 +1,37 @@
+diff --git a/tests/integration/test_formatting.py b/tests/integration/test_formatting.py
+--- a/tests/integration/test_formatting.py
++++ b/tests/integration/test_formatting.py
+@@ -2161,6 +2161,18 @@ SELECT col = "Test\'"
+ FROM t
+ """
+     assert format_sql(sql) == expected.strip()
++
++
++def test_select_star_multiple_replace():
++    sql = 'select * replace ("x" as col, "y" as f) from t'
++    expected = """
++SELECT * REPLACE (
++ "x" AS col,
++ "y" AS f
++)
++FROM t
++"""
++    assert format_sql(sql) == expected.strip()
+ 
+ 
+ def test_select_star_replace_nospace():
+diff --git a/tests/integration/test_validation.py b/tests/integration/test_validation.py
+--- a/tests/integration/test_validation.py
++++ b/tests/integration/test_validation.py
+@@ -553,3 +553,11 @@ def test_between_condition_is_valid():
+ FROM t
+ """
+     assert_valid_sql(sql)
++
++
++def test_select_star_unknown_column():
++    sql = """
++SELECT * REPLACE ("x" AS col)
++FROM (select field from t)
++"""
++    assert_invalid_sql(sql)

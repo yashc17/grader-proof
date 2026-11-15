@@ -1,0 +1,192 @@
+diff --git a/.github/workflows/pythonpublish.yml b/.github/workflows/pythonpublish.yml
+index ac97bee..654c0a3 100644
+--- a/.github/workflows/pythonpublish.yml
++++ b/.github/workflows/pythonpublish.yml
+@@ -22,7 +22,7 @@ jobs:
+       run: |
+         python -m pip install --upgrade pip
+         pip install setuptools wheel twine
+-        pip install -r requirements.txt
++        pip install -e .
+     - name: Build and publish
+       env:
+         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+diff --git a/.gitlab-ci.yml b/.gitlab-ci.yml
+index 53f995d..c2e8fb2 100644
+--- a/.gitlab-ci.yml
++++ b/.gitlab-ci.yml
+@@ -8,9 +8,7 @@ stages:
+   - QA
+ 
+ .test script: &test_script
+-- pip install -e .
+-- pip install PyQt5 pytest pytest-cov
+-- export PYTHONPATH="$PYTHONPATH:."
++- pip install -e .[test]
+ - pytest . --cov=pyqt5ac --junitxml=report.xml --cov-report html:coverage --cov-report term -vx --color=yes
+ 
+ .test template:
+diff --git a/README.md b/README.md
+index 6166daa..74e73e8 100644
+--- a/README.md
++++ b/README.md
+@@ -52,11 +52,7 @@ a copy from GitHub and install all dependencies
+ 
+     git clone https://github.com/addisonElliott/pyqt5ac.git
+     cd pyqt5ac
+-    pip install .
+-
+-or, for the last line, instead use
+-
+-    pip install -e .
++    pip install .[dev]
+ 
+ to install in 'develop' or 'editable' mode, where changes can be made to the local working code and Python will use
+ the updated code.
+@@ -102,6 +98,7 @@ Whether running via the command line or from a script, the arguments and options
+     * %%FILENAME%% - Filename of the source file without the extension
+     * %%EXT%% - Extension excluding the period of the file (e.g. ui or qrc)
+     * %%DIRNAME%% - Directory of the source file
++* **variables** - custom variables that can be used in the definition of the paths in **ioPaths**. For example, to limit the search of files to a specific directory, one can define a variable `BASEDIR` and then use it as `%%BASEDIR%%/gui/*.ui*`
+ 
+ Example
+ =======
+@@ -119,10 +116,10 @@ Take the following file structure as an example project where any UI and QRC fil
+ |   `-- style.qrc
+ |-- modules
+ |   |-- welcome
+-|       |-- module.ui
+-|       `-- resources
+-|           |-- images
+-|           `-- module.qrc
++|   |   |-- module.ui
++|   |   `-- resources
++|   |       |-- images
++|   |       `-- module.qrc
+ |   `-- dataProbe
+ |       |-- module.ui
+ |       `-- resources
+diff --git a/pyqt5ac.py b/pyqt5ac.py
+index e72eeea..46974e9 100644
+--- a/pyqt5ac.py
++++ b/pyqt5ac.py
+@@ -125,7 +125,21 @@ def cli(rccOptions, uicOptions, force, config, iopaths=()):
+     main(rccOptions, uicOptions, force, config, ioPaths)
+ 
+ 
+-def main(rccOptions='', uicOptions='', force=False, config='', ioPaths=()):
++def replaceVariables(variables_definition, string_with_variables):
++    """
++    Performs variable replacements into the given string
++    :param variables_definition: mapping variable_name - variable value. Matching names encased into %% will be replaces
++    by their respective value found in the mapping (case-sensitive)
++    :param string_with_variables: String where to replace the variable names (enclosed into %%'s) with their respective
++    values found in the variables_definition
++    :return: the input string with its variables replaced.
++    """
++    for variable_name, variable_value in variables_definition.items():
++        string_with_variables = string_with_variables.replace("%%{}%%".format(variable_name), variable_value)
++    return string_with_variables
++
++
++def main(rccOptions='', uicOptions='', force=False, config='', ioPaths=(), variables=None):
+     if config:
+         with open(config, 'r') as fh:
+             if config.endswith('.yml'):
+@@ -143,11 +157,21 @@ def main(rccOptions='', uicOptions='', force=False, config='', ioPaths=()):
+             uicOptions = configData.get('uic_options', uicOptions)
+             force = configData.get('force', force)
+             ioPaths = configData.get('ioPaths', ioPaths)
++            variables = configData.get('variables', variables)
++
++    # Validate the custom variables
++    if variables is None:
++        variables = {}
++    if 'FILENAME' in variables.keys() or 'EXT' in variables.keys() or 'DIRNAME' in variables.keys():
++        raise ValueError("Custom variables cannot be called FILENAME, EXT or DIRNAME.")
+ 
+     # Loop through the list of io paths
+     for sourceFileExpr, destFileExpr in ioPaths:
+         foundItem = False
+ 
++        # Replace instances of the variables with the actual values of the available variables
++        sourceFileExpr = replaceVariables(variables, sourceFileExpr)
++
+         # Find files that match the source filename expression given
+         for sourceFilename in glob.glob(sourceFileExpr, recursive=True):
+             # If the filename does not exist, not sure why this would ever occur, but show a warning
+@@ -169,9 +193,8 @@ def main(rccOptions='', uicOptions='', force=False, config='', ioPaths=()):
+             filename, ext = os.path.splitext(basename)
+ 
+             # Replace instances of the variables with the actual values from the source filename
+-            destFilename = destFileExpr.replace('%%FILENAME%%', filename) \
+-                .replace('%%EXT%%', ext[1:]) \
+-                .replace('%%DIRNAME%%', dirname)
++            variables.update({'FILENAME': filename, 'EXT': ext[1:], 'DIRNAME': dirname})
++            destFilename = replaceVariables(variables, destFileExpr)
+ 
+             # Retrieve the absolute path to the source and destination filename
+             sourceFilename, destFilename = os.path.abspath(sourceFilename), os.path.abspath(destFilename)
+diff --git a/requirements.txt b/requirements.txt
+deleted file mode 100644
+index 6053f4a..0000000
+--- a/requirements.txt
++++ /dev/null
+@@ -1,2 +0,0 @@
+-click
+-pyyaml
+\ No newline at end of file
+diff --git a/setup.py b/setup.py
+index f4f6ee9..093956e 100644
+--- a/setup.py
++++ b/setup.py
+@@ -25,6 +25,24 @@ with open(os.path.join(currentPath, 'README.md'), 'r') as f:
+ 
+ longDescription = '\n' + longDescription
+ 
++REQUIREMENTS = {
++    'core': [
++        'PyQt5',
++        'click',
++        'pyyaml',
++    ],
++    'test': [
++        'pytest',
++        'pytest-cov',
++    ],
++    'dev': [
++        # 'requirement-for-development-purposes-only',
++    ],
++    'doc': [
++    ],
++}
++
++
+ setup(name='pyqt5ac',
+       version=find_version('pyqt5ac.py'),
+       description='Python module to automatically compile UI and RC files in PyQt5 to Python files',
+@@ -34,7 +52,17 @@ setup(name='pyqt5ac',
+       author_email='addison.elliott@gmail.com',
+       url='https://github.com/addisonElliott/pyqt5ac',
+       license='MIT License',
+-      install_requires=['click', 'pyyaml'],
++      install_requires=REQUIREMENTS['core'],
++      extras_require={
++        **REQUIREMENTS,
++        # The 'dev' extra is the union of 'test' and 'doc', with an option
++        # to have explicit development dependencies listed.
++        'dev': [req
++                for extra in ['dev', 'test', 'doc']
++                for req in REQUIREMENTS.get(extra, [])],
++        # The 'all' extra is the union of all requirements.
++        'all': [req for reqs in REQUIREMENTS.values() for req in reqs],
++      },
+       python_requires='>=3',
+       py_modules=['pyqt5ac'],
+       entry_points={
+@@ -55,4 +83,4 @@ setup(name='pyqt5ac',
+           'Source': 'https://github.com/addisonElliott/pyqt5ac',
+           'Tracker': 'https://github.com/addisonElliott/pyqt5ac/issues',
+       }
+-      )
++)
