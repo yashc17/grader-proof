@@ -1,0 +1,15 @@
+[agent]
+timeout_sec = 1800
+
+[verifier]
+timeout_sec = 600
+
+[environment]
+build_timeout_sec = 1800
+cpus = 1
+memory_mb = 4096
+storage_mb = 10240
+
+[metadata]
+visible_fail_to_pass = ["test/git/test_git.py::ParseGitDescribe::test_pieces"]
+held_out_fail_to_pass = ["test/git/test_git.py::Keywords::test_date_gpg"]
