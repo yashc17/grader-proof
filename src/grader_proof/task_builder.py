@@ -76,13 +76,20 @@ class Instance(BaseModel):
     fail_to_pass: tuple[str, ...] = Field(alias="FAIL_TO_PASS", min_length=1)
     pass_to_pass: tuple[str, ...] = Field(alias="PASS_TO_PASS")
     test_cmd: str
+    install: str | None = None
     docker_image: str
 
     @classmethod
     def from_row(cls, row: Mapping[str, Any]) -> Self:
         """Raises ValueError, naming the field, if the row lacks one or holds a bad value."""
         install_config: Mapping[str, Any] = row.get("install_config") or {}
-        return cls.model_validate({**row, "test_cmd": install_config.get("test_cmd")})
+        return cls.model_validate(
+            {
+                **row,
+                "test_cmd": install_config.get("test_cmd"),
+                "install": install_config.get("install"),
+            }
+        )
 
 
 class FileChange(NamedTuple):
@@ -167,13 +174,38 @@ storage_mb = 10240
 {metadata}"""
 
 
+# SWE-rebench images are full clones, so the fix and the upstream tests are reachable from other
+# refs (ADR 0011). This keeps the branch HEAD points to, which sits at the base commit, and drops
+# everything else: other refs, the remote (so nothing can be fetched), the reflog and the
+# objects only those refs reached. H1, H2 and H3 read the base commit, which stays.
+STRIP_FUTURE_HISTORY = r"""RUN current=$(git symbolic-ref -q HEAD || true) \
+    && git for-each-ref --format='delete %(refname)' \
+        | grep -vxF "delete $current" \
+        | git update-ref --no-deref --stdin \
+    && for remote in $(git remote); do git remote remove "$remote"; done \
+    && rm -rf .git/FETCH_HEAD .git/ORIG_HEAD .git/refs/original \
+    && git reflog expire --expire=now --expire-unreachable=now --all \
+    && git gc --prune=now --quiet"""
+
+
 def render_dockerfile(instance: Instance) -> str:
+    # Some images ship the repo without installing it, so a plain `pytest` cannot import the
+    # package. Installing at build time keeps the tests offline, unlike SWE-bench's eval script,
+    # which reinstalls on every run.
+    install = (
+        '\nSHELL ["/bin/bash", "-c"]\n'
+        f"RUN source /opt/conda/bin/activate testbed && {instance.install}\n"
+        if instance.install
+        else ""
+    )
     return f"""FROM {instance.docker_image}
 
 WORKDIR /testbed
 
 COPY upstream_tests.patch /tmp/upstream_tests.patch
 RUN git apply /tmp/upstream_tests.patch && rm /tmp/upstream_tests.patch
+{install}
+{STRIP_FUTURE_HISTORY}
 """
 
 

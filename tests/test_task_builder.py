@@ -30,7 +30,11 @@ ROW = {
     "test_patch": "diff --git a/tests/test_x.py b/tests/test_x.py\n",
     "FAIL_TO_PASS": ["tests/test_x.py::test_new[a b]"],
     "PASS_TO_PASS": ["tests/test_x.py::test_old"],
-    "install_config": {"test_cmd": "pytest --no-header -rA", "python": "3.9"},
+    "install_config": {
+        "test_cmd": "pytest --no-header -rA",
+        "python": "3.9",
+        "install": "pip install -e '.[dev]'",
+    },
     "docker_image": "swerebench/sweb.eval.x86_64.org_1776_repo-12",
 }
 
@@ -237,6 +241,27 @@ def test_dockerfile_starts_from_image_and_applies_upstream_tests(instance: Insta
     assert "WORKDIR /testbed" in dockerfile
     assert "COPY upstream_tests.patch" in dockerfile
     assert "git apply" in dockerfile
+
+
+def test_dockerfile_installs_the_package_in_the_testbed_env(instance: Instance):
+    dockerfile = render_dockerfile(instance)
+    install = "source /opt/conda/bin/activate testbed && pip install -e '.[dev]'"
+    assert install in dockerfile
+    assert dockerfile.index("git apply") < dockerfile.index(install)
+
+
+def test_dockerfile_without_install_command_has_no_install_step():
+    dockerfile = render_dockerfile(
+        Instance.from_row({**ROW, "install_config": {"test_cmd": "pytest"}})
+    )
+    assert "activate testbed" not in dockerfile
+
+
+def test_dockerfile_strips_future_history_after_applying_the_tests(instance: Instance):
+    dockerfile = render_dockerfile(instance)
+    assert dockerfile.index("git apply") < dockerfile.index("git gc --prune=now")
+    for step in ("git update-ref --no-deref --stdin", "git remote remove", "git reflog expire"):
+        assert step in dockerfile
 
 
 def test_write_task_lays_out_a_harbor_task(instance: Instance, tmp_path: Path):

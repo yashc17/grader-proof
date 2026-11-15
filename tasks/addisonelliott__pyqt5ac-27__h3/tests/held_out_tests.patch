@@ -1,0 +1,14 @@
+diff --git a/tests/test_pyqt5ac.py b/tests/test_pyqt5ac.py
+--- a/tests/test_pyqt5ac.py
++++ b/tests/test_pyqt5ac.py
+@@ -228,6 +228,10 @@ def test_resource_generation_when_image_out_of_date(tmpdir):
+ 
+ def test_generation_fails_with_forbidden_ext_variable(tmpdir):
+     run_forbidden_variable_case(tmpdir, 'EXT')
++
++
++def test_generation_fails_with_forbidden_dirname_variable(tmpdir):
++    run_forbidden_variable_case(tmpdir, 'DIRNAME')
+ 
+ 
+ def run_forbidden_variable_case(tmpdir, variable):
