@@ -150,6 +150,17 @@ def changed_files(patch: str) -> list[str]:
     ]
 
 
+def read_trial_with_patch(trial_dir: Path) -> TrialRecord:
+    """`read_trial`, plus the agent's patch written to `patch.diff` if the workspace was saved."""
+    record = read_trial(trial_dir)
+    workspace = trial_dir / "artifacts" / "testbed"
+    if not workspace.is_dir():
+        return record
+    patch = agent_patch(workspace, Path(record.task_path) / "environment" / "upstream_tests.patch")
+    (trial_dir / "patch.diff").write_text(patch)
+    return record.model_copy(update={"patch_files": changed_files(patch)})
+
+
 def project(trials: list[TrialRecord]) -> list[Projection]:
     """One projection per model, instruction and agent settings, in the order they first appear."""
     groups: dict[str, list[TrialRecord]] = {}
@@ -182,15 +193,8 @@ def summarize(job_dirs: list[Path], notes: dict[str, str]) -> PilotSummary:
     """
     trials: list[TrialRecord] = []
     for trial_dir in sorted(p.parent for d in job_dirs for p in d.glob("*/result.json")):
-        record = read_trial(trial_dir)
-        update: dict[str, object] = {"activity": notes.get(record.trial)}
-        workspace = trial_dir / "artifacts" / "testbed"
-        if workspace.is_dir():
-            tests_patch = Path(record.task_path) / "environment" / "upstream_tests.patch"
-            patch = agent_patch(workspace, tests_patch)
-            (trial_dir / "patch.diff").write_text(patch)
-            update["patch_files"] = changed_files(patch)
-        trials.append(record.model_copy(update=update))
+        record = read_trial_with_patch(trial_dir)
+        trials.append(record.model_copy(update={"activity": notes.get(record.trial)}))
     if not trials:
         raise SystemExit(f"no trials under {[str(d) for d in job_dirs]}")
     instructions = sorted({t.instruction for t in trials if t.instruction is not None})
