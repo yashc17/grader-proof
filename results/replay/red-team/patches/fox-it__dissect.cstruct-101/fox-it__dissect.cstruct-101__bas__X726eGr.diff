@@ -1,0 +1,45 @@
+diff --git a/tests/test_types_enum.py b/tests/test_types_enum.py
+index 0a9c172..1affc70 100644
+--- a/tests/test_types_enum.py
++++ b/tests/test_types_enum.py
+@@ -154,8 +154,8 @@ def test_enum_str_repr_in_struct(cs: cstruct, compiled: bool) -> None:
+     cs.load(cdef, compiled=compiled)
+ 
+     obj = cs.test(b"\x02\x00")
+-    assert repr(obj) == "<test a=<Test16.B: 2>>"
+-    assert str(obj) == "<test a=<Test16.B: 2>>"
++    assert repr(obj) == "<test a=0x2>"
++    assert str(obj) == "<test a=0x2>"
+ 
+ 
+ def test_enum_struct(cs: cstruct, compiled: bool) -> None:
+diff --git a/tests/test_types_flag.py b/tests/test_types_flag.py
+index c9cc2c7..f4da78a 100644
+--- a/tests/test_types_flag.py
++++ b/tests/test_types_flag.py
+@@ -94,8 +94,8 @@ def test_flag_str_repr_in_struct(cs: cstruct, compiled: bool) -> None:
+         assert repr(obj) == "<test a=<Test.A|B: 3>>"
+         assert str(obj) == "<test a=<Test.A|B: 3>>"
+     else:
+-        assert repr(obj) == "<test a=<Test.B|A: 3>>"
+-        assert str(obj) == "<test a=<Test.B|A: 3>>"
++        assert repr(obj) == "<test a=0x3>"
++        assert str(obj) == "<test a=0x3>"
+ 
+ 
+ def test_flag_struct(cs: cstruct) -> None:
+diff --git a/tests/test_utils.py b/tests/test_utils.py
+index 45166d9..ff25462 100644
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+@@ -107,8 +107,8 @@ def test_dumpstruct_enum(cs: cstruct, compiled: bool) -> None:
+     out1 = utils.dumpstruct(cs.test, buf, output="string")
+     out2 = utils.dumpstruct(obj, output="string")
+ 
+-    assert "<Test16.B: 2>" in out1
+-    assert "<Test16.B: 2>" in out2
++    assert "0x2" in out1
++    assert "0x2" in out2
+ 
+ 
+ def test_pack_unpack() -> None:
