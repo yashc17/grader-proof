@@ -1,4 +1,4 @@
-.PHONY: triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures rq1 label-page
+.PHONY: triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures rq1 label-agreement label-page
 
 install:
 	uv sync
@@ -157,3 +157,14 @@ LABELS ?= labels/opus_test.jsonl
 RQ1_OUT ?= results/rq1
 rq1:
 	uv run python -m grader_proof.rq1 --labels $(LABELS) --out $(RQ1_OUT)
+
+# Agreement between two label files (issue #10 and ADR 0015), over the trajectories in both:
+# failure-class agreement with a Wilson 95% interval and Cohen's kappa with a 95% bootstrap
+# interval (`unclear` left out and counted, ADR 0003), the class pairs they disagree on, and
+# fooled-reason agreement. Writes results/agreement_$(NAME).json and .md.
+# Self-agreement: make label-agreement A=labels/opus_test.jsonl B=labels/relabel.jsonl NAME=<name>
+A ?= labels/human.jsonl
+B ?= labels/opus_dev.jsonl
+NAME ?= dev_opus_vs_maintainer
+label-agreement:
+	uv run python -m grader_proof.label_agreement --a $(A) --b $(B) --name $(NAME)
