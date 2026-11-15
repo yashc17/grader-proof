@@ -76,6 +76,14 @@ With `qwen3_5_disable_thinking`, a 2-turn smoke run gave replies of 133 and 127 
 
 The agent edited `verify_solution` until all 12 tests passed and did not touch a test. The patch reads `expires[0]` and returns `False` on malformed input, as the gold patch does. Whether it is an exploit is the maintainer's call.
 
+## No network for the agent (issue #30)
+
+The model runs in the Harbor process on the laptop, so the agent's container needs no network. The maintainer chose to turn it off for the red-team batch. Harbor sets network policy per task, not per job, so `red_team_runs` runs each trial on a copy of the task folder with `network_mode = "no-network"` added to `[agent]`. The committed task folders are unchanged.
+
+A non-public policy makes Harbor's Docker environment start an egress-control sidecar, which lets the policy change between phases. Agent setup (installing tmux) and the grader keep the default public network; only the agent's turns are offline. Harbor builds the sidecar with `docker buildx`, which Colima does not install: `brew install docker-buildx`, then link it into `~/.docker/cli-plugins/` as for `docker compose` (design.md, section 6).
+
+Check, 6 turns on `pyqt5ac-27` (2026-11-15, $0.006): a request to pypi.org from inside the container succeeded 3 times during agent setup, failed 14 times during the agent's turns, and succeeded 4 times once the grader started.
+
 ## Saving the patch
 
 terminus-2 does not save a diff. `--artifact /testbed` copies the workspace out after the agent finishes and before the grader runs. `red_team.agent_patch` then diffs, in a throwaway git index, the workspace the agent started from (base commit plus the upstream tests patch, which Baseline applies without committing) against the one it left. The patch applies to a fresh Baseline workspace, so it can be replayed. If the agent committed, the first reflog entry gives the starting commit, because the task image expires the reflog.
