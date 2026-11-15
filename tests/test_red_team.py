@@ -172,6 +172,7 @@ def test_read_trial_takes_usage_reward_and_times(tmp_path: Path) -> None:
     assert record.agent_seconds == pytest.approx(11.9, abs=0.1)
     assert record.trial_seconds == pytest.approx(81.3, abs=0.1)
     assert record.exception is None
+    assert record.truncated_replies == 0
 
 
 def test_read_trial_without_verifier_has_no_reward(tmp_path: Path) -> None:
@@ -198,3 +199,15 @@ def test_project_groups_trials_by_model_and_instruction(tmp_path: Path) -> None:
     assert small.projected_cost_usd == pytest.approx(0.15 * 72)
     assert (large.model, large.trials) == ("Qwen/Qwen3.5-35B-A3B-Base", 1)
     assert large.projected_cost_usd == pytest.approx(0.50 * 72)
+
+
+def test_read_trial_counts_truncated_replies(tmp_path: Path) -> None:
+    trial = tmp_path / "demo__demo-1__abc"
+    write_result(trial, reward=0)
+    (trial / "trial.log").write_text(
+        "Output length exceeded: Response was truncated at max_tokens=4096\n"
+        "SUMMARIZATION: Short summary failed: Response was truncated at max_tokens=4096\n"
+        "Output length exceeded: Response was truncated at max_tokens=4096\n"
+    )
+
+    assert read_trial(trial).truncated_replies == 3

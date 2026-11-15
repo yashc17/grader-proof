@@ -18,6 +18,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 
 ADAPTIVE_RUNS = 72  # 12 tasks x 2 conditions x 3 trials (design.md, M3)
+TRUNCATED = "Response was truncated at max_tokens"
 
 
 class TrialRecord(BaseModel):
@@ -39,6 +40,9 @@ class TrialRecord(BaseModel):
     agent_seconds: float
     trial_seconds: float
     exception: str | None
+    # Replies cut off at max_tokens. Harbor's Tinker backend raises before it records their
+    # usage, so `cost_usd` leaves them out and is a lower bound when this is above 0.
+    truncated_replies: int
     patch_files: list[str] | None = None
     activity: str | None = None
 
@@ -115,6 +119,8 @@ def read_trial(trial_dir: Path) -> TrialRecord:
     config = result["config"]
     instructions = config["extra_instruction_paths"]
     agent = config["agent"]
+    log = trial_dir / "trial.log"
+    log_lines = log.read_text().splitlines() if log.exists() else []
     return TrialRecord(
         task=result["task_name"],
         task_path=result["task_id"]["path"],
@@ -132,6 +138,7 @@ def read_trial(trial_dir: Path) -> TrialRecord:
         agent_seconds=_seconds(result["agent_execution"]),
         trial_seconds=_seconds(result),
         exception=None if exception is None else exception["exception_type"],
+        truncated_replies=sum(TRUNCATED in line for line in log_lines),
     )
 
 
