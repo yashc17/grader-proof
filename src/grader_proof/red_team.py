@@ -54,6 +54,7 @@ class Projection(BaseModel):
 
     model: str
     instruction: str | None
+    agent_kwargs: dict[str, object]
     trials: int
     mean_cost_usd: float
     projected_runs: int
@@ -149,18 +150,32 @@ def changed_files(patch: str) -> list[str]:
     ]
 
 
+def read_trial_with_patch(trial_dir: Path) -> TrialRecord:
+    """`read_trial`, plus the agent's patch written to `patch.diff` if the workspace was saved."""
+    record = read_trial(trial_dir)
+    workspace = trial_dir / "artifacts" / "testbed"
+    if not workspace.is_dir():
+        return record
+    patch = agent_patch(workspace, Path(record.task_path) / "environment" / "upstream_tests.patch")
+    (trial_dir / "patch.diff").write_text(patch)
+    return record.model_copy(update={"patch_files": changed_files(patch)})
+
+
 def project(trials: list[TrialRecord]) -> list[Projection]:
-    """One projection per model and instruction, in the order they first appear."""
-    groups: dict[tuple[str, str | None], list[TrialRecord]] = {}
+    """One projection per model, instruction and agent settings, in the order they first appear."""
+    groups: dict[str, list[TrialRecord]] = {}
     for trial in trials:
-        groups.setdefault((trial.model, trial.instruction), []).append(trial)
+        key = json.dumps([trial.model, trial.instruction, trial.agent_kwargs], sort_keys=True)
+        groups.setdefault(key, []).append(trial)
     projections: list[Projection] = []
-    for (model, instruction), group in groups.items():
+    for group in groups.values():
+        first = group[0]
         mean_cost = sum(t.cost_usd for t in group) / len(group)
         projections.append(
             Projection(
-                model=model,
-                instruction=instruction,
+                model=first.model,
+                instruction=first.instruction,
+                agent_kwargs=first.agent_kwargs,
                 trials=len(group),
                 mean_cost_usd=mean_cost,
                 projected_runs=ADAPTIVE_RUNS,
@@ -178,17 +193,15 @@ def summarize(job_dirs: list[Path], notes: dict[str, str]) -> PilotSummary:
     """
     trials: list[TrialRecord] = []
     for trial_dir in sorted(p.parent for d in job_dirs for p in d.glob("*/result.json")):
-        record = read_trial(trial_dir)
-        update: dict[str, object] = {"activity": notes.get(record.trial)}
-        workspace = trial_dir / "artifacts" / "testbed"
-        if workspace.is_dir():
-            tests_patch = Path(record.task_path) / "environment" / "upstream_tests.patch"
-            patch = agent_patch(workspace, tests_patch)
-            (trial_dir / "patch.diff").write_text(patch)
-            update["patch_files"] = changed_files(patch)
-        trials.append(record.model_copy(update=update))
+        record = read_trial_with_patch(trial_dir)
+        trials.append(record.model_copy(update={"activity": notes.get(record.trial)}))
     if not trials:
         raise SystemExit(f"no trials under {[str(d) for d in job_dirs]}")
+    return trials_summary(trials)
+
+
+def trials_summary(trials: list[TrialRecord]) -> PilotSummary:
+    """The instructions' hashes, the trials and the projections, as one results file."""
     instructions = sorted({t.instruction for t in trials if t.instruction is not None})
     return PilotSummary(
         instructions_sha256={
@@ -215,6 +228,7 @@ def main() -> None:
             f"{p.model}, {p.instruction}: {p.trials} trials, mean ${p.mean_cost_usd:.4f} per run, "
             f"${p.projected_cost_usd:.2f} for {p.projected_runs} runs"
         )
+        print(f"  {json.dumps(p.agent_kwargs)}")
 
 
 if __name__ == "__main__":

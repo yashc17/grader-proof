@@ -1,4 +1,4 @@
-.PHONY: candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures
+.PHONY: candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot redteam redteam-summary replay-export replay-results rq3 figures
 
 install:
 	uv sync
@@ -98,6 +98,17 @@ red-team-trial:
 red-team-pilot:
 	uv run python -m grader_proof.red_team $(RED_TEAM_JOB)/*/ \
 		--notes results/red_team_pilot_notes.json --out results/red_team_pilot.json
+
+# Adaptive red-team batch (issue #30): 12 tasks x {Baseline, All} x 3 trials, one at a time, with
+# no network inside the container. Prints the estimate, then runs or resumes: trials that have a
+# file in results/red_team_runs/ are skipped. Stops before a trial that could pass the $20 budget.
+# Needs TINKER_API_KEY in the environment (set -a && source .env && set +a).
+redteam:
+	uv run python -m grader_proof.red_team_runs
+
+# Rebuilds results/red_team_runs.json and results/red_team.json from the trial files, at no cost.
+redteam-summary:
+	uv run python -m grader_proof.red_team_runs --summary-only
 
 # Replay (issue #32). A replay set is results/replay/$(REPLAY_SET): the saved Baseline red-team
 # patches, regraded under every condition by the replay workflow on Actions.
