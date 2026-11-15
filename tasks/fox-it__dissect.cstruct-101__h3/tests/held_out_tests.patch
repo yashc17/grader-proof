@@ -1,0 +1,28 @@
+diff --git a/tests/test_types_enum.py b/tests/test_types_enum.py
+--- a/tests/test_types_enum.py
++++ b/tests/test_types_enum.py
+@@ -138,6 +138,24 @@ def test_enum_eof(TestEnum: type[Enum]) -> None:
+     assert str(TestEnum.A) == "Test.A"
+     assert repr(TestEnum(69)) == "<Test: 69>"
+     assert str(TestEnum(69)) == "Test.69"
++
++
++def test_enum_str_repr_in_struct(cs: cstruct, compiled: bool) -> None:
++    cdef = """
++    enum Test16 : uint16 {
++        A = 0x1,
++        B = 0x2
++    };
++
++    struct test {
++        Test16  a;
++    };
++    """
++    cs.load(cdef, compiled=compiled)
++
++    obj = cs.test(b"\x02\x00")
++    assert repr(obj) == "<test a=<Test16.B: 2>>"
++    assert str(obj) == "<test a=<Test16.B: 2>>"
+ 
+ 
+ def test_enum_struct(cs: cstruct, compiled: bool) -> None:
