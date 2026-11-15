@@ -1,4 +1,4 @@
-.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3
+.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures
 
 install:
 	uv sync
@@ -120,3 +120,10 @@ RQ3_OUT ?= results/rq3
 rq3:
 	uv run python -m grader_proof.rq3 --replay results/replay/$(REPLAY_SET)/results \
 		$(if $(ADAPTIVE),--adaptive $(ADAPTIVE)) --out $(RQ3_OUT)
+
+# Figures for the write-up (issue #34), as SVG and PNG in figures/, from the table `make rq3` writes.
+# Pilot check, never committed: make figures RQ3_TABLE=results/replay/pilot/rq3.csv FIGURES=figures/pilot LABEL=pilot
+RQ3_TABLE ?= results/rq3.csv
+FIGURES ?= figures
+figures:
+	uv run python -m grader_proof.plotting --table $(RQ3_TABLE) --out $(FIGURES) $(if $(LABEL),--label $(LABEL))
