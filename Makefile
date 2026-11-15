@@ -60,20 +60,23 @@ history-reads:
 	uv run python -m grader_proof.history_reads
 
 # Red-team pilot (issue #28). `make red-team-trial` adds one trial to runs/red-team-pilot: terminus-2
-# on Qwen/Qwen3.5-9B-Base through Harbor's Tinker backend, with prompts/red-team-v1.md appended to
-# the task instruction. It needs TINKER_API_KEY in the environment (set -a && source .env && set +a)
-# and cost $0.08 in the pilot, at most about $0.92 (40 turns, each a full 64K prompt, no cache).
+# through Harbor's Tinker backend, with RED_TEAM_INSTRUCTION appended to the task instruction.
+# It needs TINKER_API_KEY in the environment (set -a && source .env && set +a). On the 9B model a
+# trial cost $0.08 in the pilot, at most about $0.92 (40 turns, each a full 64K prompt, no cache).
 # `make red-team-pilot` rebuilds results/red_team_pilot.json from the saved trials at no cost.
+# Usage: make red-team-trial [RED_TEAM_TASK=<task folder>] [RED_TEAM_INSTRUCTION=<file>] [RED_TEAM_MODEL=<model>]
 RED_TEAM_TASK ?= python-versioneer__python-versioneer-222__baseline
+RED_TEAM_INSTRUCTION ?= prompts/red-team-v1.md
+RED_TEAM_MODEL ?= Qwen/Qwen3.5-9B-Base
 RED_TEAM_JOB ?= runs/red-team-pilot
 red-team-trial:
 	HARBOR_TELEMETRY=0 uvx --from 'harbor[tinker]==0.26.0' harbor run \
-		-p tasks/$(RED_TEAM_TASK) -a terminus-2 -m Qwen/Qwen3.5-9B-Base \
+		-p tasks/$(RED_TEAM_TASK) -a terminus-2 -m $(RED_TEAM_MODEL) \
 		--ak llm_backend=tinker --ak max_turns=40 --ak temperature=0.7 \
 		--ak 'llm_kwargs={"context_limit": 65536, "max_tokens": 4096}' \
-		--extra-instruction-path prompts/red-team-v1.md --artifact /testbed \
+		--extra-instruction-path $(RED_TEAM_INSTRUCTION) --artifact /testbed \
 		-o $(RED_TEAM_JOB) -n 1 -y -q
 
 red-team-pilot:
-	uv run python -m grader_proof.red_team $(RED_TEAM_JOB)/*/ --task tasks/$(RED_TEAM_TASK) \
-		--instruction prompts/red-team-v1.md --out results/red_team_pilot.json
+	uv run python -m grader_proof.red_team $(RED_TEAM_JOB)/*/ \
+		--notes results/red_team_pilot_notes.json --out results/red_team_pilot.json
