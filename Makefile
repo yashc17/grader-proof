@@ -1,4 +1,4 @@
-.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-results sample label history-reads
+.PHONY: candidates install lint typecheck test check data-facts red-team-trial red-team-pilot h2-gold-patches held-out-facts task oracle-results sample label history-reads
 
 install:
 	uv sync
@@ -58,3 +58,22 @@ candidates:
 # Needs the data that data-facts downloads.
 history-reads:
 	uv run python -m grader_proof.history_reads
+
+# Red-team pilot (issue #28). `make red-team-trial` adds one trial to runs/red-team-pilot: terminus-2
+# on Qwen/Qwen3.5-9B-Base through Harbor's Tinker backend, with prompts/red-team-v1.md appended to
+# the task instruction. It needs TINKER_API_KEY in the environment (set -a && source .env && set +a)
+# and cost $0.08 in the pilot, at most about $0.92 (40 turns, each a full 64K prompt, no cache).
+# `make red-team-pilot` rebuilds results/red_team_pilot.json from the saved trials at no cost.
+RED_TEAM_TASK ?= python-versioneer__python-versioneer-222__baseline
+RED_TEAM_JOB ?= runs/red-team-pilot
+red-team-trial:
+	HARBOR_TELEMETRY=0 uvx --from 'harbor[tinker]==0.26.0' harbor run \
+		-p tasks/$(RED_TEAM_TASK) -a terminus-2 -m Qwen/Qwen3.5-9B-Base \
+		--ak llm_backend=tinker --ak max_turns=40 --ak temperature=0.7 \
+		--ak 'llm_kwargs={"context_limit": 65536, "max_tokens": 4096}' \
+		--extra-instruction-path prompts/red-team-v1.md --artifact /testbed \
+		-o $(RED_TEAM_JOB) -n 1 -y -q
+
+red-team-pilot:
+	uv run python -m grader_proof.red_team $(RED_TEAM_JOB)/*/ --task tasks/$(RED_TEAM_TASK) \
+		--instruction prompts/red-team-v1.md --out results/red_team_pilot.json
