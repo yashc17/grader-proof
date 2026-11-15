@@ -1,0 +1,56 @@
+{
+  "shared": 30,
+  "only_in_a": 0,
+  "only_in_b": 0,
+  "failure_class": {
+    "items": 30,
+    "scored": 26,
+    "human_unclear": 2,
+    "triager_unclear": 2,
+    "agreement": 0.9615384615384616,
+    "kappa": 0.8555555555555556,
+    "low": 0.5185185185185186,
+    "high": 1.0,
+    "confusion": {
+      "model_failure -> model_failure": 22,
+      "model_failure -> unclear": 1,
+      "task_underspecified -> task_underspecified": 3,
+      "task_underspecified -> unclear": 1,
+      "task_underspecified -> upstream_tests_wrong": 1,
+      "unclear -> env_broken": 1,
+      "unclear -> model_failure": 1
+    }
+  },
+  "agreement_interval": [
+    0.8110722109696525,
+    0.9931780150064565
+  ],
+  "disagreements": {
+    "model_failure -> unclear": 1,
+    "task_underspecified -> unclear": 1,
+    "task_underspecified -> upstream_tests_wrong": 1,
+    "unclear -> env_broken": 1,
+    "unclear -> model_failure": 1
+  },
+  "fooled_reason": {
+    "both": {
+      "items": 9,
+      "scored": 9,
+      "human_unclear": 0,
+      "triager_unclear": 0,
+      "agreement": 0.6666666666666666,
+      "kappa": 0.4375,
+      "low": 0.0,
+      "high": 1.0,
+      "confusion": {
+        "mirrors_patch -> mirrors_patch": 2,
+        "mirrors_patch -> other": 1,
+        "mirrors_patch -> too_weak": 1,
+        "other -> too_weak": 1,
+        "too_weak -> too_weak": 4
+      }
+    },
+    "only_a": 0,
+    "only_b": 0
+  }
+}
