@@ -129,7 +129,7 @@ Rules alone reached κ = 0.09 [0.05, 0.14] (33% = 23/69 raw agreement). Only `tu
 |---|---|---|---|
 | H2 gold-patch rejections | 1,210 of 21,336 SWE-rebench instances (5.7%: 1,198 config file, 12 existing file in test dir, 5 new code in test dir, 2 unparseable); 198 of 6,306 trajectory instances (3.1%) | `results/h2_gold_patches.json` | `make h2-gold-patches` |
 | H3 held-out coverage | 5,553 of 21,336 instances allow holding out half of `FAIL_TO_PASS` functions (5,553/5,553 passed patch checks; 10,511 have 1 function, 5,272 refused); 967 of 5,731 trajectory instances with images qualify (967/967 passed patch checks) | `results/held_out_facts.json` | `make held-out-facts` |
-| Dataset git history reads | Strong reads (`all_refs`, `remote_ref`, `reflog`): 391 of 32,161 resolved (1.2%) and 638 of 34,913 unresolved (1.8%); commit-hash reads (`sha`, weaker evidence): 3,618 resolved and 4,294 unresolved | `results/history_reads.json` | `make history-reads` |
+| Dataset git history reads | Strong reads (`all_refs`, `remote_ref`, `reflog`): 389 of 32,161 resolved (1.2%) and 627 of 34,913 unresolved (1.8%); commit-hash reads (`sha`, weaker evidence): 3,618 resolved and 4,294 unresolved | `results/history_reads.json` | `make history-reads` |
 | Oracle acceptance (12 tasks) | 192/192 runs accepted on Actions (3/3 per task): Baseline 36/36, H1 36/36, H2 36/36, H3 36/36, H4 12/12 (4 tasks), All 36/36 | `results/oracle_check.csv` | `make oracle-check` |
 
 ### RQ3 and RQ4 (pending)
@@ -187,6 +187,7 @@ Needs, by kind:
 | `red-team-pilot` | Rebuilds the pilot summary from saved trials. | the laptop's `runs/` folder |
 | `replay-export` | Copies Baseline red-team patches into a replay set. | the laptop's `runs/` folder |
 | `replay-results` | Downloads a replay run into the replay set. | Actions (`replay` workflow) |
+| `exploit-review` | Summarizes maintainer exploit verdicts and automatic-flag agreement. | none |
 | `rq3` | Writes the RQ3 table from the replay, adaptive and oracle results and the exploit verdicts. | maintainer (exploit verdicts) |
 | `figures` | Draws the figures from the RQ3 table. | none |
 
