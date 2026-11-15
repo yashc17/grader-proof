@@ -2,14 +2,18 @@
 
 The oracle-check workflow runs the oracle `RUNS` times per task. Each run is one Harbor job
 directory. This module turns those directories into one small JSON file per task, and turns a
-folder of such files into a pass/fail table.
+folder of such files into a pass/fail table. Any run in which the oracle does not get reward 1 is
+a false negative.
 """
 
 import argparse
 import sys
+from collections.abc import Iterable
 from pathlib import Path
 
 from pydantic import BaseModel
+
+from grader_proof.task_builder import CONDITIONS
 
 RUNS = 3
 FAILING_STATUSES = ("FAILED ", "ERROR ")
@@ -25,6 +29,11 @@ class TaskResult(BaseModel):
     task: str
     condition: str
     runs: list[RunResult]
+
+    @property
+    def accepted(self) -> int:
+        """The number of runs in which the oracle got reward 1."""
+        return sum(r.reward == 1 for r in self.runs)
 
     @property
     def passed(self) -> bool:
@@ -77,8 +86,25 @@ def collect(task_name: str, runs_dir: Path, out_dir: Path) -> TaskResult:
     return result
 
 
-def summarize(results_dir: Path) -> bool:
-    """Prints one line per task and returns True if every oracle passed."""
+def acceptance_table(results: Iterable[TaskResult]) -> str:
+    """CSV with one row per task and one column per condition. A cell reads `<accepted>/<runs>`,
+    and is empty if the task was not run under that condition."""
+    cells = {(r.task, r.condition): f"{r.accepted}/{len(r.runs)}" for r in results}
+    lines = [",".join(("task", *CONDITIONS))]
+    for task in sorted({task for task, _ in cells}):
+        lines.append(",".join((task, *(cells.get((task, c), "") for c in CONDITIONS))))
+    return "\n".join(lines) + "\n"
+
+
+def missing_tasks(results: Iterable[TaskResult], task_names: Iterable[str]) -> list[str]:
+    """The task folder names that have no result."""
+    found = {f"{r.task}__{r.condition}" for r in results}
+    return sorted(set(task_names) - found)
+
+
+def summarize(results_dir: Path, tasks_dir: Path, table: Path) -> bool:
+    """Prints one line per task, writes the acceptance table, and returns True if every oracle
+    passed and every task folder has a result."""
     results = [
         TaskResult.model_validate_json(p.read_text()) for p in sorted(results_dir.rglob("*.json"))
     ]
@@ -86,7 +112,11 @@ def summarize(results_dir: Path) -> bool:
         rewards = " ".join(str(x.reward) for x in r.runs)
         status = "pass" if r.passed else "FLAKY" if r.flaky else "FAIL"
         print(f"{status:5} {r.task} [{r.condition}] rewards: {rewards}")
-    return bool(results) and all(r.passed for r in results)
+    missing = missing_tasks(results, (p.name for p in tasks_dir.iterdir() if p.is_dir()))
+    for name in missing:
+        print(f"MISSING {name}")
+    table.write_text(acceptance_table(results))
+    return bool(results) and not missing and all(r.passed for r in results)
 
 
 def main() -> None:
@@ -98,12 +128,14 @@ def main() -> None:
     collect_cmd.add_argument("--out-dir", type=Path, default=Path("oracle-check"))
     summarize_cmd = commands.add_parser("summarize", help="print a table of downloaded results")
     summarize_cmd.add_argument("results_dir", type=Path)
+    summarize_cmd.add_argument("--tasks-dir", type=Path, default=Path("tasks"))
+    summarize_cmd.add_argument("--table", type=Path, default=Path("results/oracle_check.csv"))
     args = parser.parse_args()
 
     if args.command == "collect":
         ok = collect(args.task_name, args.runs_dir, args.out_dir).passed
     else:
-        ok = summarize(args.results_dir)
+        ok = summarize(args.results_dir, args.tasks_dir, args.table)
     sys.exit(0 if ok else 1)
 
 

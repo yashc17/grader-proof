@@ -21,11 +21,14 @@ class TinkerTransport:
     def complete(self, request: Request) -> Response:
         sampler = self._sampler(request.model)
         tokenizer = sampler.get_tokenizer()
-        prompt = str(
-            tokenizer.apply_chat_template(
-                list(request.messages), add_generation_prompt=True, tokenize=False
+        if request.chat_template:
+            prompt = str(
+                tokenizer.apply_chat_template(
+                    list(request.messages), add_generation_prompt=True, tokenize=False
+                )
             )
-        )
+        else:
+            prompt = "".join(message["content"] for message in request.messages)
         prompt_ids: list[int] = tokenizer.encode(prompt, add_special_tokens=False)
         params = tinker.types.SamplingParams(
             max_tokens=request.max_tokens, temperature=request.temperature, seed=request.seed

@@ -1,0 +1,175 @@
+FAILURE TRIAGE CASEBOOK
+
+Each case is one attempt by a coding agent to fix a GitHub issue. The attempt failed: the agent's patch did not make the upstream tests pass. For each case a reviewer reads the issue, the FAIL_TO_PASS tests taken from the upstream fix, the gold patch (the upstream fix), the agent's patch and a condensed log of what the agent ran. The reviewer then records why the attempt failed, as one JSON object on one line.
+
+Failure classes, in precedence order. When more than one fits, the first one wins.
+1. env_broken: the environment stopped the agent before code quality mattered: a missing dependency, a broken install, the package does not import, or a network error or timeout in the sandbox.
+2. task_underspecified: a careful engineer could not infer from the issue what the upstream tests check, such as exact names, messages or formats that the issue never mentions.
+3. upstream_tests_wrong: the tests check something other than the issue, or reject a reasonable fix.
+4. model_failure: the task was fair and the agent's patch is wrong, incomplete, or missing because it ran out of turns.
+5. unclear: not enough evidence to decide.
+
+The verdict has three keys. "evidence" quotes the lines of the case that decide the class. "failure_class" is one of the five classes. "confidence" is a number from 0 to 1.
+
+=== Case 1 ===
+ISSUE:
+slugify() keeps a trailing hyphen. slugify("Hello world!") returns "hello-world-" but should return "hello-world". Any punctuation at the end of the title should be dropped.
+
+FAIL_TO_PASS TESTS:
+tests/test_text.py::test_slugify_drops_trailing_punctuation
+
+GOLD PATCH:
+--- a/textkit/text.py
++++ b/textkit/text.py
+@@ -12,3 +12,3 @@ def slugify(title):
+-    return re.sub(r"[^a-z0-9]+", "-", title.lower())
++    return re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+
+AGENT PATCH:
+--- a/textkit/text.py
++++ b/textkit/text.py
+@@ -11,2 +11,3 @@ def slugify(title):
++    title = title.replace("!", "")
+     return re.sub(r"[^a-z0-9]+", "-", title.lower())
+
+AGENT LOG:
+exit_status: submit
+turns: 9
+
+## Patch: 1 files, +1 -0
+textkit/text.py
+
+## Commands run
+grep -n "def slugify" -r textkit
+view textkit/text.py
+str_replace textkit/text.py
+python -c "from textkit.text import slugify; print(slugify('Hello world!'))"
+finish
+
+## Errors seen
+none
+
+## Last observations
+hello-world
+
+VERDICT:
+{"evidence": "The issue asks to drop any trailing punctuation; the agent patch only removes '!' with title.replace(\"!\", \"\"), so a title ending in '?' or '.' still gets a trailing hyphen.", "failure_class": "model_failure", "confidence": 0.9}
+
+=== Case 2 ===
+ISSUE:
+Add a way to export a report as CSV. Users want to open reports in a spreadsheet.
+
+FAIL_TO_PASS TESTS:
+tests/test_report.py::test_to_csv_writes_header
+tests/test_report.py::test_to_csv_amounts_in_cents
+
+GOLD PATCH:
+--- a/ledger/report.py
++++ b/ledger/report.py
+@@ -40,0 +41,6 @@ class Report:
++    def to_csv(self, file):
++        writer = csv.writer(file)
++        writer.writerow(["id", "name", "total_cents"])
++        for row in self.rows:
++            writer.writerow([row.id, row.name, row.total_cents])
+
+AGENT PATCH:
+--- a/ledger/export.py
++++ b/ledger/export.py
+@@ -0,0 +1,7 @@
++def export_csv(report, path):
++    with open(path, "w", newline="") as file:
++        writer = csv.writer(file)
++        writer.writerow(["ID", "Name", "Total"])
++        for row in report.rows:
++            writer.writerow([row.id, row.name, f"{row.total_cents / 100:.2f}"])
+
+AGENT LOG:
+exit_status: submit
+turns: 14
+
+## Patch: 1 files, +7 -0
+ledger/export.py
+
+## Commands run
+ls ledger
+view ledger/report.py
+create ledger/export.py
+python -m pytest tests/test_report.py -q
+finish
+
+## Errors seen
+none
+
+## Last observations
+12 passed in 0.31s
+
+VERDICT:
+{"evidence": "The issue only says 'export a report as CSV'. The tests call Report.to_csv and expect the header 'id,name,total_cents' with amounts in cents; the issue names neither the method, the header nor the unit. The agent's export_csv is a reasonable reading of the issue.", "failure_class": "task_underspecified", "confidence": 0.8}
+
+=== Case 3 ===
+ISSUE:
+Plot.save() raises a TypeError when dpi is given as a float, for example plot.save("a.png", dpi=150.0).
+
+FAIL_TO_PASS TESTS:
+tests/test_plot.py::test_save_float_dpi
+
+GOLD PATCH:
+--- a/chartlib/plot.py
++++ b/chartlib/plot.py
+@@ -88,1 +88,1 @@ def save(self, path, dpi=100):
+-        self._canvas.render(path, dpi)
++        self._canvas.render(path, int(round(dpi)))
+
+AGENT PATCH:
+--- a/chartlib/plot.py
++++ b/chartlib/plot.py
+@@ -88,1 +88,1 @@ def save(self, path, dpi=100):
+-        self._canvas.render(path, dpi)
++        self._canvas.render(path, int(dpi))
+
+AGENT LOG:
+exit_status: submit
+turns: 21
+
+## Patch: 1 files, +1 -1
+chartlib/plot.py
+
+## Commands run
+python -m pytest tests/test_plot.py -q
+pip install -e .
+pip install numpy
+str_replace chartlib/plot.py
+python -m pytest tests/test_plot.py -q
+finish
+
+## Errors seen
+#3: E   ModuleNotFoundError: No module named 'numpy'
+#5: ERROR: Could not find a version that satisfies the requirement numpy (from versions: none)
+#7: ERROR: Could not find a version that satisfies the requirement numpy (from versions: none)
+#11: E   ModuleNotFoundError: No module named 'numpy'
+
+## Last observations
+ImportError while loading conftest '/testbed/tests/conftest.py'.
+E   ModuleNotFoundError: No module named 'numpy'
+
+VERDICT:
+{"evidence": "Every test run stops at 'ModuleNotFoundError: No module named numpy' and 'pip install numpy' fails with '(from versions: none)', so no test could run against the patch.", "failure_class": "env_broken", "confidence": 0.85}
+
+=== Case 4 ===
+ISSUE:
+{{issue}}
+
+FAIL_TO_PASS TESTS:
+{{fail_to_pass}}
+
+GOLD PATCH:
+{{gold_patch}}
+
+AGENT PATCH:
+{{agent_patch}}
+
+AGENT LOG:
+{{trajectory}}
+
+VERDICT:

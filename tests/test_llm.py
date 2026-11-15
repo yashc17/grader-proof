@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 
@@ -62,10 +63,24 @@ def test_cache_survives_a_new_client(tmp_path: Path) -> None:
         {"temperature": 0.5},
         {"seed": 1},
         {"prompt_version": "judge-v2"},
+        {"chat_template": False},
     ],
 )
 def test_any_change_to_the_request_changes_the_key(change: dict[str, object]) -> None:
     assert request_key(make_request()) != request_key(make_request(**change))
+
+
+def test_chat_requests_keep_the_key_they_had_before_chat_template_existed() -> None:
+    fields = {
+        "model": QWEN,
+        "messages": [{"role": "user", "content": "hi"}],
+        "max_tokens": 100,
+        "temperature": 0.0,
+        "seed": 0,
+        "prompt_version": "judge-v1",
+    }
+    canonical = json.dumps(fields, sort_keys=True, separators=(",", ":"))
+    assert request_key(make_request()) == hashlib.sha256(canonical.encode()).hexdigest()
 
 
 def test_key_is_a_sha256_hex_digest() -> None:

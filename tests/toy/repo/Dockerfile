@@ -8,8 +8,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends git \
 # SWE-rebench images have that conda env; here the system Python plays its part.
 RUN mkdir -p /opt/conda/bin && echo ':' > /opt/conda/bin/activate
 
+# Real images install the code under test with `pip install -e .`, which puts it on sys.path
+# through site-packages. H4's check runs Python in isolated mode, which ignores PYTHONPATH.
+RUN echo /testbed > "$(python -c 'import site; print(site.getsitepackages()[0])')/testbed.pth"
+
 COPY . /testbed
-ENV PYTHONPATH=/testbed
 WORKDIR /testbed
 RUN git init -q && git add -A && git -c user.name=toy -c user.email=toy@example.com commit -qm base
 
