@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-results sample label rules-dev judge-dev
+.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev
 
 install:
 	uv sync
@@ -29,15 +29,17 @@ h2-gold-patches:
 held-out-facts:
 	uv run python -m grader_proof.held_out_facts
 
-# Usage: make task ID=12rambau__sepal_ui-411 [CONDITION=h1|h2|h3]
+# Usage: make task ID=12rambau__sepal_ui-411 [CONDITION=h1|h2|h3|h4|all]
 CONDITION ?= baseline
 task:
 	@test -n "$(ID)" || { echo "usage: make task ID=<instance_id> [CONDITION=<condition>]"; exit 2; }
 	uv run python -m grader_proof.task_builder $(ID) --condition $(CONDITION)
 
-# Downloads the results of the latest oracle-check run (or RUN=<run id>) into results/oracle-check.
-# Exits non-zero unless every task's oracle got reward 1 in all 3 runs.
-oracle-results:
+# Downloads the results of the latest oracle-check run (or RUN=<run id>) into results/oracle-check
+# and writes results/oracle_check.csv: per task and condition, the runs in which the oracle got
+# reward 1, out of 3. Exits non-zero if any run rejected the oracle (a false negative) or a task
+# folder has no result.
+oracle-check:
 	rm -rf results/oracle-check
 	gh run download $${RUN:-$$(gh run list --workflow oracle-check.yml --limit 1 --json databaseId --jq '.[0].databaseId')} --pattern 'oracle-check-*' --dir results/oracle-check
 	uv run python -m grader_proof.oracle_check summarize results/oracle-check
@@ -49,6 +51,15 @@ sample:
 # Labels the next unlabeled trajectory. Usage: make label SPLIT=dev (or test, or all)
 label:
 	uv run python -m grader_proof.label_cli label --split $(or $(SPLIT),dev)
+
+# Ranks about 20 candidate instances for the 12 tasks (needs data/, labels/human.jsonl and Docker Hub access for image sizes).
+candidates:
+	uv run python -m grader_proof.candidates
+
+# Counts trajectories whose commands read git history beyond HEAD (issue #56, ADR 0011).
+# Needs the data that data-facts downloads.
+history-reads:
+	uv run python -m grader_proof.history_reads
 
 # Coverage and precision of the triage rules on the 30 dev labels; writes results/rules_dev.json.
 # Needs labels/human.jsonl (the maintainer's, not in the repo) and the data from `make data-facts`.

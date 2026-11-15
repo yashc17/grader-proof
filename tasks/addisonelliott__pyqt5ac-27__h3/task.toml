@@ -1,0 +1,15 @@
+[agent]
+timeout_sec = 1800
+
+[verifier]
+timeout_sec = 600
+
+[environment]
+build_timeout_sec = 1800
+cpus = 1
+memory_mb = 4096
+storage_mb = 10240
+
+[metadata]
+visible_fail_to_pass = ["tests/test_pyqt5ac.py::test_generation_fails_with_forbidden_filename_variable", "tests/test_pyqt5ac.py::test_generation_fails_with_forbidden_ext_variable"]
+held_out_fail_to_pass = ["tests/test_pyqt5ac.py::test_generation_fails_with_forbidden_dirname_variable"]

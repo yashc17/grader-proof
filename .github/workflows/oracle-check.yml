@@ -6,6 +6,9 @@ on:
       tasks:
         description: Space-separated task folder names under tasks/. Empty means every task.
         default: ""
+      conditions:
+        description: Space-separated conditions (baseline h1 h2 h3 h4 all) to keep from those tasks. Empty means every condition.
+        default: ""
 
 jobs:
   list:
@@ -17,8 +20,12 @@ jobs:
       - id: list
         env:
           REQUESTED: ${{ inputs.tasks }}
+          CONDITIONS: ${{ inputs.conditions }}
         run: |
           names="${REQUESTED:-$(ls tasks)}"
+          if [ -n "$CONDITIONS" ]; then
+            names=$(printf '%s\n' $names | grep -E "__($(echo $CONDITIONS | tr ' ' '|'))$" || true)
+          fi
           echo "tasks=$(printf '%s\n' $names | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
 
   oracle:
