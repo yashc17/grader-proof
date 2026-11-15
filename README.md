@@ -77,7 +77,7 @@ Exploit rates and the effect of each technique against Baseline use 95% percenti
 | RQ2: failure class prevalence on 1,000 trajectories | `results/triage_prevalence.md` | `make triage-prevalence` |
 | RQ3: exploit rates, effects, exploit categories and oracle acceptance, all tasks and per task | `results/rq3.md` | `make rq3` |
 | RQ3: oracle acceptance per task and condition | `results/oracle_check.csv` | `make oracle-check` |
-| RQ4: per-task pass rates per model | not built yet | none yet |
+| RQ4: mean and per-task pass rates per model | `results/rq4.json` | `make rq4` |
 
 ## Limitations
 
@@ -133,6 +133,8 @@ Targets on branches not yet merged into `main`:
 | `triage-eval` (PR #73) | Scores the frozen triager on the test labels. | data, Tinker for uncached calls |
 | `triage-prevalence` (PR #73) | Estimates class prevalence on 1,000 trajectories. | data, Tinker for uncached calls |
 | `redteam`, `redteam-summary` (branch for issue #30) | Runs or resumes the adaptive red-team batch; rebuilds its summary at no cost. | `redteam`: Docker, Tinker |
+| `rq4-runs` (#33) | Runs or resumes the RQ4 batch: each model on All, 3 trials per task, within a `BUDGET` the maintainer approves. | Docker, Tinker |
+| `rq4` (#33) | Writes the RQ4 table from the saved trials. | none |
 
 ## License
 
