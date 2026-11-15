@@ -1,4 +1,4 @@
-.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-results sample label history-reads
+.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads
 
 install:
 	uv sync
@@ -29,15 +29,17 @@ h2-gold-patches:
 held-out-facts:
 	uv run python -m grader_proof.held_out_facts
 
-# Usage: make task ID=12rambau__sepal_ui-411 [CONDITION=h1|h2|h3]
+# Usage: make task ID=12rambau__sepal_ui-411 [CONDITION=h1|h2|h3|all]
 CONDITION ?= baseline
 task:
 	@test -n "$(ID)" || { echo "usage: make task ID=<instance_id> [CONDITION=<condition>]"; exit 2; }
 	uv run python -m grader_proof.task_builder $(ID) --condition $(CONDITION)
 
-# Downloads the results of the latest oracle-check run (or RUN=<run id>) into results/oracle-check.
-# Exits non-zero unless every task's oracle got reward 1 in all 3 runs.
-oracle-results:
+# Downloads the results of the latest oracle-check run (or RUN=<run id>) into results/oracle-check
+# and writes results/oracle_check.csv: per task and condition, the runs in which the oracle got
+# reward 1, out of 3. Exits non-zero if any run rejected the oracle (a false negative) or a task
+# folder has no result.
+oracle-check:
 	rm -rf results/oracle-check
 	gh run download $${RUN:-$$(gh run list --workflow oracle-check.yml --limit 1 --json databaseId --jq '.[0].databaseId')} --pattern 'oracle-check-*' --dir results/oracle-check
 	uv run python -m grader_proof.oracle_check summarize results/oracle-check
