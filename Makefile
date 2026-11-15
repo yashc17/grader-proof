@@ -1,4 +1,4 @@
-.PHONY: candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures rq1
+.PHONY: candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label label-page history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures rq1
 
 install:
 	uv sync
@@ -48,6 +48,10 @@ oracle-check:
 sample:
 	uv run python -m grader_proof.label_cli sample
 
+# Writes data/label_view/index.html: a browser page for labeling the dev items.
+label-page:
+	uv run python -m grader_proof.label_view
+
 # Writes labels/fact_sheets/test/: one page of facts per test item and index.html (issue #9).
 # The pages hold no label. Needs the data that data-facts downloads.
 fact-sheets:
@@ -67,7 +71,7 @@ history-reads:
 	uv run python -m grader_proof.history_reads
 
 # Coverage and precision of the triage rules on the 30 dev labels; writes results/rules_dev.json.
-# Needs labels/human.jsonl (the maintainer's, not in the repo) and the data from `make data-facts`.
+# Needs labels/human.jsonl (the maintainer's dev labels) and the data from `make data-facts`.
 rules-dev:
 	uv run python -m grader_proof.rules_eval
 

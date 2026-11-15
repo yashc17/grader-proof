@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dev labels</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1d1d1f; --muted: #6e6e73; --line: #d2d2d7; --panel: #f5f5f7;
+    --accent: #0b57d0; --add: #e6f4ea; --del: #fce8e6; --warn: #b3261e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1c1c1e; --fg: #f2f2f7; --muted: #aeaeb2; --line: #3a3a3c; --panel: #2c2c2e;
+      --accent: #8ab4f8; --add: #1e3a26; --del: #3d1f1d; --warn: #ff8a80;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1c1e; --fg: #f2f2f7; --muted: #aeaeb2; --line: #3a3a3c; --panel: #2c2c2e;
+    --accent: #8ab4f8; --add: #1e3a26; --del: #3d1f1d; --warn: #ff8a80;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 15px/1.5 -apple-system, system-ui, sans-serif; }
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+           padding: 12px 20px; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 17px; margin: 0 auto 0 0; }
+  button { font: inherit; padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px;
+           background: var(--panel); color: var(--fg); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .layout { display: grid; grid-template-columns: 230px 1fr; min-height: calc(100vh - 56px); }
+  nav { border-right: 1px solid var(--line); padding: 8px; overflow-y: auto; max-height: 100vh; }
+  nav button { display: block; width: 100%; text-align: left; border: none; background: none;
+               padding: 6px 8px; border-radius: 6px; }
+  nav button.current { background: var(--panel); font-weight: 600; }
+  nav .done::after { content: " ✓"; color: var(--accent); }
+  main { padding: 20px; min-width: 0; }
+  .meta { color: var(--muted); font-size: 13px; }
+  h2 { font-size: 15px; margin: 22px 0 6px; }
+  .issue { white-space: pre-wrap; background: var(--panel); padding: 12px; border-radius: 8px;
+           max-height: 260px; overflow-y: auto; }
+  pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12.5px/1.45 ui-monospace,
+        Menlo, monospace; }
+  .scroll { background: var(--panel); padding: 12px; border-radius: 8px; max-height: 380px;
+            overflow: auto; }
+  .patches { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .patches > div { min-width: 0; }
+  .patches .scroll { max-height: 420px; }
+  .add { background: var(--add); display: block; }
+  .del { background: var(--del); display: block; }
+  .tests code { display: inline-block; margin: 2px 4px 2px 0; padding: 1px 6px;
+                background: var(--panel); border-radius: 4px; font-size: 13px; }
+  .form { margin-top: 22px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; }
+  .choice { display: block; padding: 6px 4px; }
+  .choice small { color: var(--muted); }
+  input[type="text"] { width: 100%; font: inherit; padding: 8px; border-radius: 6px;
+                       border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+  .actions { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+  #status { color: var(--warn); min-height: 1.4em; }
+  .hidden { display: none; }
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+    nav { max-height: 180px; border-right: none; border-bottom: 1px solid var(--line); }
+    .patches { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Dev labels: <span id="progress"></span></h1>
+  <button id="export">Export labels.jsonl</button>
+  <button id="import-button">Import labels.jsonl</button>
+  <input id="import" type="file" accept=".jsonl,.txt" class="hidden">
+</header>
+<div class="layout">
+  <nav id="list"></nav>
+  <main>
+    <div class="meta" id="position"></div>
+    <h2>Issue</h2>
+    <div class="issue" id="issue"></div>
+    <h2>Tests that must pass (FAIL_TO_PASS)</h2>
+    <div class="tests" id="tests"></div>
+    <h2>Agent's own check</h2>
+    <div class="meta" id="selfcheck"></div>
+    <h2>Trajectory (condensed)</h2>
+    <div class="scroll"><pre id="trajectory"></pre></div>
+    <h2>Patches</h2>
+    <div class="patches">
+      <div><div class="meta">Agent patch</div><div class="scroll" id="agent"></div></div>
+      <div><div class="meta">Gold patch (the correct fix)</div><div class="scroll" id="gold"></div></div>
+    </div>
+
+    <form class="form" id="form">
+      <h2 style="margin-top:0">Failure class (pick one, the first that fits wins)</h2>
+      <div id="classes"></div>
+      <div id="fooled-section" class="hidden">
+        <h2>The agent's own check passed, but the real tests failed. Why was the check fooled?</h2>
+        <div id="fooled"></div>
+      </div>
+      <h2>One-line note</h2>
+      <input type="text" id="note" maxlength="300" placeholder="Why this class, in one line">
+      <div class="actions">
+        <button type="button" id="prev">Previous</button>
+        <button type="button" class="primary" id="save">Save and next</button>
+        <span id="status"></span>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script>
+const DATA = /*DATA*/;
+const KEY = "grader-proof-dev-labels-v1";
+const items = DATA.items;
+let current = 0;
+let labels = loadLabels();
+
+function loadLabels() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY) || "{}");
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveLabels() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(labels));
+  } catch (error) {
+    setStatus("Browser storage is blocked. Export your labels before closing this page.");
+  }
+}
+
+function setStatus(text) {
+  document.getElementById("status").textContent = text;
+}
+
+function labeledCount() {
+  return items.filter((item) => labels[item.trajectory_id]).length;
+}
+
+function renderList() {
+  const list = document.getElementById("list");
+  list.replaceChildren(...items.map((item, index) => {
+    const button = document.createElement("button");
+    button.textContent = `${index + 1}. ${item.instance_id}`;
+    button.className = [
+      index === current ? "current" : "",
+      labels[item.trajectory_id] ? "done" : "",
+    ].join(" ").trim();
+    button.addEventListener("click", () => show(index));
+    return button;
+  }));
+  document.getElementById("progress").textContent = `${labeledCount()} of ${items.length} labeled`;
+}
+
+function patchNode(text) {
+  const pre = document.createElement("pre");
+  if (!text) {
+    pre.textContent = "(empty)";
+    return pre;
+  }
+  for (const line of text.split("\n")) {
+    const span = document.createElement("span");
+    span.textContent = line;
+    if (line.startsWith("+") && !line.startsWith("+++")) span.className = "add";
+    if (line.startsWith("-") && !line.startsWith("---")) span.className = "del";
+    pre.append(span, "\n");
+  }
+  return pre;
+}
+
+function renderClasses(selected) {
+  const box = document.getElementById("classes");
+  box.replaceChildren(...Object.entries(DATA.failure_classes).map(([name, description]) => {
+    const label = document.createElement("label");
+    label.className = "choice";
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "failure_class";
+    input.value = name;
+    input.checked = name === selected;
+    const bold = document.createElement("b");
+    bold.textContent = name;
+    const small = document.createElement("small");
+    small.textContent = ` : ${description}`;
+    label.append(input, " ", bold, small);
+    return label;
+  }));
+}
+
+function renderFooled(item, selected) {
+  const section = document.getElementById("fooled-section");
+  section.classList.toggle("hidden", !item.self_check_passed);
+  const box = document.getElementById("fooled");
+  box.replaceChildren(...Object.entries(DATA.fooled_reasons).map(([name, description]) => {
+    const label = document.createElement("label");
+    label.className = "choice";
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "fooled_reason";
+    input.value = name;
+    input.checked = name === selected;
+    const bold = document.createElement("b");
+    bold.textContent = name;
+    const small = document.createElement("small");
+    small.textContent = ` : ${description}`;
+    label.append(input, " ", bold, small);
+    return label;
+  }));
+}
+
+function show(index) {
+  current = index;
+  const item = items[index];
+  const saved = labels[item.trajectory_id] || {};
+  document.getElementById("position").textContent =
+    `Item ${index + 1} of ${items.length} (dev)  ·  ${item.instance_id}`;
+  document.getElementById("issue").textContent = item.issue;
+  const tests = document.getElementById("tests");
+  tests.replaceChildren(...item.fail_to_pass.map((name) => {
+    const code = document.createElement("code");
+    code.textContent = name;
+    return code;
+  }));
+  document.getElementById("selfcheck").textContent =
+    `The agent's own test passed: ${item.self_check_passed ? "yes" : "no"}. ` +
+    `Its own test tells original code from gold fix: ${item.self_check_separates_gold}.`;
+  document.getElementById("trajectory").textContent = item.trajectory;
+  document.getElementById("agent").replaceChildren(patchNode(item.agent_patch));
+  document.getElementById("gold").replaceChildren(patchNode(item.gold_patch));
+  renderClasses(saved.failure_class);
+  renderFooled(item, saved.fooled_reason);
+  document.getElementById("note").value = saved.note || "";
+  setStatus("");
+  renderList();
+}
+
+function readForm() {
+  const item = items[current];
+  const failureClass = document.querySelector('input[name="failure_class"]:checked');
+  const fooled = document.querySelector('input[name="fooled_reason"]:checked');
+  const note = document.getElementById("note").value.trim();
+  if (!failureClass) return { error: "Pick a failure class." };
+  if (!note) return { error: "Write a one-line note." };
+  if (item.self_check_passed && !fooled) return { error: "Pick why the self-check was fooled." };
+  return {
+    label: {
+      trajectory_id: item.trajectory_id,
+      failure_class: failureClass.value,
+      note,
+      fooled_reason: item.self_check_passed ? fooled.value : null,
+    },
+  };
+}
+
+document.getElementById("save").addEventListener("click", () => {
+  const result = readForm();
+  if (result.error) {
+    setStatus(result.error);
+    return;
+  }
+  labels[result.label.trajectory_id] = result.label;
+  saveLabels();
+  const next = items.findIndex((item, index) => index > current && !labels[item.trajectory_id]);
+  if (next !== -1) {
+    show(next);
+  } else {
+    show(current);
+    setStatus("All dev items are labeled. Export labels.jsonl next.");
+  }
+});
+
+document.getElementById("prev").addEventListener("click", () => {
+  if (current > 0) show(current - 1);
+});
+
+document.getElementById("export").addEventListener("click", () => {
+  const lines = items
+    .filter((item) => labels[item.trajectory_id])
+    .map((item) => JSON.stringify(labels[item.trajectory_id]));
+  const blob = new Blob([lines.join("\n") + "\n"], { type: "application/x-ndjson" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "human.jsonl";
+  link.click();
+  URL.revokeObjectURL(link.href);
+  setStatus(`Exported ${lines.length} labels. Move the file to labels/human.jsonl.`);
+});
+
+document.getElementById("import-button").addEventListener("click", () => {
+  document.getElementById("import").click();
+});
+
+document.getElementById("import").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const known = new Set(items.map((item) => item.trajectory_id));
+  let loaded = 0;
+  for (const line of (await file.text()).split("\n")) {
+    if (!line.trim()) continue;
+    const label = JSON.parse(line);
+    if (known.has(label.trajectory_id)) {
+      labels[label.trajectory_id] = label;
+      loaded += 1;
+    }
+  }
+  saveLabels();
+  show(current);
+  setStatus(`Imported ${loaded} labels.`);
+});
+
+show(current);
+</script>
+</body>
+</html>
