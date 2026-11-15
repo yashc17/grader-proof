@@ -16,9 +16,9 @@ does not apply there. That is its own outcome, not a rejection (ADR 0010, known 
 import argparse
 import json
 import shutil
-from collections.abc import Sequence
+from collections.abc import Collection, Iterator, Sequence
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 
@@ -41,27 +41,53 @@ class ReplayResult(BaseModel):
 RESULTS = TypeAdapter(list[ReplayResult])
 
 
-def export(job_dirs: Sequence[Path], set_dir: Path) -> int:
+def _trial_results(job_dirs: Sequence[Path]) -> Iterator[dict[str, Any]]:
+    """The `result.json` of every Harbor trial under `job_dirs`, at any depth.
+
+    Job-level `result.json` files name no trial, and files inside a saved workspace
+    (`artifacts/`) belong to the repository, so both are skipped.
+    """
+    for job_dir in job_dirs:
+        for path in sorted(job_dir.rglob("result.json")):
+            if "artifacts" in path.relative_to(job_dir).parts:
+                continue
+            result = json.loads(path.read_text())
+            if "trial_name" in result:
+                yield {**result, "directory": path.parent}
+
+
+def listed_baseline_trials(summary: Path) -> set[str]:
+    """The Baseline trials a `red_team summarize` file lists."""
+    trials = json.loads(summary.read_text())["trials"]
+    return {t["trial"] for t in trials if split_task_name(t["task"])[1] == "baseline"}
+
+
+def export(job_dirs: Sequence[Path], set_dir: Path, trials: Collection[str] | None = None) -> int:
     """Copies each Baseline trial's `patch.diff` into `set_dir/patches/<task>/<trial>.diff`.
 
-    Returns the number copied. Trials without a patch (the workspace was not saved) are named and
-    skipped.
+    Returns the number copied. Without `trials`, a trial without a patch (its workspace was not
+    saved) is named and skipped. With `trials`, only those are copied, and any of them without a
+    patch is an error, so a replay set never silently drops an attack.
     """
-    copied = 0
-    for result_file in sorted(p for d in job_dirs for p in d.glob("*/result.json")):
-        result = json.loads(result_file.read_text())
+    copied: set[str] = set()
+    for result in _trial_results(job_dirs):
+        trial = result["trial_name"]
         task, condition = split_task_name(result["task_name"])
-        if condition != "baseline":
+        if condition != "baseline" or (trials is not None and trial not in trials):
             continue
-        patch = result_file.parent / "patch.diff"
+        patch = result["directory"] / "patch.diff"
         if not patch.exists():
-            print(f"skipped {result['trial_name']}: no patch.diff")
+            print(f"skipped {trial}: no patch.diff")
             continue
-        target = set_dir / "patches" / task / f"{result['trial_name']}.diff"
+        if trial in copied:
+            raise SystemExit(f"{trial} has more than one result under {list(map(str, job_dirs))}")
+        target = set_dir / "patches" / task / f"{trial}.diff"
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(patch, target)
-        copied += 1
-    return copied
+        copied.add(trial)
+    if trials is not None and (missing := sorted(set(trials) - copied)):
+        raise SystemExit(f"listed trials without a patch.diff: {', '.join(missing)}")
+    return len(copied)
 
 
 def render_solve_sh() -> str:
@@ -131,6 +157,9 @@ def main() -> None:
     export_cmd = commands.add_parser("export", help="copy Baseline patches into a replay set")
     export_cmd.add_argument("jobs", nargs="+", type=Path, help="Harbor job directories")
     export_cmd.add_argument("--set", type=Path, required=True, dest="set_dir")
+    export_cmd.add_argument(
+        "--summary", type=Path, help="red_team summarize file: copy only its Baseline trials"
+    )
     prepare_cmd = commands.add_parser("prepare", help="copy a task with an agent patch")
     prepare_cmd.add_argument("task_dir", type=Path)
     prepare_cmd.add_argument("patch", type=Path)
@@ -143,7 +172,8 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "export":
-        print(f"copied {export(args.jobs, args.set_dir)} patches to {args.set_dir}")
+        trials = listed_baseline_trials(args.summary) if args.summary else None
+        print(f"copied {export(args.jobs, args.set_dir, trials)} patches to {args.set_dir}")
     elif args.command == "prepare":
         print(prepare(args.task_dir, args.patch, args.work_dir))
     else:

@@ -9,6 +9,7 @@ from grader_proof.replay import (
     ReplayResult,
     collect,
     export,
+    listed_baseline_trials,
     prepare,
     read_outcome,
     render_solve_sh,
@@ -157,3 +158,38 @@ def test_collect_writes_one_result_per_patch(tmp_path: Path):
     ]
     saved = json.loads((tmp_path / "out/a__h3.json").read_text())
     assert [ReplayResult.model_validate(r) for r in saved] == results
+
+
+def test_export_finds_trials_at_any_depth_but_not_jobs_or_saved_workspaces(tmp_path: Path):
+    runs = tmp_path / "runs"
+    red_team_trial(runs / "t1", "attempt-2", "a__baseline", "diff A\n")
+    red_team_trial(runs / "t1/attempt-2/artifacts/testbed", "pkg", "a__baseline", "not a trial")
+    (runs / "result.json").write_text(json.dumps({"n_total_trials": 1}))
+    assert export([runs], tmp_path / "set") == 1
+    assert (tmp_path / "set/patches/a/attempt-2.diff").read_text() == "diff A\n"
+
+
+def test_export_keeps_only_the_listed_trials(tmp_path: Path):
+    job = tmp_path / "job"
+    red_team_trial(job, "x1", "a__baseline", "diff A\n")
+    red_team_trial(job, "x2", "a__baseline", "diff B\n")
+    assert export([job], tmp_path / "set", trials={"x2"}) == 1
+    assert [p.name for p in (tmp_path / "set/patches/a").iterdir()] == ["x2.diff"]
+
+
+def test_export_fails_when_a_listed_trial_has_no_patch(tmp_path: Path):
+    job = tmp_path / "job"
+    red_team_trial(job, "x1", "a__baseline", None)
+    with pytest.raises(SystemExit, match="x1, x9"):
+        export([job], tmp_path / "set", trials={"x1", "x9"})
+
+
+def test_listed_baseline_trials_reads_the_red_team_summary(tmp_path: Path):
+    summary = tmp_path / "red_team.json"
+    trials = [
+        {"trial": "x1", "task": "a__baseline"},
+        {"trial": "x2", "task": "a__all"},
+        {"trial": "x3", "task": "b__baseline"},
+    ]
+    summary.write_text(json.dumps({"trials": trials}))
+    assert listed_baseline_trials(summary) == {"x1", "x3"}

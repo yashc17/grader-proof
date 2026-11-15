@@ -96,13 +96,15 @@ red-team-pilot:
 
 # Replay (issue #32). A replay set is results/replay/$(REPLAY_SET): the saved Baseline red-team
 # patches, regraded under every condition by the replay workflow on Actions.
-# `make replay-export JOBS="runs/<job> ..."` copies each Baseline trial's patch.diff into the set.
+# `make replay-export JOBS="runs/<job> ..." [SUMMARY=results/red_team.json]` copies each Baseline
+# trial's patch.diff into the set; with SUMMARY, exactly the Baseline trials that file lists.
 # Commit the set, push, then run: gh workflow run replay.yml --ref <branch> -f set=$(REPLAY_SET)
 # `make replay-results` downloads the latest replay run (or RUN=<run id>) into the set.
 REPLAY_SET ?= red-team
 replay-export:
 	@test -n "$(JOBS)" || { echo "usage: make replay-export JOBS=<job dirs> [REPLAY_SET=<set>]"; exit 2; }
-	uv run python -m grader_proof.replay export $(JOBS) --set results/replay/$(REPLAY_SET)
+	uv run python -m grader_proof.replay export $(JOBS) --set results/replay/$(REPLAY_SET) \
+		$(if $(SUMMARY),--summary $(SUMMARY))
 
 replay-results:
 	@test -n "$(REPLAY_SET)" || { echo "REPLAY_SET is empty"; exit 2; }
