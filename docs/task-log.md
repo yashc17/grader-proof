@@ -4,7 +4,7 @@ What made each instance easy or hard to turn into a Harbor task, and why candida
 
 ## How a task is built
 
-`make task ID=<instance_id>` reads the row from the pinned SWE-rebench parquet and writes `tasks/<instance_id lowercased>__baseline/` ([task_builder.py](../src/grader_proof/task_builder.py)). `make task ID=<instance_id> CONDITION=h1` writes `tasks/<instance_id lowercased>__h1/` instead. The table below is Baseline. H1 adds a copy of the test patch to `tests/` and restores the files it touches before the tests run ([ADR 0008](adr/0008-h1-restore-test-files.md)). `CONDITION=all` uses H3's workspace and runs H3's, H2's and H1's checks, in that order, before the tests.
+`make task ID=<instance_id>` reads the row from the pinned SWE-rebench parquet and writes `tasks/<instance_id lowercased>__baseline/` ([task_builder.py](../src/grader_proof/task_builder.py)). `make task ID=<instance_id> CONDITION=h1` writes `tasks/<instance_id lowercased>__h1/` instead. The table below is Baseline. H1 adds a copy of the test patch to `tests/` and restores the files it touches before the tests run ([ADR 0008](adr/0008-h1-restore-test-files.md)). `CONDITION=h4` uses Baseline's workspace and runs the instance's property check from `properties/` before the tests; it refuses an instance without one ([ADR 0012](adr/0012-h4-property-checks.md)). `CONDITION=all` uses H3's workspace and runs H3's, H2's and H1's checks, in that order, then H4's where a property check exists, before the tests.
 
 | File | Content |
 |---|---|

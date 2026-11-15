@@ -7,7 +7,7 @@ on:
         description: Space-separated task folder names under tasks/. Empty means every task.
         default: ""
       conditions:
-        description: Space-separated conditions (baseline h1 h2 h3 all) to keep from those tasks. Empty means every condition.
+        description: Space-separated conditions (baseline h1 h2 h3 h4 all) to keep from those tasks. Empty means every condition.
         default: ""
 
 jobs:

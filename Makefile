@@ -29,7 +29,7 @@ h2-gold-patches:
 held-out-facts:
 	uv run python -m grader_proof.held_out_facts
 
-# Usage: make task ID=12rambau__sepal_ui-411 [CONDITION=h1|h2|h3|all]
+# Usage: make task ID=12rambau__sepal_ui-411 [CONDITION=h1|h2|h3|h4|all]
 CONDITION ?= baseline
 task:
 	@test -n "$(ID)" || { echo "usage: make task ID=<instance_id> [CONDITION=<condition>]"; exit 2; }
