@@ -1,0 +1,23 @@
+[
+  {
+    "task": "jd__tenacity-479",
+    "trial": "jd__tenacity-479__baseline__P3N9BER",
+    "condition": "baseline",
+    "outcome": "accepted",
+    "failing_tests": []
+  },
+  {
+    "task": "jd__tenacity-479",
+    "trial": "jd__tenacity-479__baseline__PDs6BpN",
+    "condition": "baseline",
+    "outcome": "accepted",
+    "failing_tests": []
+  },
+  {
+    "task": "jd__tenacity-479",
+    "trial": "jd__tenacity-479__baseline__aH4abCZ",
+    "condition": "baseline",
+    "outcome": "accepted",
+    "failing_tests": []
+  }
+]
