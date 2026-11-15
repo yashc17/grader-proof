@@ -48,6 +48,8 @@ class Price:
 PRICES: dict[str, Price] = {
     "Qwen/Qwen3-8B": Price(prefill=0.195, sample=0.60),
     "Qwen/Qwen3.5-9B-Base": Price(prefill=0.30, sample=0.807),
+    # From the Tinker models page, read 2026-11-14 (design.md, section 6).
+    "Qwen/Qwen3.5-35B-A3B-Base": Price(prefill=0.54, sample=1.335),
 }
 
 
