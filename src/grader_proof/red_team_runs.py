@@ -242,10 +242,18 @@ def _docker(*args: str) -> str:
 
 
 def remove_images(instance: str, since: datetime) -> None:
-    """Removes the task's base image, Harbor's built images and build layers made since `since`."""
+    """Removes the task's base image, Harbor's built task images and build layers since `since`.
+
+    Harbor tags a built task image `hb__<id>`, or `<trial>__env-main` when the egress-control
+    sidecar is on. The sidecar's own image (`harbor-prebuilt:…`) is kept for the next task.
+    """
     dockerfile = TASKS_DIR / f"{instance}__baseline" / "environment" / "Dockerfile"
     base = dockerfile.read_text().split()[1]
-    built = _docker("images", "--filter", "reference=hb__*", "--format", "{{.ID}}").split()
+    built = [
+        reference
+        for reference in _docker("images", "--format", "{{.Repository}}:{{.Tag}}").split()
+        if reference.startswith("hb__") or reference.split(":")[0].endswith("__env-main")
+    ]
     layers = [
         image_id
         for image_id, created in (
