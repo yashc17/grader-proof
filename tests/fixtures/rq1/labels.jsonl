@@ -1,0 +1,6 @@
+{"trajectory_id": "fake-1", "failure_class": "model_failure", "note": "self-check only calls the happy path", "fooled_reason": "too_weak"}
+{"trajectory_id": "fake-2", "failure_class": "model_failure", "note": "asserts the value the patch returns", "fooled_reason": "mirrors_patch"}
+{"trajectory_id": "fake-3", "failure_class": "upstream_tests_wrong", "note": "tests a helper the issue never names", "fooled_reason": "wrong_target"}
+{"trajectory_id": "fake-4", "failure_class": "model_failure", "note": "never runs the reported input", "fooled_reason": "too_weak"}
+{"trajectory_id": "fake-5", "failure_class": "model_failure", "note": "self-check failed on its own patch", "fooled_reason": null}
+{"trajectory_id": "fake-6", "failure_class": "env_broken", "note": "no self-check; install failed", "fooled_reason": null}
