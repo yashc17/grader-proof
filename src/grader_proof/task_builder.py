@@ -9,6 +9,7 @@ differ in what `test.sh` does before it runs the tests:
 - h2: gives reward 0 if any test file or test config file changed (ADR 0009).
 - h3: the workspace holds only some FAIL_TO_PASS tests; it adds the held-out ones back first
   (ADR 0010).
+- all: H3's workspace, and H3's, H2's and H1's checks, in that order (`TECHNIQUES`).
 """
 
 import argparse
@@ -29,8 +30,21 @@ from grader_proof.held_out import HeldOut, hold_out
 DATASET_REVISION = "89cdfbab4ab1bd8f5a658bb212d1b63624f4f881"
 DATASET_URL = "https://huggingface.co/datasets/nebius/SWE-rebench/resolve/{revision}/data/{file}"
 DATASET_FILES = ("test-00000-of-00002.parquet", "test-00001-of-00002.parquet")
-Condition = Literal["baseline", "h1", "h2", "h3"]
+Condition = Literal["baseline", "h1", "h2", "h3", "all"]
 CONDITIONS: tuple[Condition, ...] = get_args(Condition)
+Technique = Literal["h1", "h2", "h3"]
+
+# The hardening techniques each condition runs before the tests, in this order. In All, H3 puts
+# the held-out tests back first, because H2 compares against the full test patch, and H2 runs
+# before H1, because H1's restore would hide the edits H2 looks for. H4 (#26) joins All when it
+# exists.
+TECHNIQUES: dict[Condition, tuple[Technique, ...]] = {
+    "baseline": (),
+    "h1": ("h1",),
+    "h2": ("h2",),
+    "h3": ("h3",),
+    "all": ("h3", "h2", "h1"),
+}
 AGENT_TIMEOUT_SEC = 1800
 VERIFIER_TIMEOUT_SEC = 600
 
@@ -298,24 +312,27 @@ def render_restore_held_out() -> str:
 """
 
 
-def render_checks(instance: Instance, condition: Condition) -> dict[str, str]:
-    """The bash functions that run before the tests, by name."""
-    match condition:
-        case "baseline":
-            return {}
+def render_check(instance: Instance, technique: Technique) -> tuple[str, str]:
+    """One technique's bash function: its name and its definition."""
+    match technique:
         case "h1":
-            return {RESTORE: render_restore(instance)}
+            return RESTORE, render_restore(instance)
         case "h2":
-            return {INTEGRITY: render_integrity_check(instance)}
+            return INTEGRITY, render_integrity_check(instance)
         case "h3":
-            return {RESTORE_HELD_OUT: render_restore_held_out()}
+            return RESTORE_HELD_OUT, render_restore_held_out()
+
+
+def render_checks(instance: Instance, condition: Condition) -> dict[str, str]:
+    """The bash functions that run before the tests, by name, in the order they run."""
+    return dict(render_check(instance, technique) for technique in TECHNIQUES[condition])
 
 
 def render_test_sh(instance: Instance, condition: Condition = "baseline") -> str:
     """Runs every upstream test after the condition's checks. Reward 1 only if all succeed.
 
     pytest exits 0 only if every listed test was collected and passed. Checks run in the order of
-    `render_checks`; H2 must come before H1, because H1's restore would undo the edits H2 looks for.
+    `TECHNIQUES`.
     """
     checks = render_checks(instance, condition)
     tests = " ".join(shlex.quote(t) for t in (*instance.fail_to_pass, *instance.pass_to_pass))
@@ -350,12 +367,13 @@ def _write_executable(path: Path, text: str) -> None:
 def write_task(instance: Instance, tasks_dir: Path, condition: Condition = "baseline") -> Path:
     """Writes the task folder, replacing any earlier version, and returns its path.
 
-    Under H3 the workspace's test patch is the visible part only. Raises ValueError if H3 can
-    hold out no test of this instance.
+    Under H3 and All the workspace's test patch is the visible part only. Raises ValueError if H3
+    can hold out no test of this instance.
     """
+    techniques = TECHNIQUES[condition]
     held_out = (
         hold_out(instance.instance_id, instance.test_patch, instance.fail_to_pass)
-        if condition == "h3"
+        if "h3" in techniques
         else None
     )
     task = tasks_dir / task_dir_name(instance.instance_id, condition)
@@ -369,7 +387,7 @@ def write_task(instance: Instance, tasks_dir: Path, condition: Condition = "base
     workspace_tests = held_out.visible_patch if held_out else instance.test_patch
     (task / "environment/upstream_tests.patch").write_text(workspace_tests)
     _write_executable(task / "tests/test.sh", render_test_sh(instance, condition))
-    if condition in ("h1", "h2"):
+    if "h1" in techniques or "h2" in techniques:
         (task / "tests/upstream_tests.patch").write_text(instance.test_patch)
     if held_out:
         (task / "tests/held_out_tests.patch").write_text(held_out.held_out_patch)

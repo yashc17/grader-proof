@@ -16,6 +16,7 @@ from grader_proof.task_builder import (
     render_dockerfile,
     render_integrity_check,
     render_restore,
+    render_restore_held_out,
     render_solve_sh,
     render_test_sh,
     task_dir_name,
@@ -374,3 +375,42 @@ def test_other_conditions_have_no_task_metadata(instance: Instance, tmp_path: Pa
             (write_task(instance, tmp_path, condition) / "task.toml").read_text()
         )
         assert "metadata" not in config
+
+
+def test_all_test_sh_runs_h3_then_h2_then_h1_then_the_tests():
+    """H2 compares against the full test patch, so H3 must put the held-out tests back first.
+    H1's restore would hide the edits H2 looks for, so H1 runs after H2."""
+    instance = Instance.from_row(H3_ROW)
+    script = render_test_sh(instance, "all")
+    assert (
+        f"if {RESTORE_HELD_OUT} && {INTEGRITY} && {RESTORE} && pytest --no-header -rA "
+        "tests/test_y.py::test_one 'tests/test_y.py::test_two[a]' tests/test_y.py::test_old; then"
+    ) in script
+    for check in (
+        render_restore_held_out(),
+        render_integrity_check(instance),
+        render_restore(instance),
+    ):
+        assert check in script
+
+
+def test_write_task_all_uses_the_h3_workspace_and_ships_both_patches(tmp_path: Path):
+    instance = Instance.from_row(H3_ROW)
+    h3 = write_task(instance, tmp_path, "h3")
+    everything = write_task(instance, tmp_path, "all")
+    assert everything == tmp_path / "org__repo-12__all"
+    for name in (
+        "instruction.md",
+        "task.toml",
+        "environment/Dockerfile",
+        "environment/upstream_tests.patch",
+        "tests/held_out_tests.patch",
+        "solution/gold.patch",
+    ):
+        assert (everything / name).read_text() == (h3 / name).read_text(), name
+    assert (everything / "tests/upstream_tests.patch").read_text() == instance.test_patch
+
+
+def test_write_task_all_refuses_an_instance_h3_refuses(instance: Instance, tmp_path: Path):
+    with pytest.raises(ValueError, match="no FAIL_TO_PASS test"):
+        write_task(instance, tmp_path, "all")
