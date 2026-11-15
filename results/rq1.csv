@@ -1,0 +1,5 @@
+fooled_reason,count,false_positives,share,share_low,share_high
+too_weak,14,29,0.4828,0.3139,0.6557
+wrong_target,3,29,0.1034,0.03581,0.2639
+mirrors_patch,7,29,0.2414,0.1222,0.4211
+other,5,29,0.1724,0.07598,0.3455
