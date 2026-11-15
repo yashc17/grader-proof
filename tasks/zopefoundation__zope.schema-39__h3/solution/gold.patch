@@ -1,0 +1,66 @@
+diff --git a/CHANGES.rst b/CHANGES.rst
+index ddf13a4..67b7b56 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -4,7 +4,14 @@ Changes
+ 4.5.1 (unreleased)
+ ------------------
+ 
+-- Nothing changed yet.
++- ``Field`` instances are hashable on Python 3, and use a defined
++  hashing algorithm that matches what equality does on all versions of
++  Python. Previously, on Python 2, fields were hashed based on their
++  identity. This violated the rule that equal objects should have
++  equal hashes, and now they do. Since having equal hashes does not
++  imply that the objects are equal, this is not expected to be a
++  compatibility problem. See `issue 36
++  <https://github.com/zopefoundation/zope.schema/issues/36>`_.
+ 
+ 
+ 4.5.0 (2017-07-10)
+diff --git a/src/zope/schema/_bootstrapfields.py b/src/zope/schema/_bootstrapfields.py
+index 8d5e7dc..e16d138 100644
+--- a/src/zope/schema/_bootstrapfields.py
++++ b/src/zope/schema/_bootstrapfields.py
+@@ -184,12 +184,9 @@ class Field(Attribute):
+             except StopValidation:
+                 pass
+ 
+-    def __eq__(self, other):
+-        # should be the same type
+-        if type(self) != type(other):
+-            return False
+-
+-        # should have the same properties
++    def __get_property_names_to_compare(self):
++        # Return the set of property names to compare, ignoring
++        # order
+         names = {}  # used as set of property names, ignoring values
+         for interface in providedBy(self):
+             names.update(getFields(interface))
+@@ -197,6 +194,25 @@ class Field(Attribute):
+         # order will be different always, don't compare it
+         if 'order' in names:
+             del names['order']
++        return names
++
++    def __hash__(self):
++        # Equal objects should have equal hashes;
++        # equal hashes does not imply equal objects.
++        value = (type(self),) + tuple(self.__get_property_names_to_compare())
++        return hash(value)
++
++    def __eq__(self, other):
++        # should be the same type
++        if type(self) != type(other):
++            return False
++
++        # should have the same properties
++        names = self.__get_property_names_to_compare()
++        # XXX: What about the property names of the other object? Even
++        # though it's the same type, it could theoretically have
++        # another interface that it `alsoProvides`.
++
+         for name in names:
+             if getattr(self, name) != getattr(other, name):
+                 return False

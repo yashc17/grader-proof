@@ -1,0 +1,236 @@
+diff --git a/tests/test_types_enum.py b/tests/test_types_enum.py
+index 95b3b3f..0a9c172 100644
+--- a/tests/test_types_enum.py
++++ b/tests/test_types_enum.py
+@@ -98,6 +98,66 @@ def test_enum_eof(TestEnum: type[Enum]) -> None:
+         TestEnum[None](b"\x01")
+ 
+ 
++def test_enum_same_value_different_type(cs: cstruct, compiled: bool) -> None:
++    cdef = """
++    enum Test16 : uint16 {
++        A = 0x1,
++        B = 0x2
++    };
++
++    enum Test24 : uint24 {
++        A = 0x1,
++        B = 0x2
++    };
++
++    enum Test32 : uint32 {
++        A = 0x1,
++        B = 0x2
++    };
++    """
++    cs.load(cdef, compiled=compiled)
++
++    obj = {
++        cs.Test16.A: "Test16.A",
++        cs.Test16.B: "Test16.B",
++        cs.Test24.A: "Test24.A",
++        cs.Test24.B: "Test24.B",
++    }
++
++    assert obj[cs.Test16.A] == "Test16.A"
++    assert obj[cs.Test16(2)] == "Test16.B"
++    assert obj[cs.Test24(1)] == "Test24.A"
++    assert obj[cs.Test24.B] == "Test24.B"
++
++    with pytest.raises(KeyError):
++        obj[cs.Test32.A]
++
++
++def test_enum_str_repr(TestEnum: type[Enum]) -> None:
++    assert repr(TestEnum.A) == "<Test.A: 1>"
++    assert str(TestEnum.A) == "Test.A"
++    assert repr(TestEnum(69)) == "<Test: 69>"
++    assert str(TestEnum(69)) == "Test.69"
++
++
++def test_enum_str_repr_in_struct(cs: cstruct, compiled: bool) -> None:
++    cdef = """
++    enum Test16 : uint16 {
++        A = 0x1,
++        B = 0x2
++    };
++
++    struct test {
++        Test16  a;
++    };
++    """
++    cs.load(cdef, compiled=compiled)
++
++    obj = cs.test(b"\x02\x00")
++    assert repr(obj) == "<test a=<Test16.B: 2>>"
++    assert str(obj) == "<test a=<Test16.B: 2>>"
++
++
+ def test_enum_struct(cs: cstruct, compiled: bool) -> None:
+     cdef = """
+     enum Test16 : uint16 {
+@@ -174,26 +234,6 @@ def test_enum_struct(cs: cstruct, compiled: bool) -> None:
+     assert cs.test_expr(buf).expr == [cs.Test16.A, cs.Test16.B]
+     assert cs.test_expr(size=1, expr=[cs.Test16.A, cs.Test16.B]).dumps() == buf
+ 
+-    obj = {
+-        cs.Test16.A: "Test16.A",
+-        cs.Test16.B: "Test16.B",
+-        cs.Test24.A: "Test24.A",
+-        cs.Test24.B: "Test24.B",
+-    }
+-
+-    assert obj[cs.Test16.A] == "Test16.A"
+-    assert obj[cs.Test16(2)] == "Test16.B"
+-    assert obj[cs.Test24(1)] == "Test24.A"
+-    assert obj[cs.Test24.B] == "Test24.B"
+-
+-    with pytest.raises(KeyError):
+-        obj[cs.Test32.A]
+-
+-    assert repr(cs.Test16.A) == "<Test16.A: 1>"
+-    assert str(cs.Test16.A) == "Test16.A"
+-    assert repr(cs.Test16(69)) == "<Test16: 69>"
+-    assert str(cs.Test16(69)) == "Test16.69"
+-
+ 
+ def test_enum_comments(cs: cstruct) -> None:
+     cdef = """
+@@ -259,7 +299,7 @@ def test_enum_name(cs: cstruct, compiled: bool) -> None:
+     Color = cs.Color
+     Pixel = cs.Pixel
+ 
+-    pixel = Pixel(b"\xFF\x0A\x01\x00\xAA\xBB\xCC\xDD")
++    pixel = Pixel(b"\xff\x0a\x01\x00\xaa\xbb\xcc\xdd")
+     assert pixel.x == 255
+     assert pixel.y == 10
+     assert pixel.color.name == "RED"
+@@ -267,7 +307,7 @@ def test_enum_name(cs: cstruct, compiled: bool) -> None:
+     assert pixel.color.value == 1
+     assert pixel.hue == 0xDDCCBBAA
+ 
+-    pixel = Pixel(b"\x00\x00\xFF\x00\xAA\xBB\xCC\xDD")
++    pixel = Pixel(b"\x00\x00\xff\x00\xaa\xbb\xcc\xdd")
+     assert pixel.color.name is None
+     assert pixel.color.value == 0xFF
+     assert repr(pixel.color) == "<Color: 255>"
+@@ -350,7 +390,7 @@ def test_enum_anonymous_struct(cs: cstruct, compiled: bool) -> None:
+ 
+     test = cs.test
+ 
+-    t = test(b"\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0A\x00\x00\x00")
++    t = test(b"\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0a\x00\x00\x00")
+     assert t.arr == [255, 0, 0, 10]
+ 
+ 
+diff --git a/tests/test_types_flag.py b/tests/test_types_flag.py
+index a326225..c9cc2c7 100644
+--- a/tests/test_types_flag.py
++++ b/tests/test_types_flag.py
+@@ -62,6 +62,42 @@ def test_flag_operator(TestFlag: type[Flag]) -> None:
+     assert TestFlag[2]([TestFlag.B, (TestFlag.A | TestFlag.B)]).dumps() == b"\x02\x03"
+ 
+ 
++def test_flag_str_repr(TestFlag: type[Flag]) -> None:
++    if PY_311:
++        assert repr(TestFlag.A | TestFlag.B) == "<Test.A|B: 3>"
++        assert str(TestFlag.A | TestFlag.B) == "Test.A|B"
++        assert repr(TestFlag(69)) == "<Test.A|68: 69>"
++        assert str(TestFlag(69)) == "Test.A|68"
++    else:
++        assert repr(TestFlag.A | TestFlag.B) == "<Test.B|A: 3>"
++        assert str(TestFlag.A | TestFlag.B) == "Test.B|A"
++        assert repr(TestFlag(69)) == "<Test.64|4|A: 69>"
++        assert str(TestFlag(69)) == "Test.64|4|A"
++
++
++def test_flag_str_repr_in_struct(cs: cstruct, compiled: bool) -> None:
++    cdef = """
++    flag Test : uint16 {
++        A,
++        B
++    };
++
++    struct test {
++        Test    a;
++    };
++    """
++    cs.load(cdef, compiled=compiled)
++
++    obj = cs.test(b"\x03\x00")
++
++    if PY_311:
++        assert repr(obj) == "<test a=<Test.A|B: 3>>"
++        assert str(obj) == "<test a=<Test.A|B: 3>>"
++    else:
++        assert repr(obj) == "<test a=<Test.B|A: 3>>"
++        assert str(obj) == "<test a=<Test.B|A: 3>>"
++
++
+ def test_flag_struct(cs: cstruct) -> None:
+     cdef = """
+     flag Test {
+@@ -101,20 +137,6 @@ def test_flag_struct(cs: cstruct) -> None:
+     assert bool(cs.Test(1)) is True
+ 
+     assert cs.Test.a | cs.Test.b == 3
+-    if PY_311:
+-        assert repr(cs.Test.c | cs.Test.d) == "<Test.c|d: 12>"
+-        assert str(cs.Test.c | cs.Test.d) == "Test.c|d"
+-        assert repr(cs.Test.a | cs.Test.b) == "<Test.a|b: 3>"
+-        assert str(cs.Test.a | cs.Test.b) == "Test.a|b"
+-        assert repr(cs.Test(69)) == "<Test.a|c|64: 69>"
+-        assert str(cs.Test(69)) == "Test.a|c|64"
+-    else:
+-        assert repr(cs.Test.c | cs.Test.d) == "<Test.d|c: 12>"
+-        assert str(cs.Test.c | cs.Test.d) == "Test.d|c"
+-        assert repr(cs.Test.a | cs.Test.b) == "<Test.b|a: 3>"
+-        assert str(cs.Test.a | cs.Test.b) == "Test.b|a"
+-        assert repr(cs.Test(69)) == "<Test.64|c|a: 69>"
+-        assert str(cs.Test(69)) == "Test.64|c|a"
+     assert cs.Test(2) == cs.Test.b
+     assert cs.Test(3) == cs.Test.a | cs.Test.b
+     assert cs.Test.c & 12 == cs.Test.c
+@@ -231,5 +253,5 @@ def test_flag_anonymous_struct(cs: cstruct, compiled: bool) -> None:
+ 
+     test = cs.test
+ 
+-    t = test(b"\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0A\x00\x00\x00")
++    t = test(b"\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0a\x00\x00\x00")
+     assert t.arr == [255, 0, 0, 10]
+diff --git a/tests/test_utils.py b/tests/test_utils.py
+index c733ab9..45166d9 100644
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+@@ -86,6 +86,31 @@ def test_dumpstruct_anonymous(cs: cstruct, capsys: pytest.CaptureFixture, compil
+     assert str(excinfo.value) == "Invalid output argument: 'generator' (should be 'print' or 'string')."
+ 
+ 
++def test_dumpstruct_enum(cs: cstruct, compiled: bool) -> None:
++    cdef = """
++    enum Test16 : uint16 {
++        A = 0x1,
++        B = 0x2
++    };
++
++    struct test {
++        Test16 testval;
++    };
++    """
++    cs.load(cdef, compiled=compiled)
++
++    assert verify_compiled(cs.test, compiled)
++
++    buf = b"\x02\x00"
++    obj = cs.test(buf)
++
++    out1 = utils.dumpstruct(cs.test, buf, output="string")
++    out2 = utils.dumpstruct(obj, output="string")
++
++    assert "<Test16.B: 2>" in out1
++    assert "<Test16.B: 2>" in out2
++
++
+ def test_pack_unpack() -> None:
+     endian = "little"
+     sign = False
