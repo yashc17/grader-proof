@@ -1,12 +1,16 @@
+from pathlib import Path
+
 import pytest
 
 from grader_proof.judge import JudgeResult, JudgeVerdict
-from grader_proof.labeling import FailureClass, Label, SampleItem, Split, write_sample
+from grader_proof.label_agreement import compare
+from grader_proof.labeling import Candidate, FailureClass, Label, SampleItem, Split, write_sample
 from grader_proof.rules_eval import load_labeled_items
 from grader_proof.triage_eval import (
     ABSTAIN,
     class_scores,
     evaluate,
+    load_relabels,
     majority_baseline,
     predictions,
     rules_alone,
@@ -138,3 +142,87 @@ def test_evaluate_scores_the_triager_and_both_baselines_and_lists_disagreements(
     assert disagreement.note == "note t3"
     assert disagreement.evidence == "wrong"
     assert report.self_agreement is None
+
+
+def test_evaluate_populates_self_agreement_from_relabels_when_provided():
+    items = [item(f"t{i}") for i in range(6)]
+    labels = [
+        label("t0", EB),
+        label("t1", MF),
+        label("t2", MF),
+        label("t3", TU),
+        label("t4", MF),
+        label("t5", UN),
+    ]
+    rule_verdicts = [rule(EB), None, None, None, rule(MF), None]
+    judge_results = [judged(MF), judged(MF), judged(MF, "wrong"), judged(TU)]
+    relabels = [label("t0", EB), label("t1", MF), label("t2", TU), label("t3", TU), label("t5", MF)]
+    report = evaluate(
+        items,
+        labels,
+        rule_verdicts,
+        judge_results,
+        labeler="Opus",
+        label_file="opus.jsonl",
+        relabels=relabels,
+        sample=items,
+    )
+    assert report.self_agreement == compare(labels, relabels, items).failure_class
+    assert report.self_agreement is not None
+    assert (report.self_agreement.items, report.self_agreement.scored) == (5, 4)
+    assert report.self_agreement.human_unclear == 1
+    assert report.self_agreement.agreement == pytest.approx(3 / 4)
+    without_sample = evaluate(
+        items,
+        labels,
+        rule_verdicts,
+        judge_results,
+        labeler="Opus",
+        label_file="opus.jsonl",
+        relabels=relabels,
+    )
+    assert without_sample.self_agreement == report.self_agreement
+
+
+def test_evaluate_requires_sample_when_relabeling_plain_candidates():
+    candidates = [Candidate(trajectory_id="t0", instance_id="i-t0", self_check_passed=None)]
+    with pytest.raises(ValueError, match="sample is required"):
+        evaluate(
+            candidates,
+            [label("t0", MF)],
+            [rule(MF)],
+            [],
+            labeler="Opus",
+            label_file="opus.jsonl",
+            relabels=[label("t0", MF)],
+        )
+
+
+def test_evaluate_leaves_self_agreement_none_when_relabels_are_empty():
+    items = [item("t0")]
+    labels = [label("t0", MF)]
+    report = evaluate(
+        items,
+        labels,
+        [rule(MF)],
+        [],
+        labeler="Opus",
+        label_file="opus.jsonl",
+        relabels=[],
+        sample=items,
+    )
+    assert report.self_agreement is None
+
+
+def test_load_relabels_returns_none_when_missing_or_empty(tmp_path: Path):
+    assert load_relabels(None) is None
+    assert load_relabels(tmp_path / "missing.jsonl") is None
+    assert load_relabels(tmp_path) is None
+    empty = tmp_path / "empty.jsonl"
+    empty.write_text("")
+    assert load_relabels(empty) is None
+
+    relabel_file = tmp_path / "relabels.jsonl"
+    row = label("t0", MF)
+    relabel_file.write_text(row.model_dump_json() + "\n")
+    assert load_relabels(relabel_file) == [row]

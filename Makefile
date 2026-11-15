@@ -84,11 +84,12 @@ judge-dev:
 # Scores the frozen triager on the 70 test labels; writes results/triage_test.json (issue #14).
 # Refuses to run until every test item has a label. Needs the label file, the data from
 # `make data-facts` and, for calls not in cache/llm/, TINKER_API_KEY. Asks before calling the model.
-# Usage: make triage-eval [LABELS=labels/opus_test.jsonl] [LABELER="Claude Opus 5.5 labeler session"]
+# Usage: make triage-eval [LABELS=labels/opus_test.jsonl] [RELABELS=labels/opus_test_relabel.jsonl] [LABELER="Claude Opus 5.5 labeler session"]
 LABELS ?= labels/opus_test.jsonl
+RELABELS ?= labels/opus_test_relabel.jsonl
 LABELER ?= Claude Opus 5.5 labeler session
 triage-eval:
-	uv run python -m grader_proof.triage_eval --labels "$(LABELS)" --labeler "$(LABELER)"
+	uv run python -m grader_proof.triage_eval --labels "$(LABELS)" --relabels "$(RELABELS)" --labeler "$(LABELER)"
 
 # Class shares from the frozen triager on 1,000 trajectories outside the labeling sample; writes
 # results/triage_prevalence.json and .md (issue #15). Same needs and cost prompt as triage-eval.
@@ -162,7 +163,7 @@ rq1:
 # failure-class agreement with a Wilson 95% interval and Cohen's kappa with a 95% bootstrap
 # interval (`unclear` left out and counted, ADR 0003), the class pairs they disagree on, and
 # fooled-reason agreement. Writes results/agreement_$(NAME).json and .md.
-# Self-agreement: make label-agreement A=labels/opus_test.jsonl B=labels/relabel.jsonl NAME=<name>
+# Self-agreement: make label-agreement A=labels/opus_test.jsonl B=labels/opus_test_relabel.jsonl NAME=test_opus_self_agreement
 A ?= labels/human.jsonl
 B ?= labels/opus_dev.jsonl
 NAME ?= dev_opus_vs_maintainer
