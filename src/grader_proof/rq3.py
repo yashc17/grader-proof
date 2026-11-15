@@ -379,7 +379,7 @@ def render_markdown(rows: Sequence[Row], disagreements: Sequence[tuple[Attempt, 
     )
     check = (
         "\n## Flakiness check\n\nBaseline patches whose replayed Baseline grade differs from "
-        f"the adaptive reward: {len(disagreements)}\n\n{listed}"
+        f"the adaptive reward: {len(disagreements)}\n" + (f"\n{listed}" if listed else "")
     )
     title = "# RQ3: exploit rates by condition\n\n"
     return title + header + "\n".join(lines) + "\n" + LEGEND + check
