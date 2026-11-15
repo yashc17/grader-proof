@@ -21,6 +21,8 @@ class Request:
     temperature: float
     seed: int
     prompt_version: str
+    # False sends the message contents as one plain-text prompt for a base model to continue.
+    chat_template: bool = True
 
 
 @dataclass(frozen=True)
@@ -45,11 +47,20 @@ class Price:
 # Tinker list prices, dated 2026-10-19. Add a model here before estimating its cost.
 PRICES: dict[str, Price] = {
     "Qwen/Qwen3-8B": Price(prefill=0.195, sample=0.60),
+    "Qwen/Qwen3.5-9B-Base": Price(prefill=0.30, sample=0.807),
 }
 
 
 def request_key(request: Request) -> str:
-    canonical = json.dumps(asdict(request), sort_keys=True, separators=(",", ":"))
+    """SHA-256 of the request's canonical JSON.
+
+    `chat_template` is left out when it has its default, so chat requests keep the keys they had
+    before the field existed and their committed cache entries still match.
+    """
+    fields = asdict(request)
+    if request.chat_template:
+        del fields["chat_template"]
+    canonical = json.dumps(fields, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 

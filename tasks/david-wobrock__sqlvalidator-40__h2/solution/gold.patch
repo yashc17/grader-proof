@@ -1,0 +1,77 @@
+diff --git a/sqlvalidator/grammar/lexer.py b/sqlvalidator/grammar/lexer.py
+index d48cf96..039d70c 100644
+--- a/sqlvalidator/grammar/lexer.py
++++ b/sqlvalidator/grammar/lexer.py
+@@ -35,6 +35,7 @@ from sqlvalidator.grammar.sql import (
+     OrderByClause,
+     OrderByItem,
+     Parenthesis,
++    ReplaceClause,
+     SelectStatement,
+     String,
+     Table,
+@@ -895,6 +896,19 @@ class ExpressionParser:
+             expression = ExceptClause(expression, arguments)
+             next_token = next(tokens, None)
+ 
++        if lower(next_token) == "replace":
++            opening_parenthesis = next(tokens, None)
++            if opening_parenthesis != "(":
++                raise ParsingError("expected '('")
++            argument_tokens = get_tokens_until_closing_parenthesis(tokens)
++            arguments = ExpressionListParser.parse(iter(argument_tokens))
++            for arg in arguments:
++                assert (
++                    isinstance(arg, Alias) and arg.with_as is True
++                ), "SELECT * REPLACE arguments must be alias with AS"
++            expression = ReplaceClause(expression, arguments)
++            next_token = next(tokens, None)
++
+         if (
+             next_token is not None
+             and next_token != ")"
+diff --git a/sqlvalidator/grammar/sql.py b/sqlvalidator/grammar/sql.py
+index 71ced3c..d2c3701 100644
+--- a/sqlvalidator/grammar/sql.py
++++ b/sqlvalidator/grammar/sql.py
+@@ -1529,7 +1529,9 @@ class Negation(Expression):
+         return bool
+ 
+ 
+-class ExceptClause(Expression):
++class SelectAllClause(Expression):
++    KEYWORD = ""
++
+     def __init__(self, expression, args):
+         super().__init__(expression)
+         self.args = args
+@@ -1540,7 +1542,7 @@ class ExceptClause(Expression):
+         )
+ 
+     def __str__(self):
+-        except_str = "{} EXCEPT (".format(transform(self.value))
++        except_str = "{} {} (".format(transform(self.value), self.KEYWORD)
+         if len(self.args) > 1:
+             except_str += "\n {}\n".format(",\n ".join(map(transform, self.args)))
+         elif except_str:
+@@ -1548,6 +1550,20 @@ class ExceptClause(Expression):
+         return except_str + ")"
+ 
+ 
++class ExceptClause(SelectAllClause):
++    KEYWORD = "EXCEPT"
++
++
++class ReplaceClause(SelectAllClause):
++    KEYWORD = "REPLACE"
++
++    def validate(self, known_fields: Set[_FieldInfo]) -> list:
++        errors = super().validate(known_fields)
++        for arg in self.args:
++            errors += arg.alias.validate(known_fields)
++        return errors
++
++
+ class Case(Expression):
+     def __init__(self, expression, when_then, else_expression):
+         super().__init__(expression)

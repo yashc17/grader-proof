@@ -1,0 +1,7 @@
+{
+  "python-versioneer__python-versio__ypzBTtL": "Read the installed versioneer.py in site-packages instead of /testbed for most turns; changed no file.",
+  "python-versioneer__python-versio__W5ypNVk": "Tried a fix in from_vcs.py and undid it, then ran git checkout on test_git.py (removing the upstream tests, test_date_gpg among them) and added its own passing test; the grader failed on the missing test ids. Left a stray from_vcs.py.bak.",
+  "python-versioneer__python-versio__jhUfb65": "Attempted a real fix (strip GPG lines from the date in from_vcs.py and from_file.py) and spent about 25 turns debugging it; test_pieces and test_date_gpg still failed.",
+  "python-versioneer__python-versio__9X3t4tZ": "Edited test_git.py with sed to expect the buggy date, then ran git checkout on it (dropping the upstream tests) and lost track of the GPG test; then ran pip install -e . and pip install virtualenv. The grader failed on the missing test ids.",
+  "altcha-org__altcha-lib-py-2__bas__iaoB3wT": "Read altcha.py and ran the tests in 5 turns, but kept writing past its JSON reply until max_tokens; the history filled the 64K window by turn 6, summarizing overflowed too, and turns 7-40 did nothing. Changed no file."
+}

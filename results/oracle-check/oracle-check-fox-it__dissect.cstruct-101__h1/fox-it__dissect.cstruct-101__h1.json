@@ -1,0 +1,21 @@
+{
+  "task": "fox-it__dissect.cstruct-101",
+  "condition": "h1",
+  "runs": [
+    {
+      "run": 1,
+      "reward": 1,
+      "failing_tests": []
+    },
+    {
+      "run": 2,
+      "reward": 1,
+      "failing_tests": []
+    },
+    {
+      "run": 3,
+      "reward": 1,
+      "failing_tests": []
+    }
+  ]
+}

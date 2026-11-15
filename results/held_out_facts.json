@@ -1,0 +1,33 @@
+{
+  "all_instances": {
+    "instances": 21336,
+    "one_fail_to_pass_test": 9320,
+    "one_fail_to_pass_function": 10511,
+    "several_functions_half_held_out": 5553,
+    "several_functions_refused": 5272,
+    "patch_checks": {
+      "ok": 5553
+    }
+  },
+  "trajectory_instances": {
+    "instances": 6306,
+    "one_fail_to_pass_test": 3789,
+    "one_fail_to_pass_function": 4237,
+    "several_functions_half_held_out": 1054,
+    "several_functions_refused": 1015,
+    "patch_checks": {
+      "ok": 1054
+    }
+  },
+  "trajectory_instances_with_image": {
+    "instances": 5731,
+    "one_fail_to_pass_test": 3413,
+    "one_fail_to_pass_function": 3825,
+    "several_functions_half_held_out": 967,
+    "several_functions_refused": 939,
+    "patch_checks": {
+      "ok": 967
+    }
+  },
+  "failed_checks": []
+}

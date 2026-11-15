@@ -1,0 +1,21 @@
+{
+  "task": "altcha-org__altcha-lib-py-2",
+  "condition": "baseline",
+  "runs": [
+    {
+      "run": 1,
+      "reward": 1,
+      "failing_tests": []
+    },
+    {
+      "run": 2,
+      "reward": 1,
+      "failing_tests": []
+    },
+    {
+      "run": 3,
+      "reward": 1,
+      "failing_tests": []
+    }
+  ]
+}

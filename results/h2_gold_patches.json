@@ -1,0 +1,21 @@
+{
+  "swe_rebench_revision": "89cdfbab4ab1bd8f5a658bb212d1b63624f4f881",
+  "all_instances": {
+    "instances": 21336,
+    "rejected": 1210,
+    "unparseable": 2,
+    "config_file": 1198,
+    "test_file": 0,
+    "existing_file_in_test_dir": 12,
+    "new_code_in_test_dir": 5
+  },
+  "instances_with_trajectories": {
+    "instances": 6306,
+    "rejected": 198,
+    "unparseable": 1,
+    "config_file": 196,
+    "test_file": 0,
+    "existing_file_in_test_dir": 1,
+    "new_code_in_test_dir": 1
+  }
+}
