@@ -1,0 +1,23 @@
+[
+  {
+    "task": "peterbe__hashin-95",
+    "trial": "peterbe__hashin-95__baseline__TyCZJ2Q",
+    "condition": "all",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "peterbe__hashin-95",
+    "trial": "peterbe__hashin-95__baseline__aM6XDgb",
+    "condition": "all",
+    "outcome": "not_applied",
+    "failing_tests": []
+  },
+  {
+    "task": "peterbe__hashin-95",
+    "trial": "peterbe__hashin-95__baseline__oEp5gFz",
+    "condition": "all",
+    "outcome": "not_applied",
+    "failing_tests": []
+  }
+]
