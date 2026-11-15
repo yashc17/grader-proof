@@ -1,0 +1,29 @@
+diff --git a/src/git/from_keywords.py b/src/git/from_keywords.py
+index ea7c040..5a46935 100644
+--- a/src/git/from_keywords.py
++++ b/src/git/from_keywords.py
+@@ -40,6 +40,10 @@ def git_versions_from_keywords(keywords, tag_prefix, verbose):
+         raise NotThisMethod("no keywords at all, weird")
+     date = keywords.get("date")
+     if date is not None:
++        # Use only the last line.  Previous lines may contain GPG signature
++        # information.
++        date = date.splitlines()[-1]
++
+         # git-2.2.0 added "%cI", which expands to an ISO-8601 -compliant
+         # datestamp. However we prefer "%ci" (which expands to an "ISO-8601
+         # -like" string, which we must then edit to make compliant), because
+diff --git a/src/git/from_vcs.py b/src/git/from_vcs.py
+index c7db10d..e007aa4 100644
+--- a/src/git/from_vcs.py
++++ b/src/git/from_vcs.py
+@@ -100,6 +100,9 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
+     # commit date: see ISO-8601 comment in git_versions_from_keywords()
+     date = run_command(GITS, ["show", "-s", "--format=%ci", "HEAD"],
+                        cwd=root)[0].strip()
++    # Use only the last line.  Previous lines may contain GPG signature
++    # information.
++    date = date.splitlines()[-1]
+     pieces["date"] = date.strip().replace(" ", "T", 1).replace(" ", "", 1)
+ 
+     return pieces

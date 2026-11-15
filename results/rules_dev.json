@@ -1,0 +1,42 @@
+{
+ "items": 30,
+ "fired": 8,
+ "correct": 8,
+ "coverage": {
+  "successes": 8,
+  "n": 30,
+  "rate": 0.26666666666666666,
+  "low": 0.14182663319596325,
+  "high": 0.44447961695188887
+ },
+ "precision": {
+  "successes": 8,
+  "n": 8,
+  "rate": 1.0,
+  "low": 0.67559243511612,
+  "high": 1.0
+ },
+ "rules": {
+  "no_network": {
+   "fired": 0,
+   "correct": 0
+  },
+  "own_install_failed": {
+   "fired": 0,
+   "correct": 0
+  },
+  "own_package_import_error": {
+   "fired": 0,
+   "correct": 0
+  },
+  "turn_limit": {
+   "fired": 8,
+   "correct": 8
+  }
+ },
+ "labels": {
+  "model_failure": 23,
+  "unclear": 2,
+  "task_underspecified": 5
+ }
+}

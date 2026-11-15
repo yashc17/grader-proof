@@ -27,6 +27,8 @@ build-backend = "uv_build"
 
 [tool.ruff]
 line-length = 100
+# Generated tasks hold upstream text verbatim, including code in problem statements.
+extend-exclude = ["tasks"]
 target-version = "py312"
 
 [tool.ruff.lint]

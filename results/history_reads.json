@@ -1,0 +1,48 @@
+{
+  "trajectories": {
+    "resolved": 32161,
+    "unresolved": 34913
+  },
+  "any_read": {
+    "resolved": 391,
+    "unresolved": 638
+  },
+  "by_kind": {
+    "all_refs": {
+      "resolved": 332,
+      "unresolved": 538
+    },
+    "remote_ref": {
+      "resolved": 93,
+      "unresolved": 129
+    },
+    "reflog": {
+      "resolved": 0,
+      "unresolved": 1
+    },
+    "sha": {
+      "resolved": 3618,
+      "unresolved": 4294
+    }
+  },
+  "examples": {
+    "sha": [
+      "cd /workspace/alexgolec__tda-api__0.3 && git show c9a9a9e0ff215aec66af2a622170e0aad8558a5f --stat",
+      "cd /workspace/alexgolec__tda-api__0.3 && git show 035a47f --stat",
+      "cd /workspace/alexgolec__tda-api__0.3 && git show 035a47f -- tda/auth.py"
+    ],
+    "all_refs": [
+      "cd /workspace/mir-dataset-loaders__mirdata__0.2 && git log --oneline --grep=\"207\" --grep=\"tempo\" --grep=\"dataset\" --all",
+      "cd /workspace/LSSTDESC__gcr-catalogs__1.0 && git log --oneline --grep=\"public\" --grep=\"release\" --all | head -10",
+      "cd /workspace/Textualize__textual__0.52 && git log --oneline --grep=\"directory\" --grep=\"tree\" --grep=\"reload\" --all"
+    ],
+    "remote_ref": [
+      "cd /workspace/marshmallow-code__marshmallow__3.9 && git branch -a",
+      "cd /workspace/scipp__plopp__23.01 && git remote -v",
+      "cd /workspace/lincc-frameworks__nested-pandas__0.1 && git branch -a"
+    ],
+    "reflog": [
+      "cd /workspace/zopefoundation__persistent__4.5 && git reflog | head -20"
+    ]
+  }
+}
