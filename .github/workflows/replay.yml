@@ -1,9 +1,6 @@
 name: replay
 
 on:
-  # Temporary: workflow_dispatch needs the file on main, so the pilot smoke test runs on push.
-  push:
-    branches: [m3/32-replay]
   workflow_dispatch:
     inputs:
       set:
@@ -22,8 +19,8 @@ jobs:
       - uses: actions/checkout@v7.0.1
       - id: list
         env:
-          SET: ${{ inputs.set || 'pilot' }}
-          CONDITIONS: ${{ inputs.conditions || 'baseline h1 h2 h3 h4 all' }}
+          SET: ${{ inputs.set }}
+          CONDITIONS: ${{ inputs.conditions }}
         run: |
           test -d "results/replay/$SET/patches" || { echo "no patches in results/replay/$SET"; exit 1; }
           names=$(for dir in results/replay/"$SET"/patches/*/; do
@@ -43,7 +40,7 @@ jobs:
       matrix:
         task: ${{ fromJSON(needs.list.outputs.tasks) }}
     env:
-      SET_DIR: results/replay/${{ inputs.set || 'pilot' }}
+      SET_DIR: results/replay/${{ inputs.set }}
       FOLDER: ${{ matrix.task }}
     steps:
       - uses: actions/checkout@v7.0.1
