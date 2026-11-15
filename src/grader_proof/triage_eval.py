@@ -32,7 +32,16 @@ from grader_proof.judge import (
     load_prompt,
 )
 from grader_proof.judge_eval import KappaScore, load_tasks, score
-from grader_proof.labeling import FAILURE_CLASSES, SAMPLE_PATH, Candidate, Label
+from grader_proof.label_agreement import compare
+from grader_proof.labeling import (
+    FAILURE_CLASSES,
+    SAMPLE_PATH,
+    Candidate,
+    Label,
+    SampleItem,
+    read_labels,
+    read_sample,
+)
 from grader_proof.llm import PRICES, CachedClient, ask_on_terminal
 from grader_proof.rules_eval import Report as RulesReport
 from grader_proof.rules_eval import evaluate as evaluate_rules
@@ -42,6 +51,7 @@ from grader_proof.triage_rules import Verdict, triage
 
 RESULTS_PATH = Path("results/triage_test.json")
 LABELS_PATH = Path("labels/opus_test.jsonl")
+RELABELS_PATH = Path("labels/opus_test_relabel.jsonl")
 LABELER = "Claude Opus 5.5 labeler session"
 # The rules-alone baseline's class for an item every rule abstains on. It never matches a label.
 ABSTAIN = "abstain"
@@ -92,7 +102,7 @@ class Report(Frozen):
     rules: RulesReport  # coverage, and precision on the items a rule fires on
     majority_class: str
     majority: KappaScore
-    self_agreement: KappaScore | None  # from the maintainer's re-labels (#10), once they exist
+    self_agreement: KappaScore | None  # from the blind re-labels (#10, ADR 0015), once they exist
     judge_outcomes: dict[str, int]
     judge_dollars: float
     disagreements: list[Disagreement]
@@ -196,6 +206,29 @@ def judge_dollars(results: Sequence[JudgeResult]) -> float:
     return (prompt * price.prefill + completion * price.sample) / 1e6
 
 
+def load_relabels(path: Path | None) -> list[Label] | None:
+    """Reads the blind re-labels when the file exists and is non-empty; otherwise None."""
+    if path is None or not path.is_file():
+        return None
+    return read_labels(path) or None
+
+
+def _self_agreement(
+    items: Sequence[Candidate],
+    labels: Sequence[Label],
+    relabels: Sequence[Label] | None,
+    sample: Sequence[SampleItem] | None,
+) -> KappaScore | None:
+    if not relabels:
+        return None
+    if sample is None:
+        sample_items = [item for item in items if isinstance(item, SampleItem)]
+        if len(sample_items) != len(items):
+            raise ValueError("sample is required when relabels are provided")
+        sample = sample_items
+    return compare(labels, relabels, sample).failure_class
+
+
 def evaluate(
     items: Sequence[Candidate],
     labels: Sequence[Label],
@@ -203,6 +236,8 @@ def evaluate(
     judge_results: Sequence[JudgeResult],
     labeler: str,
     label_file: str,
+    relabels: Sequence[Label] | None = None,
+    sample: Sequence[SampleItem] | None = None,
 ) -> Report:
     humans = [label.failure_class for label in labels]
     found = predictions(rule_verdicts, judge_results)
@@ -221,7 +256,7 @@ def evaluate(
         rules=evaluate_rules(list(zip(labels, rule_verdicts, strict=True))),
         majority_class=majority[0],
         majority=score(list(zip(humans, majority, strict=True))),
-        self_agreement=None,
+        self_agreement=_self_agreement(items, labels, relabels, sample),
         judge_outcomes=dict(Counter(r.outcome for r in judge_results)),
         judge_dollars=judge_dollars(judge_results),
         disagreements=[
@@ -254,6 +289,12 @@ def describe(name: str, result: KappaScore) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Score the frozen triager on the test labels.")
     parser.add_argument("--labels", type=Path, default=LABELS_PATH, help="the test label file")
+    parser.add_argument(
+        "--relabels",
+        type=Path,
+        default=RELABELS_PATH,
+        help="the blind re-label file for self-agreement",
+    )
     parser.add_argument("--labeler", default=LABELER, help="who wrote the labels")
     args = parser.parse_args()
     try:
@@ -262,10 +303,20 @@ def main() -> None:
         sys.exit(f"{error}\nThe triager runs on the test items only once every one is labeled.")
     items = [item for item, _ in labeled]
     labels = [label for _, label in labeled]
+    relabels = load_relabels(args.relabels)
+    sample = read_sample(SAMPLE_PATH) if relabels else None
     ran = run_triager(CachedClient(TinkerTransport()), items)
     if ran is None:
         sys.exit("Batch declined; nothing written.")
-    report = evaluate(items, labels, *ran, labeler=args.labeler, label_file=str(args.labels))
+    report = evaluate(
+        items,
+        labels,
+        *ran,
+        labeler=args.labeler,
+        label_file=str(args.labels),
+        relabels=relabels,
+        sample=sample,
+    )
     RESULTS_PATH.parent.mkdir(exist_ok=True)
     RESULTS_PATH.write_text(report.model_dump_json(indent=1) + "\n")
     rules = report.rules
@@ -279,6 +330,8 @@ def main() -> None:
         + ("none fired" if precision is None else f"{precision.successes} of {precision.n}")
     )
     print(describe(f"always {report.majority_class}", report.majority))
+    if report.self_agreement is not None:
+        print(describe("self-agreement", report.self_agreement))
     print(
         f"unclear: labels {report.triager.human_unclear}, triager {report.triager.triager_unclear}"
     )

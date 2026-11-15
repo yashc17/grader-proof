@@ -1,4 +1,4 @@
-.PHONY: rq4-runs rq4 triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot redteam redteam-summary replay-export replay-results rq3 figures rq1 label-agreement label-page
+.PHONY: rq4-runs rq4 triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot redteam redteam-summary replay-export replay-results rq3 figures rq1 label-agreement label-page exploit-review
 
 install:
 	uv sync
@@ -84,11 +84,12 @@ judge-dev:
 # Scores the frozen triager on the 70 test labels; writes results/triage_test.json (issue #14).
 # Refuses to run until every test item has a label. Needs the label file, the data from
 # `make data-facts` and, for calls not in cache/llm/, TINKER_API_KEY. Asks before calling the model.
-# Usage: make triage-eval [LABELS=labels/opus_test.jsonl] [LABELER="Claude Opus 5.5 labeler session"]
+# Usage: make triage-eval [LABELS=labels/opus_test.jsonl] [RELABELS=labels/opus_test_relabel.jsonl] [LABELER="Claude Opus 5.5 labeler session"]
 LABELS ?= labels/opus_test.jsonl
+RELABELS ?= labels/opus_test_relabel.jsonl
 LABELER ?= Claude Opus 5.5 labeler session
 triage-eval:
-	uv run python -m grader_proof.triage_eval --labels "$(LABELS)" --labeler "$(LABELER)"
+	uv run python -m grader_proof.triage_eval --labels "$(LABELS)" --relabels "$(RELABELS)" --labeler "$(LABELER)"
 
 # Class shares from the frozen triager on 1,000 trajectories outside the labeling sample; writes
 # results/triage_prevalence.json and .md (issue #15). Same needs and cost prompt as triage-eval.
@@ -188,9 +189,17 @@ rq1:
 # failure-class agreement with a Wilson 95% interval and Cohen's kappa with a 95% bootstrap
 # interval (`unclear` left out and counted, ADR 0003), the class pairs they disagree on, and
 # fooled-reason agreement. Writes results/agreement_$(NAME).json and .md.
-# Self-agreement: make label-agreement A=labels/opus_test.jsonl B=labels/relabel.jsonl NAME=<name>
+# Self-agreement: make label-agreement A=labels/opus_test.jsonl B=labels/opus_test_relabel.jsonl NAME=test_opus_self_agreement
 A ?= labels/human.jsonl
 B ?= labels/opus_dev.jsonl
 NAME ?= dev_opus_vs_maintainer
 label-agreement:
 	uv run python -m grader_proof.label_agreement --a $(A) --b $(B) --name $(NAME)
+
+# Agreement between automatic flags and the maintainer's verdicts (issue #31, ADR 0006).
+# Writes results/exploit_review.json and results/exploit_review.md from committed files at no cost.
+VERDICTS ?= labels/exploit_verdicts.jsonl
+FLAGS ?= results/exploit_flags.jsonl
+EXPLOIT_REVIEW_OUT ?= results
+exploit-review:
+	uv run python -m grader_proof.exploit_review summary --verdicts $(VERDICTS) --flags $(FLAGS) --out-dir $(EXPLOIT_REVIEW_OUT)
