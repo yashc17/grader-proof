@@ -179,7 +179,7 @@ def compute_facts() -> tuple[dict[str, object], pl.DataFrame, pl.DataFrame]:
                 (per_instance["n_resolved"] > 0) & (per_instance["n_resolved"] < per_instance["n"])
             ).sum()
         ),
-        "exit_category": dict(df["exit_category"].value_counts().iter_rows()),
+        "exit_category": dict(df["exit_category"].value_counts().sort("exit_category").iter_rows()),
         "with_self_check": int(df["pred_passes_gen_tests"].is_not_null().sum()),
         "self_check_table": table,
         "self_check_rates": self_check_rates(table),

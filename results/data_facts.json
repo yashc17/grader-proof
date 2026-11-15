@@ -15,10 +15,10 @@
   "resolved_rate": 0.4794853445448311,
   "instances_with_resolved_and_unresolved": 1741,
   "exit_category": {
-    "submit": 60739,
+    "infrastructure_error": 80,
     "stuck_in_loop": 252,
-    "turn_limit": 6003,
-    "infrastructure_error": 80
+    "submit": 60739,
+    "turn_limit": 6003
   },
   "with_self_check": 31389,
   "self_check_table": {
