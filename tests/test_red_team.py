@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from grader_proof.red_team import agent_patch, read_trial
+from grader_proof.red_team import agent_patch, project, read_trial
 
 TESTS_PATCH = """\
 --- a/test_calc.py
@@ -114,18 +114,28 @@ def test_patch_applies_to_a_fresh_workspace(workspace: tuple[Path, Path], tmp_pa
     assert not (fresh / "test_calc.py").exists()
 
 
-def write_result(trial: Path, reward: float | None) -> None:
+def write_result(
+    trial: Path,
+    reward: float | None,
+    model: str = "Qwen/Qwen3.5-9B-Base",
+    instruction: str = "prompts/red-team-v1.md",
+    cost_usd: float = 0.001295301,
+) -> None:
     trial.mkdir(parents=True)
     result = {
         "task_name": "demo__demo-1__baseline",
-        "trial_name": "demo__demo-1__abc",
-        "config": {"agent": {"name": "terminus-2", "kwargs": {"max_turns": 40}}},
-        "agent_info": {"model_info": {"name": "Qwen/Qwen3.5-9B-Base"}},
+        "task_id": {"path": "tasks/demo__demo-1__baseline"},
+        "trial_name": trial.name,
+        "config": {
+            "agent": {"name": "terminus-2", "kwargs": {"max_turns": 40}},
+            "extra_instruction_paths": [instruction],
+        },
+        "agent_info": {"model_info": {"name": model}},
         "agent_result": {
             "n_input_tokens": 4721,
             "n_cache_tokens": 1792,
             "n_output_tokens": 383,
-            "cost_usd": 0.001295301,
+            "cost_usd": cost_usd,
             "metadata": {"n_episodes": 2},
         },
         "verifier_result": None if reward is None else {"rewards": {"reward": reward}},
@@ -147,6 +157,9 @@ def test_read_trial_takes_usage_reward_and_times(tmp_path: Path) -> None:
     record = read_trial(trial)
 
     assert record.task == "demo__demo-1__baseline"
+    assert record.task_path == "tasks/demo__demo-1__baseline"
+    assert record.trial == "demo__demo-1__abc"
+    assert record.instruction == "prompts/red-team-v1.md"
     assert record.agent == "terminus-2"
     assert record.agent_kwargs == {"max_turns": 40}
     assert record.model == "Qwen/Qwen3.5-9B-Base"
@@ -166,3 +179,22 @@ def test_read_trial_without_verifier_has_no_reward(tmp_path: Path) -> None:
     write_result(trial, reward=None)
 
     assert read_trial(trial).reward is None
+
+
+def test_project_groups_trials_by_model_and_instruction(tmp_path: Path) -> None:
+    write_result(tmp_path / "a", 0, instruction="prompts/red-team-v2.md", cost_usd=0.10)
+    write_result(tmp_path / "b", 0, instruction="prompts/red-team-v2.md", cost_usd=0.20)
+    write_result(tmp_path / "c", 0, model="Qwen/Qwen3.5-35B-A3B-Base", cost_usd=0.50)
+    trials = [read_trial(tmp_path / name) for name in ("a", "b", "c")]
+
+    small, large = project(trials)
+
+    assert (small.model, small.instruction, small.trials) == (
+        "Qwen/Qwen3.5-9B-Base",
+        "prompts/red-team-v2.md",
+        2,
+    )
+    assert small.mean_cost_usd == pytest.approx(0.15)
+    assert small.projected_cost_usd == pytest.approx(0.15 * 72)
+    assert (large.model, large.trials) == ("Qwen/Qwen3.5-35B-A3B-Base", 1)
+    assert large.projected_cost_usd == pytest.approx(0.50 * 72)
