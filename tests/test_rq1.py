@@ -93,3 +93,9 @@ def test_render_markdown_shows_counts_and_examples(rq1: Rq1):
     assert "| 2 | 50% [" in table
     assert "- fake-1: self-check only calls the happy path" in table
     assert "labels/x.jsonl" in table
+
+
+def test_render_markdown_says_why_open_question_6_is_not_answered(rq1: Rq1):
+    table = render_markdown(rq1, source=Path("labels/x.jsonl"))
+    assert "## Broke a PASS_TO_PASS test or missed a FAIL_TO_PASS test?" in table
+    assert "`resolved`, `gen_tests_correct` and `pred_passes_gen_tests`" in table

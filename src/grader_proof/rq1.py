@@ -146,7 +146,18 @@ def render_markdown(rq1: Rq1, source: Path) -> str:
     for reason, examples in rq1.examples.items():
         lines += ["", f"### {reason}", ""]
         lines += [f"- {label.trajectory_id}: {label.note}" for label in examples] or ["- none"]
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines) + "\n" + OPEN_QUESTION_6
+
+
+# Open question 6 in design.md, answered as far as the data allows.
+OPEN_QUESTION_6 = """
+## Broke a PASS_TO_PASS test or missed a FAIL_TO_PASS test?
+
+The data cannot say. The trajectories dataset records the upstream outcome only as
+`resolved`, `gen_tests_correct` and `pred_passes_gen_tests`, one value per trajectory, with no
+per-test results. Telling the two apart needs the upstream tests rerun on each sampled patch in
+its instance's image (design.md, open question 6).
+"""
 
 
 def main() -> None:
