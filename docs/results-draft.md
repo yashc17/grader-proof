@@ -8,4 +8,4 @@ Not written yet: it waits for the Opus test labels (`labels/opus_test.jsonl`, AD
 
 - the table from `make rq1` (`results/rq1.md`): each `fooled_reason` with its count and share of the labeled self-check false positives;
 - 2–3 short real examples per reason, taken from the labels' notes and checked against the trajectories;
-- whether the patch broke a `PASS_TO_PASS` test or missed a `FAIL_TO_PASS` test (open question 6), or why the data cannot say.
+- why the data cannot say whether a patch broke a `PASS_TO_PASS` test or missed a `FAIL_TO_PASS` test (open question 6): only `resolved`, `gen_tests_correct` and `pred_passes_gen_tests` exist, with no per-test results.
