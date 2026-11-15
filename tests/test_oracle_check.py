@@ -6,6 +6,8 @@ import pytest
 from grader_proof.oracle_check import (
     RunResult,
     TaskResult,
+    acceptance_table,
+    missing_tasks,
     parse_failing_tests,
     read_run,
     split_task_name,
@@ -65,9 +67,9 @@ def test_read_run_without_reward_file_has_no_reward(tmp_path: Path) -> None:
     assert read_run(tmp_path, run=1) == RunResult(run=1, reward=None, failing_tests=[])
 
 
-def result(*rewards: int | None) -> TaskResult:
+def result(*rewards: int | None, task: str = "t", condition: str = "baseline") -> TaskResult:
     runs = [RunResult(run=i, reward=r, failing_tests=[]) for i, r in enumerate(rewards, 1)]
-    return TaskResult(task="t", condition="baseline", runs=runs)
+    return TaskResult(task=task, condition=condition, runs=runs)
 
 
 def test_three_of_three_passes() -> None:
@@ -102,3 +104,25 @@ def test_task_result_round_trips_through_json() -> None:
 def test_split_task_name_rejects_names_without_condition(bad: str) -> None:
     with pytest.raises(ValueError, match="condition"):
         split_task_name(bad)
+
+
+def test_accepted_counts_runs_with_reward_1() -> None:
+    assert result(1, 0, None).accepted == 1
+    assert result(1, 1, 1).accepted == 3
+
+
+def test_acceptance_table_has_one_row_per_task_and_one_column_per_condition() -> None:
+    table = acceptance_table(
+        [
+            result(1, 1, 1, task="b", condition="all"),
+            result(1, 0, 1, task="a", condition="h2"),
+            result(1, 1, 1, task="a", condition="baseline"),
+            result(None, None, None, task="b", condition="h1"),
+        ]
+    )
+    assert table == "task,baseline,h1,h2,h3,h4,all\na,3/3,,2/3,,,\nb,,0/3,,,,3/3\n"
+
+
+def test_missing_tasks_lists_task_folders_without_a_result() -> None:
+    results = [result(1, 1, 1, task="a", condition="h1")]
+    assert missing_tasks(results, ["a__h1", "a__all", "b__baseline"]) == ["a__all", "b__baseline"]
