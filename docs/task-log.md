@@ -115,3 +115,13 @@ Observed over 13 candidates tried (12 built, 1 rejected):
 - **Test count and runtime.** `fakenewsredis-3` has 782 tests (56 s per run) and `sqlvalidator-40` 239 ids. Everything else is under 100 tests and under 3 s of pytest time.
 - **Image size.** Images are 1.2-1.4 GB compressed and about 4.6-5.1 GB unpacked. The laptop needs one pull per task and about 2 minutes for the first run.
 - **Not hard:** none of the 13 needed network access at test time, none had a flaky test across 3 runs, and none had test ids that needed escaping.
+
+## H4 property checks (issue #26)
+
+4 of the 12 tasks got a property check: `zopefoundation__zope.schema-39`, `ska-sa__fakenewsredis-3`, `peterbe__hashin-95` and `altcha-org__altcha-lib-py-2`. [ADR 0012](adr/0012-h4-property-checks.md) gives each property, the issue sentence it comes from, and why the other 8 have none. Actions run [43670538785](https://github.com/yashc17/grader-proof/actions/runs/43670538785): the oracle got reward 1 in 3 of 3 runs for each of the 4 tasks under H4 and under All.
+
+Observed while writing them:
+
+- Every image installs its package with `pip install -e`, so a check run with `python -I` outside `/testbed` imports the code under test without any path setup.
+- The dataset's install config names Python 3.6 for zope.schema, fakenewsredis and hashin, and 3.9 for altcha. The checks avoid syntax newer than 3.6.
+- `files-to-prompt-16`'s gold patch adds `--cxml`, not the `--xml` flag the issue proposes, so the issue and the oracle disagree on the interface.

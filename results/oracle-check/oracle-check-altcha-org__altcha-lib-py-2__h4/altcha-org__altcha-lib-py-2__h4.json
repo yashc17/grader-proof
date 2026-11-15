@@ -1,6 +1,6 @@
 {
-  "task": "addisonelliott__pyqt5ac-27",
-  "condition": "baseline",
+  "task": "altcha-org__altcha-lib-py-2",
+  "condition": "h4",
   "runs": [
     {
       "run": 1,

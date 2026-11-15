@@ -1,6 +1,6 @@
 {
   "task": "ska-sa__fakenewsredis-3",
-  "condition": "h1",
+  "condition": "h4",
   "runs": [
     {
       "run": 1,
