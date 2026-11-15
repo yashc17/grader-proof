@@ -15,7 +15,15 @@ import polars as pl
 from pydantic import BaseModel, ConfigDict
 
 from grader_proof.label_cli import TRAJECTORIES
-from grader_proof.labeling import LABELS_PATH, SAMPLE_PATH, Label, SampleItem, read_sample
+from grader_proof.labeling import (
+    LABELS_PATH,
+    SAMPLE_PATH,
+    Candidate,
+    Label,
+    SampleItem,
+    Split,
+    read_sample,
+)
 from grader_proof.stats import wilson_interval
 from grader_proof.trajectory import Trajectory
 from grader_proof.triage_rules import RULES, Verdict, triage
@@ -57,23 +65,30 @@ def proportion(successes: int, n: int) -> Proportion:
     return Proportion(successes=successes, n=n, rate=successes / n, low=low, high=high)
 
 
-def load_dev_items(sample_path: Path, labels_path: Path) -> list[tuple[SampleItem, Label]]:
-    """Dev items with their labels. Label lines of any other trajectory are skipped unparsed."""
+def load_labeled_items(
+    sample_path: Path, labels_path: Path, split: Split
+) -> list[tuple[SampleItem, Label]]:
+    """The split's items with their labels. Label lines of any other trajectory are skipped
+    unparsed. Raises ValueError if an item of the split has no label yet."""
     if not labels_path.exists():
         raise FileNotFoundError(
-            f"{labels_path} not found. It holds the maintainer's hand labels and is not in the "
-            "repository; copy it from the maintainer's checkout to run this target."
+            f"{labels_path} not found. It holds hand labels, which are not in the repository; "
+            "copy it from the labeler's checkout to run this target."
         )
-    dev = {item.trajectory_id: item for item in read_sample(sample_path) if item.split == "dev"}
+    chosen = {item.trajectory_id: item for item in read_sample(sample_path) if item.split == split}
     labels: dict[str, Label] = {}
     for line in labels_path.read_text().splitlines():
-        if json.loads(line)["trajectory_id"] in dev:
+        if json.loads(line)["trajectory_id"] in chosen:
             label = Label.model_validate_json(line)
             labels[label.trajectory_id] = label
-    missing = sorted(set(dev) - set(labels))
+    missing = sorted(set(chosen) - set(labels))
     if missing:
-        raise ValueError(f"dev items without a label: {', '.join(missing)}")
-    return [(item, labels[trajectory_id]) for trajectory_id, item in dev.items()]
+        raise ValueError(f"{split} items without a label: {', '.join(missing)}")
+    return [(item, labels[trajectory_id]) for trajectory_id, item in chosen.items()]
+
+
+def load_dev_items(sample_path: Path, labels_path: Path) -> list[tuple[SampleItem, Label]]:
+    return load_labeled_items(sample_path, labels_path, "dev")
 
 
 def evaluate(pairs: Sequence[tuple[Label, Verdict | None]]) -> Report:
@@ -98,7 +113,7 @@ def evaluate(pairs: Sequence[tuple[Label, Verdict | None]]) -> Report:
     )
 
 
-def load_trajectories(items: Sequence[SampleItem]) -> dict[str, Trajectory]:
+def load_trajectories(items: Sequence[Candidate]) -> dict[str, Trajectory]:
     ids = [item.trajectory_id for item in items]
     rows = pl.scan_parquet(TRAJECTORIES).filter(pl.col("trajectory_id").is_in(ids)).collect()
     return {row["trajectory_id"]: Trajectory.from_row(row) for row in rows.iter_rows(named=True)}

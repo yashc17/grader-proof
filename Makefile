@@ -1,4 +1,4 @@
-.PHONY: rq4-runs rq4 candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot redteam redteam-summary replay-export replay-results rq3 figures rq1 label-page
+.PHONY: rq4-runs rq4 triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot redteam redteam-summary replay-export replay-results rq3 figures rq1 label-agreement label-page
 
 install:
 	uv sync
@@ -80,6 +80,20 @@ rules-dev:
 # TINKER_API_KEY. Prints each batch's cost estimate and asks before calling the model.
 judge-dev:
 	uv run python -m grader_proof.judge_eval
+
+# Scores the frozen triager on the 70 test labels; writes results/triage_test.json (issue #14).
+# Refuses to run until every test item has a label. Needs the label file, the data from
+# `make data-facts` and, for calls not in cache/llm/, TINKER_API_KEY. Asks before calling the model.
+# Usage: make triage-eval [LABELS=labels/opus_test.jsonl] [LABELER="Claude Opus 5.5 labeler session"]
+LABELS ?= labels/opus_test.jsonl
+LABELER ?= Claude Opus 5.5 labeler session
+triage-eval:
+	uv run python -m grader_proof.triage_eval --labels "$(LABELS)" --labeler "$(LABELER)"
+
+# Class shares from the frozen triager on 1,000 trajectories outside the labeling sample; writes
+# results/triage_prevalence.json and .md (issue #15). Same needs and cost prompt as triage-eval.
+triage-prevalence:
+	uv run python -m grader_proof.prevalence
 
 # Red-team pilot (issue #28). `make red-team-trial` adds one trial to runs/red-team-pilot: terminus-2
 # through Harbor's Tinker backend, with RED_TEAM_INSTRUCTION appended to the task instruction.
@@ -169,3 +183,14 @@ LABELS ?= labels/opus_test.jsonl
 RQ1_OUT ?= results/rq1
 rq1:
 	uv run python -m grader_proof.rq1 --labels $(LABELS) --out $(RQ1_OUT)
+
+# Agreement between two label files (issue #10 and ADR 0015), over the trajectories in both:
+# failure-class agreement with a Wilson 95% interval and Cohen's kappa with a 95% bootstrap
+# interval (`unclear` left out and counted, ADR 0003), the class pairs they disagree on, and
+# fooled-reason agreement. Writes results/agreement_$(NAME).json and .md.
+# Self-agreement: make label-agreement A=labels/opus_test.jsonl B=labels/relabel.jsonl NAME=<name>
+A ?= labels/human.jsonl
+B ?= labels/opus_dev.jsonl
+NAME ?= dev_opus_vs_maintainer
+label-agreement:
+	uv run python -m grader_proof.label_agreement --a $(A) --b $(B) --name $(NAME)
