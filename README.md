@@ -73,7 +73,7 @@ Expectations from [docs/design.md](docs/design.md) section 5:
 |---|---|---|---|---|
 | RQ2 rules alone: κ below 0.3 | Met | 0.09 [0.05, 0.14] | `results/triage_test.json` | `make triage-eval` |
 | RQ2 rules + judge: κ in 0.5–0.7 | **Failed** | 0.14 [-0.11, 0.41] | `results/triage_test.json` | `make triage-eval` |
-| RQ2 self-agreement: κ around 0.8 | Met | 1.00 [1.00, 1.00] (20/20; same model) | `results/agreement_<name>.json` (from `labels/opus_test_relabel.jsonl`) | `make label-agreement` |
+| RQ2 self-agreement: κ around 0.8 | Met | 1.00 [1.00, 1.00] (20/20; same model) | `results/agreement_test_opus_self_agreement.md`, `results/triage_test.json` | `make label-agreement`, `make triage-eval` |
 | RQ3 All oracle acceptance: 100% | Met (on 12 selected tasks) | 36/36 under All (192/192 overall) | `results/oracle_check.csv` | `make oracle-check` |
 | RQ3 exploit rates & RQ4 pass rates | Pending | *runs not done (#30, #32, #33)* | `results/rq3.csv`, `results/rq4.json` | `make rq3`, `make rq4` |
 
@@ -112,7 +112,7 @@ Rules alone reached κ = 0.09 [0.05, 0.14] (33% = 23/69 raw agreement). Only `tu
 | `upstream_tests_wrong` | 4 | 3 | 1 | 33% (1/3) | 25% (1/4) |
 | `env_broken` | 1 | 1 | 1 | 100% (1/1) | 100% (1/1) |
 
-- **Label agreement** (`make label-agreement`, writing `results/agreement_dev_opus_vs_maintainer.json` by default or `results/agreement_<name>.json`): on 20 blind re-labeled test items (`labels/opus_test.jsonl` vs `labels/opus_test_relabel.jsonl`), Opus agreed with itself on 20/20 failure classes (100% [84%, 100%], κ = 1.00 [1.00, 1.00]) and 6/6 `fooled_reason` values (100%, κ = 1.00). Because both passes used Claude Opus 5.5 and [docs/codebook.md](docs/codebook.md), this measures rule-application consistency rather than independent-labeler agreement. On the 30 dev items (`labels/human.jsonl` vs `labels/opus_dev.jsonl`, 26 scored after excluding 4 `unclear` items), Opus agreed with the maintainer on 25/26 failure classes (96% [81%, 99%], κ = 0.86 [0.52, 1.00]) and 6/9 `fooled_reason` values (67%, κ = 0.44 [0.00, 1.00]).
+- **Label agreement** (`make label-agreement`): on 20 blind re-labeled test items (`results/agreement_test_opus_self_agreement.md`, `make label-agreement A=labels/opus_test.jsonl B=labels/opus_test_relabel.jsonl NAME=test_opus_self_agreement`; also in `results/triage_test.json`), Opus agreed with itself on 20/20 failure classes (100% [84%, 100%], κ = 1.00 [1.00, 1.00]) and 6/6 `fooled_reason` values (100%, κ = 1.00). Because both passes used Claude Opus 5.5 and [docs/codebook.md](docs/codebook.md), this measures rule-application consistency rather than independent-labeler agreement. On the 30 dev items (`results/agreement_dev_opus_vs_maintainer.md`, `make label-agreement` on `labels/human.jsonl` vs `labels/opus_dev.jsonl`, 26 scored after excluding 4 `unclear` items), Opus agreed with the maintainer on 25/26 failure classes (96% [81%, 99%], κ = 0.86 [0.52, 1.00]) and 6/9 `fooled_reason` values (67%, κ = 0.44 [0.00, 1.00]).
 - **Prevalence on 1,000 trajectories** (`results/triage_prevalence.md`, `make triage-prevalence`, 880 instances, seed 15): rules fired on 149 items and `judge-v2` classified 851 (850 parsed, 1 failed to parse -> `unclear`; $1.90 list price). These are imperfect classifier counts, not hand labels, and reflect the low precision and recall on minority classes in `results/triage_test.json`:
 
 | Class | Trajectories | Share | 95% interval |
