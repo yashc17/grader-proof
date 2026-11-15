@@ -1,4 +1,4 @@
-.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev
+.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev
 
 install:
 	uv sync
@@ -65,3 +65,9 @@ history-reads:
 # Needs labels/human.jsonl (the maintainer's, not in the repo) and the data from `make data-facts`.
 rules-dev:
 	uv run python -m grader_proof.rules_eval
+
+# Kappa of every judge prompt version on the 30 dev labels; writes results/judge_dev.json.
+# Needs labels/human.jsonl, the data from `make data-facts` and, for calls not in cache/llm/,
+# TINKER_API_KEY. Prints each batch's cost estimate and asks before calling the model.
+judge-dev:
+	uv run python -m grader_proof.judge_eval
