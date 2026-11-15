@@ -1,6 +1,6 @@
 # Codebook
 
-This codebook turns [ADR 0003](adr/0003-failure-class-taxonomy.md) into decision rules for labeling unresolved trajectories. It records the rules actually applied to the 70 test and 30 dev labels in `labels/opus_test.jsonl` and `labels/opus_dev.jsonl`. Terms follow [CONTEXT.md](../CONTEXT.md).
+This codebook turns [ADR 0003](adr/0003-failure-class-taxonomy.md) into decision rules for labeling unresolved trajectories. It records the rules actually applied to the 70 test and 30 dev labels in `labels/opus_test.jsonl` and `labels/opus_dev.jsonl`, which a Claude Opus 5.5 labeler wrote as set out in [ADR 0015](adr/0015-opus-test-labels.md). Terms follow [CONTEXT.md](../CONTEXT.md).
 
 Every example below is a dev item, cited by its instance id. Test items stay held out, so none is named here, although several rules were first written while labeling them.
 
