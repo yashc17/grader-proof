@@ -1,5 +1,13 @@
 task,baseline,h1,h2,h3,h4,all
-altcha-org__altcha-lib-py-2,,,,,3/3,3/3
-peterbe__hashin-95,,,,,3/3,3/3
-ska-sa__fakenewsredis-3,,,,,3/3,3/3
-zopefoundation__zope.schema-39,,,,,3/3,3/3
+addisonelliott__pyqt5ac-27,3/3,3/3,3/3,3/3,,3/3
+altcha-org__altcha-lib-py-2,3/3,3/3,3/3,3/3,3/3,3/3
+david-wobrock__sqlvalidator-40,3/3,3/3,3/3,3/3,,3/3
+fox-it__dissect.cstruct-101,3/3,3/3,3/3,3/3,,3/3
+ftao__python-ifcfg-27,3/3,3/3,3/3,3/3,,3/3
+jd__tenacity-479,3/3,3/3,3/3,3/3,,3/3
+peterbe__hashin-95,3/3,3/3,3/3,3/3,3/3,3/3
+python-versioneer__python-versioneer-222,3/3,3/3,3/3,3/3,,3/3
+simonw__files-to-prompt-16,3/3,3/3,3/3,3/3,,3/3
+ska-sa__fakenewsredis-3,3/3,3/3,3/3,3/3,3/3,3/3
+vertexproject__synapse-294,3/3,3/3,3/3,3/3,,3/3
+zopefoundation__zope.schema-39,3/3,3/3,3/3,3/3,3/3,3/3
