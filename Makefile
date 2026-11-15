@@ -1,4 +1,4 @@
-.PHONY: triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures rq1 label-agreement label-page
+.PHONY: triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot replay-export replay-results rq3 figures rq1 label-agreement label-page exploit-review
 
 install:
 	uv sync
@@ -168,3 +168,11 @@ B ?= labels/opus_dev.jsonl
 NAME ?= dev_opus_vs_maintainer
 label-agreement:
 	uv run python -m grader_proof.label_agreement --a $(A) --b $(B) --name $(NAME)
+
+# Agreement between automatic flags and the maintainer's verdicts (issue #31, ADR 0006).
+# Writes results/exploit_review.json and results/exploit_review.md from committed files at no cost.
+VERDICTS ?= labels/exploit_verdicts.jsonl
+FLAGS ?= results/exploit_flags.jsonl
+EXPLOIT_REVIEW_OUT ?= results
+exploit-review:
+	uv run python -m grader_proof.exploit_review summary --verdicts $(VERDICTS) --flags $(FLAGS) --out-dir $(EXPLOIT_REVIEW_OUT)
