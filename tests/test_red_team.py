@@ -120,6 +120,9 @@ def write_result(
     model: str = "Qwen/Qwen3.5-9B-Base",
     instruction: str = "prompts/red-team-v1.md",
     cost_usd: float = 0.001295301,
+    agent_kwargs: dict[str, object] | None = None,
+    agent_ran: bool = True,
+    exception_type: str | None = None,
 ) -> None:
     trial.mkdir(parents=True)
     result = {
@@ -127,11 +130,13 @@ def write_result(
         "task_id": {"path": "tasks/demo__demo-1__baseline"},
         "trial_name": trial.name,
         "config": {
-            "agent": {"name": "terminus-2", "kwargs": {"max_turns": 40}},
+            "agent": {"name": "terminus-2", "kwargs": agent_kwargs or {"max_turns": 40}},
             "extra_instruction_paths": [instruction],
         },
         "agent_info": {"model_info": {"name": model}},
-        "agent_result": {
+        "agent_result": None
+        if not agent_ran
+        else {
             "n_input_tokens": 4721,
             "n_cache_tokens": 1792,
             "n_output_tokens": 383,
@@ -139,10 +144,12 @@ def write_result(
             "metadata": {"n_episodes": 2},
         },
         "verifier_result": None if reward is None else {"rewards": {"reward": reward}},
-        "exception_info": None,
+        "exception_info": None if exception_type is None else {"exception_type": exception_type},
         "started_at": "2026-11-15T02:55:55.951328Z",
         "finished_at": "2026-11-15T02:57:17.233452Z",
-        "agent_execution": {
+        "agent_execution": None
+        if not agent_ran
+        else {
             "started_at": "2026-11-15T02:56:53.474488Z",
             "finished_at": "2026-11-15T02:57:05.378876Z",
         },
@@ -182,13 +189,20 @@ def test_read_trial_without_verifier_has_no_reward(tmp_path: Path) -> None:
     assert read_trial(trial).reward is None
 
 
-def test_project_groups_trials_by_model_and_instruction(tmp_path: Path) -> None:
+def test_project_groups_trials_by_model_instruction_and_settings(tmp_path: Path) -> None:
     write_result(tmp_path / "a", 0, instruction="prompts/red-team-v2.md", cost_usd=0.10)
     write_result(tmp_path / "b", 0, instruction="prompts/red-team-v2.md", cost_usd=0.20)
     write_result(tmp_path / "c", 0, model="Qwen/Qwen3.5-35B-A3B-Base", cost_usd=0.50)
-    trials = [read_trial(tmp_path / name) for name in ("a", "b", "c")]
+    write_result(
+        tmp_path / "d",
+        0,
+        instruction="prompts/red-team-v2.md",
+        cost_usd=0.30,
+        agent_kwargs={"max_turns": 40, "llm_kwargs": {"renderer_name": "qwen3_5"}},
+    )
+    trials = [read_trial(tmp_path / name) for name in ("a", "b", "c", "d")]
 
-    small, large = project(trials)
+    small, large, renderer = project(trials)
 
     assert (small.model, small.instruction, small.trials) == (
         "Qwen/Qwen3.5-9B-Base",
@@ -199,6 +213,8 @@ def test_project_groups_trials_by_model_and_instruction(tmp_path: Path) -> None:
     assert small.projected_cost_usd == pytest.approx(0.15 * 72)
     assert (large.model, large.trials) == ("Qwen/Qwen3.5-35B-A3B-Base", 1)
     assert large.projected_cost_usd == pytest.approx(0.50 * 72)
+    assert renderer.agent_kwargs == {"max_turns": 40, "llm_kwargs": {"renderer_name": "qwen3_5"}}
+    assert (renderer.trials, renderer.mean_cost_usd) == (1, pytest.approx(0.30))
 
 
 def test_read_trial_counts_truncated_replies(tmp_path: Path) -> None:
@@ -211,3 +227,17 @@ def test_read_trial_counts_truncated_replies(tmp_path: Path) -> None:
     )
 
     assert read_trial(trial).truncated_replies == 3
+
+
+def test_read_trial_when_agent_setup_fails_returns_zero_usage_and_exception(
+    tmp_path: Path,
+) -> None:
+    trial = tmp_path / "demo__demo-1__abc"
+    write_result(trial, reward=None, agent_ran=False, exception_type="RuntimeError")
+
+    record = read_trial(trial)
+
+    assert record.reward is None
+    assert (record.turns, record.prompt_tokens, record.cached_prompt_tokens) == (0, 0, 0)
+    assert (record.completion_tokens, record.cost_usd, record.agent_seconds) == (0, 0.0, 0.0)
+    assert record.exception == "RuntimeError"
