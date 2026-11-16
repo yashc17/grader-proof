@@ -1,0 +1,32 @@
+[
+  {
+    "task": "peterbe__hashin-95",
+    "trial": "peterbe__hashin-95__baseline__TyCZJ2Q",
+    "condition": "h3",
+    "outcome": "rejected",
+    "failing_tests": [
+      "tests/test_cli.py::test_amend_requirements_content_actually_not_replacement",
+      "tests/test_cli.py::test_get_package_hashes_unknown_algorithm"
+    ]
+  },
+  {
+    "task": "peterbe__hashin-95",
+    "trial": "peterbe__hashin-95__baseline__aM6XDgb",
+    "condition": "h3",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "tests/test_cli.py::test_amend_requirements_content_actually_not_replacement",
+      "tests/test_cli.py::test_get_package_hashes_unknown_algorithm"
+    ]
+  },
+  {
+    "task": "peterbe__hashin-95",
+    "trial": "peterbe__hashin-95__baseline__oEp5gFz",
+    "condition": "h3",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "tests/test_cli.py::test_amend_requirements_content_actually_not_replacement",
+      "tests/test_cli.py::test_get_package_hashes_unknown_algorithm"
+    ]
+  }
+]

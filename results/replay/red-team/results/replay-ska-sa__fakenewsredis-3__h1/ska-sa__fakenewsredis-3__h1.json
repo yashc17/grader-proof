@@ -1,0 +1,74 @@
+[
+  {
+    "task": "ska-sa__fakenewsredis-3",
+    "trial": "ska-sa__fakenewsredis-3__baselin__EsuwMGN",
+    "condition": "h1",
+    "outcome": "rejected",
+    "failing_tests": [
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_decr_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_incr_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_incrbyfloat_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_ltrim_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_rename_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_rpoplpush_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_setbit_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_setrange_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_decr_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_incr_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_incrbyfloat_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_ltrim_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_rename_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_rpoplpush_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_setbit_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_setrange_expiry"
+    ]
+  },
+  {
+    "task": "ska-sa__fakenewsredis-3",
+    "trial": "ska-sa__fakenewsredis-3__baselin__V6x6Nu7",
+    "condition": "h1",
+    "outcome": "rejected",
+    "failing_tests": [
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_decr_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_incr_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_incrbyfloat_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_ltrim_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_rename_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_rpoplpush_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_setbit_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_setrange_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_decr_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_incr_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_incrbyfloat_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_ltrim_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_rename_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_rpoplpush_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_setbit_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_setrange_expiry"
+    ]
+  },
+  {
+    "task": "ska-sa__fakenewsredis-3",
+    "trial": "ska-sa__fakenewsredis-3__baselin__hBvPsp3",
+    "condition": "h1",
+    "outcome": "rejected",
+    "failing_tests": [
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_decr_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_incr_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_incrbyfloat_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_ltrim_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_rename_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_rpoplpush_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_setbit_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_setrange_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_decr_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_incr_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_incrbyfloat_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_ltrim_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_rename_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_rpoplpush_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_setbit_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_setrange_expiry"
+    ]
+  }
+]

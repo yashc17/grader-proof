@@ -1,0 +1,55 @@
+diff --git a/src/ifcfg/parser.py b/src/ifcfg/parser.py
+index 22ceeb8..96b693d 100644
+--- a/src/ifcfg/parser.py
++++ b/src/ifcfg/parser.py
+@@ -14,6 +14,7 @@ Log = minimal_logger(__name__)
+ DEVICE_PROPERTY_DEFAULTS = {
+     'inet': None,
+     'ether': None,
++    'inet4': "LIST",  # Because lists are mutable
+     'inet6': "LIST",  # Because lists are mutable
+     'netmask': None,
+ }
+@@ -38,6 +39,24 @@ class Parser(object):
+             else:
+                 self._interfaces[device_name][key] = value
+ 
++    def _parse_ipv4_addresses(self, interfaces, ifconfig):
++        """Parse all IPv4 addresses from ifconfig output and add to inet4 field"""
++        for line in ifconfig.splitlines():
++            # Match lines containing "inet " followed by an IP and subnet mask
++            match = re.search(r'inet\s+([0-9.]+)[\s/]+(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)', line)
++            if match:
++                ip = match.group(1)
++                # If inet4 is empty, use it; otherwise append
++                device = None
++                for d in interfaces:
++                    if interfaces[d]['ether'] in line or interfaces[d]['inet'] in line:
++                        device = d
++                        break
++                if device and 'inet4' in interfaces[device]:
++                    interfaces[device]['inet4'].append(ip)
++                elif device:
++                    interfaces[device]['inet4'] = [ip]
++
+     def parse(self, ifconfig=None):  # noqa: max-complexity=12
+         """
+         Parse ifconfig output into self._interfaces.
+@@ -92,6 +111,9 @@ class Parser(object):
+ 
+         # fix it up
+         self._interfaces = self.alter(self._interfaces)
++        
++        # Parse all IPv4 addresses into inet4 field
++        self._parse_ipv4_addresses(self._interfaces, self.ifconfig_data)
+ 
+     def alter(self, interfaces):
+         """
+@@ -293,6 +315,7 @@ class UnixIPParser(UnixParser):
+             '.*(ether )(?P<ether>[^\s]*).*',
+             '.*inet\s.*(brd )(?P<broadcast>[^\s]*).*',
+             '.*(inet )[^/]+(?P<netmask>[/][0-9]+).*',
++            '.*[0-9.]+(/24|/32|/128|/64|/255.255.255.255|/255.255.255.0|/255.255.255.128|/255.255.255.192|/255.255.255.224|/255.255.255.240|/255.255.255.248|/255.255.255.252|/255.255.255.254|/255.255.255.255)*\.',
+         ]
+ 
+ 

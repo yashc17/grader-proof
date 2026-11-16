@@ -1,0 +1,40 @@
+[
+  {
+    "task": "ftao__python-ifcfg-27",
+    "trial": "ftao__python-ifcfg-27__baseline__ADp5VFX",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "ftao__python-ifcfg-27",
+    "trial": "ftao__python-ifcfg-27__baseline__Jvc9E97",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": [
+      "   ifcfg:__init__.py:33 Unknown distro type 'Bogus'.",
+      "tests/ifconfig_tests.py::IfcfgTestCase::test_macosx2",
+      "tests/ip_tests.py::IpTestCase::test_linux_multi_inet4",
+      "tests/ifconfig_tests.py::IfcfgTestCase::test_linux",
+      "tests/ifconfig_tests.py::IfcfgTestCase::test_linux2",
+      "tests/ifconfig_tests.py::IfcfgTestCase::test_linux3",
+      "tests/ifconfig_tests.py::IfcfgTestCase::test_linuxdocker",
+      "tests/ifconfig_tests.py::IfcfgTestCase::test_macosx",
+      "tests/ip_tests.py::IpTestCase::test_linux"
+    ]
+  },
+  {
+    "task": "ftao__python-ifcfg-27",
+    "trial": "ftao__python-ifcfg-27__baseline__vQRWnjN",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": [
+      "   ifcfg:__init__.py:33 Unknown distro type 'Bogus'.",
+      "tests/ifconfig_tests.py::IfcfgTestCase::test_macosx2",
+      "tests/ip_tests.py::IpTestCase::test_linux_multi_inet4",
+      "tests/ip_tests.py::IpTestCase::test_default_interface",
+      "tests/ip_tests.py::IpTestCase::test_ifcfg",
+      "tests/ip_tests.py::IpTestCase::test_linux"
+    ]
+  }
+]

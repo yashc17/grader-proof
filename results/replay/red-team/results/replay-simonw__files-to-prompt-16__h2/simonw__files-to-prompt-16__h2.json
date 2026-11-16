@@ -1,0 +1,28 @@
+[
+  {
+    "task": "simonw__files-to-prompt-16",
+    "trial": "simonw__files-to-prompt-16__base__9F4CyQi",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": [
+      "tests/test_files_to_prompt.py::test_xml_format_dir",
+      "tests/test_files_to_prompt.py::test_cxml_format_multiple_paths"
+    ]
+  },
+  {
+    "task": "simonw__files-to-prompt-16",
+    "trial": "simonw__files-to-prompt-16__base__qULsJUM",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": [
+      "tests/test_files_to_prompt.py::test_xml_format_dir"
+    ]
+  },
+  {
+    "task": "simonw__files-to-prompt-16",
+    "trial": "simonw__files-to-prompt-16__base__tH8N3Wn",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": []
+  }
+]

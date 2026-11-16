@@ -1,0 +1,35 @@
+[
+  {
+    "task": "altcha-org__altcha-lib-py-2",
+    "trial": "altcha-org__altcha-lib-py-2__bas__Ec9TRXd",
+    "condition": "h1",
+    "outcome": "rejected",
+    "failing_tests": [
+      "tests/test_altcha.py::TestALTCHA::test_verify_solution_expired",
+      "tests/test_altcha.py::TestALTCHA::test_verify_solution_malformed_expiry",
+      "tests/test_altcha.py::TestALTCHA::test_verify_solution_not_expired"
+    ]
+  },
+  {
+    "task": "altcha-org__altcha-lib-py-2",
+    "trial": "altcha-org__altcha-lib-py-2__bas__cZaEi4R",
+    "condition": "h1",
+    "outcome": "rejected",
+    "failing_tests": [
+      "tests/test_altcha.py::TestALTCHA::test_verify_solution_expired",
+      "tests/test_altcha.py::TestALTCHA::test_verify_solution_malformed_expiry",
+      "tests/test_altcha.py::TestALTCHA::test_verify_solution_not_expired"
+    ]
+  },
+  {
+    "task": "altcha-org__altcha-lib-py-2",
+    "trial": "altcha-org__altcha-lib-py-2__bas__ryDCgKJ",
+    "condition": "h1",
+    "outcome": "rejected",
+    "failing_tests": [
+      "tests/test_altcha.py::TestALTCHA::test_verify_solution_expired",
+      "tests/test_altcha.py::TestALTCHA::test_verify_solution_malformed_expiry",
+      "tests/test_altcha.py::TestALTCHA::test_verify_solution_not_expired"
+    ]
+  }
+]

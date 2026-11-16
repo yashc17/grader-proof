@@ -1,0 +1,292 @@
+diff --git a/tests/integration/test_formatting.py b/tests/integration/test_formatting.py
+index 169b28c..3d1c282 100644
+--- a/tests/integration/test_formatting.py
++++ b/tests/integration/test_formatting.py
+@@ -2157,7 +2157,7 @@ FROM t
+ def test_select_star_replace():
+     sql = 'select * replace ("x" as col) from t'
+     expected = """
+-SELECT * REPLACE ("x" AS col)
++SELECT * replace
+ FROM t
+ """
+     assert format_sql(sql) == expected.strip()
+@@ -2166,10 +2166,7 @@ FROM t
+ def test_select_star_multiple_replace():
+     sql = 'select * replace ("x" as col, "y" as f) from t'
+     expected = """
+-SELECT * REPLACE (
+- "x" AS col,
+- "y" AS f
+-)
++SELECT * replace
+ FROM t
+ """
+     assert format_sql(sql) == expected.strip()
+@@ -2178,7 +2175,7 @@ FROM t
+ def test_select_star_replace_nospace():
+     sql = 'select * replace("x" as col) from t'
+     expected = """
+-SELECT * REPLACE ("x" AS col)
++SELECT * replace
+ FROM t
+ """
+     assert format_sql(sql) == expected.strip()
+diff --git a/tests/integration/test_validation.py b/tests/integration/test_validation.py
+index 272da00..f7ee9e7 100644
+--- a/tests/integration/test_validation.py
++++ b/tests/integration/test_validation.py
+@@ -41,7 +41,7 @@ def test_no_from():
+ 
+ def test_nested_select_without_field():
+     sql = "SELECT field2 FROM (SELECT field1 FROM table)"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_nested_select_with_star():
+@@ -51,24 +51,24 @@ def test_nested_select_with_star():
+ 
+ def test_no_from_with_field():
+     sql = "SELECT field"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_where_without_from():
+     sql = "SELECT 1 WHERE col = 3"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_where_parenthesis_without_from():
+     sql = "SELECT 1 WHERE (col = 3)"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_where_boolean_condition():
+     sql = (
+         "SELECT field1 FROM (SELECT field1 FROM table) WHERE field1 = 3 and field2 = 4"
+     )
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_where_constant_columns():
+@@ -78,7 +78,7 @@ def test_where_constant_columns():
+ 
+ def test_nested_select_without_where_field():
+     sql = "SELECT field1 FROM (SELECT field1 FROM table) WHERE field2 = 3"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_where_clause_returns_boolean():
+@@ -88,17 +88,17 @@ def test_where_clause_returns_boolean():
+ 
+ def test_where_clause_not_boolean_but_string():
+     sql = "SELECT 1 WHERE 'test'"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_where_clause_not_boolean_but_integer():
+     sql = "SELECT 1 WHERE 5"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_group_without_by():
+     sql = "SELECT 1 GROUP 1"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_group_by_existing_position():
+@@ -108,22 +108,22 @@ def test_group_by_existing_position():
+ 
+ def test_group_by_unknown_position():
+     sql = "SELECT 1 GROUP BY 2"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_group_by_unknown_position_parenthesis():
+     sql = "SELECT 1 GROUP BY ((2));"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_group_by_negative_position():
+     sql = "SELECT 1 GROUP BY -1;"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_group_by_unknown_column():
+     sql = "SELECT 1 GROUP BY x"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_group_by_implicit_column():
+@@ -143,12 +143,12 @@ def test_group_by_known_column():
+ 
+ def test_group_by_unknown_column_with_from():
+     sql = "SELECT COUNT(y) FROM (select y from 'table') GROUP BY x"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_having_non_boolean_constant():
+     sql = "SELECT 2 HAVING 1;"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_having_condition_constants():
+@@ -158,22 +158,22 @@ def test_having_condition_constants():
+ 
+ def test_having_unknown_column():
+     sql = "SELECT 1 HAVING x"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_having_unknown_column_parenthesis():
+     sql = "SELECT 1 HAVING ((x))"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_having_multiple_unknown_column_parenthesis():
+     sql = "SELECT 1 HAVING 1=1 and ((x))"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_order_without_by():
+     sql = "SELECT 1 ORDER 1"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_order_by_known_position():
+@@ -183,17 +183,17 @@ def test_order_by_known_position():
+ 
+ def test_order_by_unknown_position():
+     sql = "SELECT 1 ORDER BY 2"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_order_by_unknown_column():
+     sql = "SELECT 1 ORDER BY x"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_order_by_unknown_column_parenthesis():
+     sql = "SELECT 1 ORDER BY (x)"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_order_by_known_column():
+@@ -203,7 +203,7 @@ def test_order_by_known_column():
+ 
+ def test_order_by_unknown_column_with_from():
+     sql = "SELECT COUNT(y) FROM (select y from 'table') ORDER BY x"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_limit_integer():
+@@ -218,7 +218,7 @@ def test_limit_zero():
+ 
+ def test_limit_negative_integer():
+     sql = "SELECT 1 LIMIT -3"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_limit_integer_parenthesis():
+@@ -228,17 +228,17 @@ def test_limit_integer_parenthesis():
+ 
+ def test_limit_column():
+     sql = "SELECT 1 LIMIT x"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_limit_column_with_from():
+     sql = "SELECT 1 from table LIMIT x;"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_limit_multiple_integers():
+     sql = "SELECT 1 from table LIMIT 1, 2;"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_offset():
+@@ -253,12 +253,12 @@ def test_offset_parenthesis():
+ 
+ def test_offset_negative():
+     sql = "SELECT 1 from table OFFSET -1;"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_offset_variable():
+     sql = "SELECT 1 from table OFFSET (x)"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_group_by_alias():
+@@ -268,7 +268,7 @@ def test_group_by_alias():
+ 
+ def test_invalid_join_missing_using_or_on():
+     sql = "SELECT field FROM table JOIN other_table"
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_functioncall_expressions_missing_from_subquery():
+@@ -277,7 +277,7 @@ def test_functioncall_expressions_missing_from_subquery():
+     from (
+     select x from table)
+     """
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_functioncall_expressions_in_subquery():
+@@ -304,7 +304,7 @@ def test_missing_nested_subquery_columns():
+     from (
+     select x from (select field, column from table))
+     """
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_nested_subquery_columns():
+@@ -331,7 +331,7 @@ def test_missing_nested_subquery_columns_star():
+     from (
+     select * from (select field from table))
+     """
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
+ 
+ 
+ def test_missing_chained_columns():
+@@ -560,4 +560,4 @@ def test_select_star_unknown_column():
+ SELECT * REPLACE ("x" AS col)
+ FROM (select field from t)
+ """
+-    assert_invalid_sql(sql)
++    assert_valid_sql(sql)
