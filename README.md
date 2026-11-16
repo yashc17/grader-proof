@@ -221,12 +221,12 @@ Needs, by kind:
 | `oracle-check` | Downloads an oracle-check run and writes oracle acceptance per task and condition. | Actions (`oracle-check` workflow) |
 | `red-team-trial` | Runs one red-team pilot trial. | Docker, Tinker |
 | `redteam` | Runs or resumes the adaptive red-team batch. | Docker, Tinker |
-| `redteam-summary` | Rebuilds the adaptive batch's summary from saved trials, at no cost. | the laptop's `runs/` folder |
+| `redteam-summary` | Rebuilds the adaptive batch's summary from saved trials, at no cost. | none (reads `results/red_team_runs/`) |
 | `red-team-pilot` | Rebuilds the pilot summary from saved trials. | the laptop's `runs/` folder |
 | `replay-export` | Copies Baseline red-team patches into a replay set. | the laptop's `runs/` folder |
 | `replay-results` | Downloads a replay run into the replay set. | Actions (`replay` workflow) |
-| `exploit-review` | Summarizes maintainer exploit verdicts and automatic-flag agreement. | none |
-| `rq3` | Writes the RQ3 table from the replay, adaptive and oracle results and the exploit verdicts. | maintainer (exploit verdicts) |
+| `exploit-review` | Summarizes agent-written exploit verdicts (ADR 0016) and automatic-flag agreement. | none |
+| `rq3` | Writes the RQ3 table from the replay, adaptive and oracle results and the exploit verdicts. | none (the verdicts are committed) |
 | `figures` | Draws the figures from the RQ3 table. | none |
 
 Targets on branches not yet merged into `main`:
