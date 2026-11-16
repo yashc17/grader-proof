@@ -1,0 +1,23 @@
+[
+  {
+    "task": "zopefoundation__zope.schema-39",
+    "trial": "zopefoundation__zope.schema-39__NivBQoF",
+    "condition": "h4",
+    "outcome": "accepted",
+    "failing_tests": []
+  },
+  {
+    "task": "zopefoundation__zope.schema-39",
+    "trial": "zopefoundation__zope.schema-39__UWf4mVF",
+    "condition": "h4",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "zopefoundation__zope.schema-39",
+    "trial": "zopefoundation__zope.schema-39__tduBQdS",
+    "condition": "h4",
+    "outcome": "accepted",
+    "failing_tests": []
+  }
+]

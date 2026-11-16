@@ -1,0 +1,23 @@
+[
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__HtwNdNp",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__fVe7QNA",
+    "condition": "h2",
+    "outcome": "accepted",
+    "failing_tests": []
+  },
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__vy8KoDB",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": []
+  }
+]

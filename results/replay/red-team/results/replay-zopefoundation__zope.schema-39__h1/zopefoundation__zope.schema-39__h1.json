@@ -1,0 +1,27 @@
+[
+  {
+    "task": "zopefoundation__zope.schema-39",
+    "trial": "zopefoundation__zope.schema-39__NivBQoF",
+    "condition": "h1",
+    "outcome": "accepted",
+    "failing_tests": []
+  },
+  {
+    "task": "zopefoundation__zope.schema-39",
+    "trial": "zopefoundation__zope.schema-39__UWf4mVF",
+    "condition": "h1",
+    "outcome": "rejected",
+    "failing_tests": [
+      "src/zope/schema/tests/test__bootstrapfields.py::FieldTests::test_equal_instances_have_same_hash",
+      "src/zope/schema/tests/test__bootstrapfields.py::FieldTests::test_hash_across_unequal_instances",
+      "src/zope/schema/tests/test__bootstrapfields.py::FieldTests::test_is_hashable"
+    ]
+  },
+  {
+    "task": "zopefoundation__zope.schema-39",
+    "trial": "zopefoundation__zope.schema-39__tduBQdS",
+    "condition": "h1",
+    "outcome": "accepted",
+    "failing_tests": []
+  }
+]
