@@ -1,0 +1,41 @@
+{
+  "key": {
+    "instance": "python-versioneer__python-versioneer-222",
+    "condition": "all",
+    "trial": 3
+  },
+  "attempts": 1,
+  "record": {
+    "task": "python-versioneer__python-versioneer-222__all",
+    "task_path": "runs/rq4/tasks/python-versioneer__python-versioneer-222__all",
+    "trial": "python-versioneer__python-versio__Lui8JYQ",
+    "instruction": null,
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-35B-A3B-Base",
+    "reward": 0,
+    "turns": 16,
+    "prompt_tokens": 138280,
+    "cached_prompt_tokens": 123136,
+    "completion_tokens": 3988,
+    "cost_usd": 0.026800428,
+    "agent_seconds": 63.598396,
+    "trial_seconds": 88.317363,
+    "exception": null,
+    "truncated_replies": 0,
+    "patch_files": [
+      "src/git/long_header.py"
+    ],
+    "activity": null
+  },
+  "failure": null
+}
