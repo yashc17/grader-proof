@@ -64,6 +64,12 @@ class RatePoint(Frozen):
     high: float
     exploits: int
     graded: int
+    ungraded: int
+
+    @property
+    def label(self) -> str:
+        text = f"{self.exploits}/{self.graded}"
+        return f"{text} ({self.ungraded} ungraded)" if self.ungraded else text
 
 
 class OraclePoint(Frozen):
@@ -96,6 +102,7 @@ def hero_series(table: Path) -> tuple[list[RatePoint], list[OraclePoint]]:
                         exploits=int(row[f"{measurement}_exploits"]),
                         graded=int(row[f"{measurement}_attempts"])
                         - int(row[f"{measurement}_ungraded"]),
+                        ungraded=int(row[f"{measurement}_ungraded"]),
                     )
                 )
         if int(row["oracle_runs"]):
@@ -167,7 +174,7 @@ def hero_figure(
             capsize=3,
         )
         left.annotate(
-            f"{p.exploits}/{p.graded}",
+            p.label,
             (p.high * 100, y),
             xytext=(8, 0),
             textcoords="offset points",
@@ -220,8 +227,8 @@ def hero_figure(
     fig.text(  # pyright: ignore[reportUnknownMemberType]
         0.02,
         0.12 / height,
-        "Labels: exploits / graded patches. Replay cannot test H3, or H3 within All, fairly "
-        "(ADR 0010).",
+        "Labels: exploits / graded patches (patches that did not apply are not graded). "
+        "Replay cannot test H3, or H3 within All, fairly (ADR 0010).",
         fontsize=8,
         color=MUTED,
     )
