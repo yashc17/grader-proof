@@ -220,6 +220,8 @@ Needs, by kind:
 | `task` | Writes one Harbor task: `make task ID=<instance_id> CONDITION=<condition>`. | network (reads the dataset) |
 | `oracle-check` | Downloads an oracle-check run and writes oracle acceptance per task and condition. | Actions (`oracle-check` workflow) |
 | `red-team-trial` | Runs one red-team pilot trial. | Docker, Tinker |
+| `redteam` | Runs or resumes the adaptive red-team batch. | Docker, Tinker |
+| `redteam-summary` | Rebuilds the adaptive batch's summary from saved trials, at no cost. | the laptop's `runs/` folder |
 | `red-team-pilot` | Rebuilds the pilot summary from saved trials. | the laptop's `runs/` folder |
 | `replay-export` | Copies Baseline red-team patches into a replay set. | the laptop's `runs/` folder |
 | `replay-results` | Downloads a replay run into the replay set. | Actions (`replay` workflow) |
@@ -231,7 +233,6 @@ Targets on branches not yet merged into `main`:
 
 | Target | What it does | Needs |
 |---|---|---|
-| `redteam`, `redteam-summary` (branch `m3/30-red-team-runs`, issue #30) | Runs or resumes the adaptive red-team batch; rebuilds its summary at no cost. | `redteam`: Docker, Tinker |
 | `rq4-runs` (PR #78) | Runs or resumes the RQ4 batch: each model on All, 3 trials per task, within a `BUDGET` the maintainer approves. | Docker, Tinker |
 | `rq4` (PR #78) | Writes the RQ4 table from the saved trials. | none |
 
