@@ -1,0 +1,42 @@
+{
+  "key": {
+    "instance": "peterbe__hashin-95",
+    "condition": "all",
+    "trial": 2
+  },
+  "attempts": 1,
+  "record": {
+    "task": "peterbe__hashin-95__all",
+    "task_path": "runs/rq4/tasks/peterbe__hashin-95__all",
+    "trial": "peterbe__hashin-95__all__P5DQC35",
+    "instruction": null,
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-35B-A3B-Base",
+    "reward": 0,
+    "turns": 21,
+    "prompt_tokens": 234632,
+    "cached_prompt_tokens": 213376,
+    "completion_tokens": 6149,
+    "cost_usd": 0.04273176300000001,
+    "agent_seconds": 147.244995,
+    "trial_seconds": 172.536352,
+    "exception": null,
+    "truncated_replies": 0,
+    "patch_files": [
+      "hashin.py",
+      "hashin.py.orig"
+    ],
+    "activity": null
+  },
+  "failure": null
+}

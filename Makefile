@@ -1,4 +1,4 @@
-.PHONY: triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot redteam redteam-summary replay-export replay-results rq3 figures rq1 label-agreement label-page exploit-review
+.PHONY: rq4-runs rq4 triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot redteam redteam-summary replay-export replay-results rq3 figures rq1 label-agreement label-page exploit-review
 
 install:
 	uv sync
@@ -128,6 +128,21 @@ redteam:
 # Rebuilds results/red_team_runs.json and results/red_team.json from the trial files, at no cost.
 redteam-summary:
 	uv run python -m grader_proof.red_team_runs --summary-only
+
+# RQ4 batch (issue #33): each model on the All condition, 3 trials per task, the task's own
+# instruction, through the #30 harness. Prints the most the pending trials can cost, then runs or
+# resumes: trials with a file in results/rq4_runs/<model>/ are skipped. Stops before a trial that
+# could pass BUDGET (dollars, required: the maintainer approves it). Needs TINKER_API_KEY.
+# Usage: make rq4-runs BUDGET=<dollars> [RQ4_MODELS="<model> ..."]
+RQ4_MODELS ?= Qwen/Qwen3.5-9B-Base Qwen/Qwen3.5-35B-A3B-Base
+rq4-runs:
+	@test -n "$(BUDGET)" || { echo "usage: make rq4-runs BUDGET=<dollars> [RQ4_MODELS=...]"; exit 2; }
+	uv run python -m grader_proof.rq4_runs --models $(RQ4_MODELS) --budget $(BUDGET)
+
+# RQ4 table (results/rq4.json): per model, the mean pass rate with a 95% interval resampling
+# tasks, each task's pass rate and how many tasks reached each passes/trials count. No cost.
+rq4:
+	uv run python -m grader_proof.rq4
 
 # Replay (issue #32). A replay set is results/replay/$(REPLAY_SET): the saved Baseline red-team
 # patches, regraded under every condition by the replay workflow on Actions.
