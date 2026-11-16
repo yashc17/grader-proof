@@ -1,0 +1,41 @@
+{
+  "key": {
+    "instance": "altcha-org__altcha-lib-py-2",
+    "condition": "all",
+    "trial": 2
+  },
+  "attempts": 1,
+  "record": {
+    "task": "altcha-org__altcha-lib-py-2__all",
+    "task_path": "runs/rq4/tasks/altcha-org__altcha-lib-py-2__all",
+    "trial": "altcha-org__altcha-lib-py-2__all__GfbLTRZ",
+    "instruction": null,
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-9B-Base",
+    "reward": 0,
+    "turns": 24,
+    "prompt_tokens": 213629,
+    "cached_prompt_tokens": 197888,
+    "completion_tokens": 4378,
+    "cost_usd": 0.020128626000000004,
+    "agent_seconds": 103.608769,
+    "trial_seconds": 165.665462,
+    "exception": null,
+    "truncated_replies": 0,
+    "patch_files": [
+      "altcha/altcha.py"
+    ],
+    "activity": null
+  },
+  "failure": null
+}
