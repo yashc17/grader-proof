@@ -114,7 +114,8 @@ def _seconds(timing: dict[str, str]) -> float:
 def read_trial(trial_dir: Path) -> TrialRecord:
     """Reads reward, token usage, cost and times from a Harbor trial's `result.json`."""
     result = json.loads((trial_dir / "result.json").read_text())
-    usage = result["agent_result"]
+    usage = result.get("agent_result")
+    execution = result.get("agent_execution")
     verifier = result["verifier_result"]
     exception = result["exception_info"]
     config = result["config"]
@@ -131,12 +132,12 @@ def read_trial(trial_dir: Path) -> TrialRecord:
         agent_kwargs=agent["kwargs"],
         model=result["agent_info"]["model_info"]["name"],
         reward=None if verifier is None else int(verifier["rewards"]["reward"]),
-        turns=usage["metadata"]["n_episodes"],
-        prompt_tokens=usage["n_input_tokens"],
-        cached_prompt_tokens=usage["n_cache_tokens"],
-        completion_tokens=usage["n_output_tokens"],
-        cost_usd=usage["cost_usd"],
-        agent_seconds=_seconds(result["agent_execution"]),
+        turns=0 if usage is None else usage["metadata"]["n_episodes"],
+        prompt_tokens=0 if usage is None else usage["n_input_tokens"],
+        cached_prompt_tokens=0 if usage is None else usage["n_cache_tokens"],
+        completion_tokens=0 if usage is None else usage["n_output_tokens"],
+        cost_usd=0.0 if usage is None else usage["cost_usd"],
+        agent_seconds=0.0 if execution is None else _seconds(execution),
         trial_seconds=_seconds(result),
         exception=None if exception is None else exception["exception_type"],
         truncated_replies=sum(TRUNCATED in line for line in log_lines),
