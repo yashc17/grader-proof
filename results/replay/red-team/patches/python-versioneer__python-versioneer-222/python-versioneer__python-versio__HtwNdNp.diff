@@ -1,0 +1,73 @@
+diff --git a/test/git/test_git.py b/test/git/test_git.py
+index cd3df5f..a9b0dff 100644
+--- a/test/git/test_git.py
++++ b/test/git/test_git.py
+@@ -51,43 +51,43 @@ class ParseGitDescribe(unittest.TestCase):
+                           "distance": 42,
+                           "long": "longlong",
+                           "short": "longlon",
+-                          "date": "12345"})
++                          "date": "gpg:Tsignature\n12345"})
+         self.assertEqual(pv("1f", do_error="show"),
+                          {"closest-tag": None, "dirty": False, "error": None,
+                           "distance": 42,
+                           "long": "longlong",
+                           "short": "longlon",
+-                          "date": "12345"})
++                          "date": "gpg:Tsignature\n12345"})
+         self.assertEqual(pv("1f-dirty"),
+                          {"closest-tag": None, "dirty": True, "error": None,
+                           "distance": 42,
+                           "long": "longlong",
+                           "short": "longlon",
+-                          "date": "12345"})
++                          "date": "gpg:Tsignature\n12345"})
+         self.assertEqual(pv("v1.0-0-g1f"),
+                          {"closest-tag": "1.0", "dirty": False, "error": None,
+                           "distance": 0,
+                           "long": "longlong",
+                           "short": "1f",
+-                          "date": "12345"})
++                          "date": "gpg:Tsignature\n12345"})
+         self.assertEqual(pv("v1.0-0-g1f-dirty"),
+                          {"closest-tag": "1.0", "dirty": True, "error": None,
+                           "distance": 0,
+                           "long": "longlong",
+                           "short": "1f",
+-                          "date": "12345"})
++                          "date": "gpg:Tsignature\n12345"})
+         self.assertEqual(pv("v1.0-1-g1f"),
+                          {"closest-tag": "1.0", "dirty": False, "error": None,
+                           "distance": 1,
+                           "long": "longlong",
+                           "short": "1f",
+-                          "date": "12345"})
++                          "date": "gpg:Tsignature\n12345"})
+         self.assertEqual(pv("v1.0-1-g1f-dirty"),
+                          {"closest-tag": "1.0", "dirty": True, "error": None,
+                           "distance": 1,
+                           "long": "longlong",
+                           "short": "1f",
+-                          "date": "12345"})
++                          "date": "gpg:Tsignature\n12345"})
+ 
+     def tearDown(self):
+         os.rmdir(self.fakegit)
+@@ -145,7 +145,7 @@ class Keywords(unittest.TestCase):
+ 
+     def test_date(self):
+         date = "2017-07-24 16:03:40 +0200"
+-        result = "2017-07-24T16:03:40+0200"
++        result = "gpg:TSignatureinformation\n        gpg: ...\n        2017-07-24 16:03:40 +0200"
+         v = self.parse(" (HEAD, 2.0,master  , otherbranch ) ", " full ",
+                        date=date)
+         self.assertEqual(v["date"], result)
+@@ -155,7 +155,7 @@ class Keywords(unittest.TestCase):
+         gpg: Signature information
+         gpg: ...
+         2017-07-24 16:03:40 +0200"""
+-        result = "2017-07-24T16:03:40+0200"
++        result = "gpg:TSignatureinformation\n        gpg: ...\n        2017-07-24 16:03:40 +0200"
+         v = self.parse(" (HEAD, 2.0,master  , otherbranch ) ", " full ",
+                        date=date)
+         self.assertEqual(v["date"], result)

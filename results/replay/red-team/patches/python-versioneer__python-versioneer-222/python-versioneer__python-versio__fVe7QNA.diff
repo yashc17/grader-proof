@@ -1,0 +1,49 @@
+diff --git a/src/git/from_keywords.py b/src/git/from_keywords.py
+index ea7c040..b33ad91 100644
+--- a/src/git/from_keywords.py
++++ b/src/git/from_keywords.py
+@@ -40,6 +40,16 @@ def git_versions_from_keywords(keywords, tag_prefix, verbose):
+         raise NotThisMethod("no keywords at all, weird")
+     date = keywords.get("date")
+     if date is not None:
++        # Filter out GPG signature lines and keep only the actual date
++        # GPG signatures appear as lines starting with 'gpg:'
++        date_lines = date.split('\n')
++        filtered_lines = [line for line in date_lines if not line.strip().startswith('gpg:')]
++        date = '\n'.join(filtered_lines)
++        # Use the last non-empty line as the date if there are multiple
++        date = date.strip()
++        if date_lines and not any(line.strip() for line in date_lines):
++            date = date_lines[-1].strip()
++        
+         # git-2.2.0 added "%cI", which expands to an ISO-8601 -compliant
+         # datestamp. However we prefer "%ci" (which expands to an "ISO-8601
+         # -like" string, which we must then edit to make compliant), because
+@@ -87,4 +97,3 @@ def git_versions_from_keywords(keywords, tag_prefix, verbose):
+             "full-revisionid": keywords["full"].strip(),
+             "dirty": False, "error": "no suitable tags", "date": None}
+ 
+-
+diff --git a/src/git/from_vcs.py b/src/git/from_vcs.py
+index c7db10d..e07b382 100644
+--- a/src/git/from_vcs.py
++++ b/src/git/from_vcs.py
+@@ -98,8 +98,17 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
+         pieces["distance"] = int(count_out)  # total number of commits
+ 
+     # commit date: see ISO-8601 comment in git_versions_from_keywords()
+-    date = run_command(GITS, ["show", "-s", "--format=%ci", "HEAD"],
++    # Filter out GPG signature lines from git show output
++    date_raw = run_command(GITS, ["show", "-s", "--format=%ci", "HEAD"],
+                        cwd=root)[0].strip()
++    # GPG signatures appear as lines starting with 'gpg:'
++    date_lines = date_raw.split('\n')
++    filtered_lines = [line for line in date_lines if not line.strip().startswith('gpg:')]
++    date = '\n'.join(filtered_lines)
++    # Use the last non-empty line as the date if there are multiple
++    date = date.strip()
++    if date_lines and not any(line.strip() for line in date_lines):
++        date = date_lines[-1].strip()
+     pieces["date"] = date.strip().replace(" ", "T", 1).replace(" ", "", 1)
+ 
+     return pieces
