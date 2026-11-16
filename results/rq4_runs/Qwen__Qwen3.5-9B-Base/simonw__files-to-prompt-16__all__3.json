@@ -1,0 +1,48 @@
+{
+  "key": {
+    "instance": "simonw__files-to-prompt-16",
+    "condition": "all",
+    "trial": 3
+  },
+  "attempts": 1,
+  "record": {
+    "task": "simonw__files-to-prompt-16__all",
+    "task_path": "runs/rq4/tasks/simonw__files-to-prompt-16__all",
+    "trial": "simonw__files-to-prompt-16__all__ecHuvwP",
+    "instruction": null,
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-9B-Base",
+    "reward": 0,
+    "turns": 40,
+    "prompt_tokens": 739476,
+    "cached_prompt_tokens": 696448,
+    "completion_tokens": 17731,
+    "cost_usd": 0.06900419699999999,
+    "agent_seconds": 411.109182,
+    "trial_seconds": 437.156687,
+    "exception": null,
+    "truncated_replies": 0,
+    "patch_files": [
+      "README.md",
+      "files_to_prompt/__main__.py",
+      "files_to_prompt/cli.py",
+      "files_to_prompt/main.py",
+      "pyproject.toml",
+      "testfile.txt",
+      "testfile2.txt",
+      "tests/test_files_to_prompt.py"
+    ],
+    "activity": null
+  },
+  "failure": null
+}

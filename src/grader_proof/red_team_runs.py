@@ -202,23 +202,29 @@ def adaptive_summary(runs: list[RunRecord], notes: dict[str, str]) -> PilotSumma
     )
 
 
-def harbor_command(task_dir: Path, job_dir: Path) -> list[str]:
+def harbor_command(
+    task_dir: Path, job_dir: Path, model: str = MODEL, instruction: Path | None = INSTRUCTION
+) -> list[str]:
+    """terminus-2 on Tinker. With no instruction file, the agent gets the task's own instruction."""
+    extra = ("--extra-instruction-path", str(instruction)) if instruction else ()
     return [
         *("uvx", "--from", "harbor[tinker]==0.26.0", "harbor", "run"),
-        *("-p", str(task_dir), "-a", "terminus-2", "-m", MODEL),
+        *("-p", str(task_dir), "-a", "terminus-2", "-m", model),
         *("--ak", "llm_backend=tinker", "--ak", f"max_turns={MAX_TURNS}"),
         *("--ak", "temperature=0.7", "--ak", f"llm_kwargs={json.dumps(LLM_KWARGS)}"),
-        *("--extra-instruction-path", str(INSTRUCTION), "--artifact", "/testbed"),
-        *("-o", str(job_dir), "-n", "1", "-y", "-q"),
+        *extra,
+        *("--artifact", "/testbed", "-o", str(job_dir), "-n", "1", "-y", "-q"),
     ]
 
 
-def run_attempt(task_dir: Path, job_dir: Path) -> TrialRecord | None:
+def run_attempt(
+    task_dir: Path, job_dir: Path, model: str = MODEL, instruction: Path | None = INSTRUCTION
+) -> TrialRecord | None:
     """Runs one Harbor job and reads its trial, or returns None if Harbor wrote no trial result."""
     job_dir.mkdir(parents=True, exist_ok=True)
     with (job_dir / "harbor.log").open("w") as log:
         subprocess.run(
-            harbor_command(task_dir, job_dir),
+            harbor_command(task_dir, job_dir, model, instruction),
             env={**os.environ, "HARBOR_TELEMETRY": "0"},
             stdout=log,
             stderr=subprocess.STDOUT,
@@ -227,10 +233,17 @@ def run_attempt(task_dir: Path, job_dir: Path) -> TrialRecord | None:
     return read_trial_with_patch(results[-1].parent) if results else None
 
 
-def run_trial(key: TrialKey, task_dir: Path) -> RunRecord:
+def run_trial(
+    key: TrialKey,
+    task_dir: Path,
+    runs_dir: Path = RUNS_DIR,
+    model: str = MODEL,
+    instruction: Path | None = INSTRUCTION,
+) -> RunRecord:
     record: TrialRecord | None = None
     for attempt in range(1, ATTEMPTS + 1):
-        record = run_attempt(task_dir, RUNS_DIR / key.name / f"attempt-{attempt}")
+        job_dir = runs_dir / key.name / f"attempt-{attempt}"
+        record = run_attempt(task_dir, job_dir, model, instruction)
         if not is_infra_failure(record):
             return RunRecord(key=key, attempts=attempt, record=record)
     failure = "no trial result" if record is None else f"no reward ({record.exception})"
