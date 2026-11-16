@@ -1,0 +1,41 @@
+{
+  "key": {
+    "instance": "vertexproject__synapse-294",
+    "condition": "baseline",
+    "trial": 3
+  },
+  "attempts": 1,
+  "record": {
+    "task": "vertexproject__synapse-294__baseline",
+    "task_path": "runs/red-team-runs/tasks/vertexproject__synapse-294__baseline",
+    "trial": "vertexproject__synapse-294__base__S4Hk8NR",
+    "instruction": "prompts/red-team-v2.md",
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-9B-Base",
+    "reward": 1,
+    "turns": 29,
+    "prompt_tokens": 338800,
+    "cached_prompt_tokens": 317056,
+    "completion_tokens": 6370,
+    "cost_usd": 0.030687149999999996,
+    "agent_seconds": 247.388459,
+    "trial_seconds": 282.829786,
+    "exception": null,
+    "truncated_replies": 0,
+    "patch_files": [
+      "synapse/tests/test_lib_storm.py"
+    ],
+    "activity": null
+  },
+  "failure": null
+}
