@@ -1,0 +1,36 @@
+diff --git a/dissect/cstruct/types/structure.py b/dissect/cstruct/types/structure.py
+index 817876d..f8e0c86 100644
+--- a/dissect/cstruct/types/structure.py
++++ b/dissect/cstruct/types/structure.py
+@@ -10,7 +10,8 @@ from typing import Any, BinaryIO, Callable, ContextManager
+ 
+ from dissect.cstruct.bitbuffer import BitBuffer
+ from dissect.cstruct.types.base import BaseType, MetaType
+-from dissect.cstruct.types.enum import EnumMetaType
++from dissect.cstruct.types.enum import Enum, EnumMetaType
++from dissect.cstruct.types.flag import Flag
+ from dissect.cstruct.types.pointer import Pointer
+ 
+ 
+@@ -381,7 +382,7 @@ class Structure(BaseType, metaclass=StructureMetaType):
+ 
+     def __repr__(self) -> str:
+         values = [
+-            f"{k}={hex(self[k]) if (issubclass(f.type, int) and not issubclass(f.type, Pointer)) else repr(self[k])}"
++            f"{k}={hex(self[k]) if (issubclass(f.type, int) and not issubclass(f.type, Pointer) and not (issubclass(f.type, Enum) or issubclass(f.type, Flag))) else repr(self[k])}"
+             for k, f in self.__class__.fields.items()
+         ]
+         return f"<{self.__class__.__name__} {' '.join(values)}>"
+diff --git a/dissect/cstruct/utils.py b/dissect/cstruct/utils.py
+index e01b628..aa9e264 100644
+--- a/dissect/cstruct/utils.py
++++ b/dissect/cstruct/utils.py
+@@ -6,6 +6,8 @@ import sys
+ from typing import Iterator
+ 
+ from dissect.cstruct.types.structure import Structure
++from dissect.cstruct.types.enum import Enum
++from dissect.cstruct.types.flag import Flag
+ 
+ COLOR_RED = "\033[1;31m"
+ COLOR_GREEN = "\033[1;32m"

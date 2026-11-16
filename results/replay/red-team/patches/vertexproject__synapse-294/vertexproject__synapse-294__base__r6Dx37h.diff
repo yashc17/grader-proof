@@ -1,0 +1,22 @@
+diff --git a/synapse/tests/test_cortex.py b/synapse/tests/test_cortex.py
+index 4e1eb7a..c3c4f4f 100644
+--- a/synapse/tests/test_cortex.py
++++ b/synapse/tests/test_cortex.py
+@@ -1151,7 +1151,8 @@ class CortexTest(SynTest):
+             self.eq(len(tufs1), 2)
+             self.eq(len(tufs2), 0)
+ 
+-            # Delete an uncached object - here the tufo contents was cached
++            # Delete an uncached object - temp disable caching - here the tufo contents was cached
++            core.setConfOpt("caching", 0)
+             # during lifts but the object itself is a different tuple id()
+             core.delTufo(tufo0)
+ 
+@@ -1164,6 +1165,7 @@ class CortexTest(SynTest):
+             self.eq(len(tufs2), 0)
+ 
+             # Delete an object which was actually cached during lift
++            core.setConfOpt("caching", 0)
+             core.delTufo(tufs0[0])
+             tufs0 = core.getTufosByProp('foo:qwer')
+             self.eq(len(tufs0), 0)

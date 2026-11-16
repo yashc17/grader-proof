@@ -1,0 +1,13 @@
+diff --git a/src/zope/schema/_bootstrapfields.py b/src/zope/schema/_bootstrapfields.py
+index 8d5e7dc..028e996 100644
+--- a/src/zope/schema/_bootstrapfields.py
++++ b/src/zope/schema/_bootstrapfields.py
+@@ -204,6 +204,8 @@ class Field(Attribute):
+ 
+     def __ne__(self, other):
+         return not self.__eq__(other)
++    def __hash__(self):
++        return 0
+ 
+     def _validate(self, value):
+         if self._type is not None and not isinstance(value, self._type):

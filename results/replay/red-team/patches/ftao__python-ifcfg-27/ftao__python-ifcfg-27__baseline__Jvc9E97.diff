@@ -1,0 +1,111 @@
+diff --git a/src/ifcfg/parser.py b/src/ifcfg/parser.py
+index 22ceeb8..199a6cc 100644
+--- a/src/ifcfg/parser.py
++++ b/src/ifcfg/parser.py
+@@ -16,6 +16,7 @@ DEVICE_PROPERTY_DEFAULTS = {
+     'ether': None,
+     'inet6': "LIST",  # Because lists are mutable
+     'netmask': None,
++    'inet4': 'LIST',  # Because lists are mutable
+ }
+ 
+ 
+@@ -67,28 +68,50 @@ class Parser(object):
+                 if 'device' in groupdict:
+                     cur = groupdict['device']
+                     self.add_device(cur)
++                    # Skip processing the 'device' key itself since we just set it
++                    continue
+                 elif cur is None:
+                     raise RuntimeError(
+                         "Got results that don't belong to a device"
+                     )
+ 
+                 for k, v in groupdict.items():
+-                    if k in self._interfaces[cur]:
+-                        if self._interfaces[cur][k] is None:
+-                            self._interfaces[cur][k] = v
+-                        elif hasattr(self._interfaces[cur][k], 'append'):
+-                            self._interfaces[cur][k].append(v)
+-                        else:
+-                            raise RuntimeError(
+-                                "Tried to add {}={} multiple times to {}, it was already: {}".format(
+-                                    k,
+-                                    v,
+-                                    cur,
+-                                    self._interfaces[cur][k]
+-                                )
+-                            )
++                    # Skip the device key since it's handled above
++                    if k == 'device':
++                        continue
++                    # Special handling for inet and netmask - first value goes to 
++                    # the main key, subsequent values go to *_4 keys
++                    if k == 'inet' and 'inet' in self._interfaces[cur]:
++                        # If we already have an inet value, add this one to inet4
++                        if self._interfaces[cur]['inet'] is not None and 'inet4' not in self._interfaces[cur]:
++                            # Store first inet in inet, subsequent in inet4
++                            self._interfaces[cur]['inet4'] = [self._interfaces[cur]['inet']]
++                        if 'inet4' in self._interfaces[cur]:
++                            self._interfaces[cur]['inet4'].append(v)
++                    elif k == 'netmask' and 'netmask' in self._interfaces[cur]:
++                        # If we already have a netmask value, add this one to netmask4
++                        if self._interfaces[cur]['netmask'] is not None and 'netmask4' not in self._interfaces[cur]:
++                            # Store first netmask in netmask, subsequent in netmask4
++                            self._interfaces[cur]['netmask4'] = [self._interfaces[cur]['netmask']]
++                        if 'netmask4' in self._interfaces[cur]:
++                            self._interfaces[cur]['netmask4'].append(v)
+                     else:
+-                        self._interfaces[cur][k] = v
++                        if k in self._interfaces[cur]:
++                            if self._interfaces[cur][k] is None:
++                                self._interfaces[cur][k] = v
++                            elif hasattr(self._interfaces[cur][k], 'append'):
++                                self._interfaces[cur][k].append(v)
++                            else:
++                                raise RuntimeError(
++                                    "Tried to add {}={} multiple times to {}, it was already: {}".format(
++                                        k,
++                                        v,
++                                        cur,
++                                        self._interfaces[cur][k]
++                                    )
++                                )
++                        else:
++                            self._interfaces[cur][k] = v
+ 
+         # fix it up
+         self._interfaces = self.alter(self._interfaces)
+@@ -115,6 +138,13 @@ class Parser(object):
+                 except (socket.herror, socket.gaierror):
+                     interfaces[device]['hostname'] = None
+ 
++            # Collect all inet values into inet4
++            if 'inet' in device_dict and device_dict['inet'] is not None:
++                inet_values = [device_dict['inet']]
++                if 'inet4' in device_dict and device_dict['inet4'] is not None:
++                    inet_values.extend(device_dict['inet4'])
++                interfaces[device]['inet4'] = inet_values
++
+             # To be sure that hex values and similar are always consistent, we
+             # return everything in lowercase. For instance, Windows writes
+             # MACs in upper-case.
+@@ -287,12 +317,12 @@ class UnixIPParser(UnixParser):
+     @classmethod
+     def get_patterns(cls):
+         return [
+-            '\s*[0-9]+:\s+(?P<device>[a-zA-Z0-9]+):.*mtu (?P<mtu>.*)',
+-            '.*(inet\s)(?P<inet>[\d\.]+)',
+-            '.*(inet6 )(?P<inet6>[^/]*).*',
+-            '.*(ether )(?P<ether>[^\s]*).*',
+-            '.*inet\s.*(brd )(?P<broadcast>[^\s]*).*',
+-            '.*(inet )[^/]+(?P<netmask>[/][0-9]+).*',
++            r'\s*[0-9]+:\s+(?P<device>[a-zA-Z0-9]+):.*mtu (?P<mtu>.*)',
++            r'.*(inet\s)(?P<inet>[\d\.]+)',
++            r'.*(inet6 )(?P<inet6>[^/]*).*',
++            r'.*(ether )(?P<ether>[^\s]*).*',
++            r'.*inet\s.*(brd )(?P<broadcast>[^\s]*).*',
++            r'.*(inet )[^/]+(?P<netmask>[/][0-9]+).*',
+         ]
+ 
+ 

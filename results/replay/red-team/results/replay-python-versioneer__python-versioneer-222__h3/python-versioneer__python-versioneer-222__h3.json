@@ -1,0 +1,29 @@
+[
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__HtwNdNp",
+    "condition": "h3",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "test/git/test_git.py::ParseGitDescribe::test_pieces",
+      "test/git/test_git.py::Keywords::test_date_gpg"
+    ]
+  },
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__fVe7QNA",
+    "condition": "h3",
+    "outcome": "accepted",
+    "failing_tests": []
+  },
+  {
+    "task": "python-versioneer__python-versioneer-222",
+    "trial": "python-versioneer__python-versio__vy8KoDB",
+    "condition": "h3",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "test/git/test_git.py::ParseGitDescribe::test_pieces",
+      "test/git/test_git.py::Keywords::test_date_gpg"
+    ]
+  }
+]

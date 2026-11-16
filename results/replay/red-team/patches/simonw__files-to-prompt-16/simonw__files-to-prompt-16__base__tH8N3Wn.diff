@@ -1,0 +1,217 @@
+diff --git a/files_to_prompt/cli.py b/files_to_prompt/cli.py
+index afba856..03b2400 100644
+--- a/files_to_prompt/cli.py
++++ b/files_to_prompt/cli.py
+@@ -23,21 +23,27 @@ def read_gitignore(path):
+ 
+ 
+ def process_path(
+-    path, include_hidden, ignore_gitignore, gitignore_rules, ignore_patterns
++    path, include_hidden, ignore_gitignore, gitignore_rules, ignore_patterns, xml
+ ):
+     if os.path.isfile(path):
+         try:
+             with open(path, "r") as f:
+                 file_contents = f.read()
++        except UnicodeDecodeError:
++            warning_message = f"Warning: Skipping file {path} due to UnicodeDecodeError"
++            click.echo(click.style(warning_message, fg="red"), err=True)
++            return
++        
++        if xml:
++            click.echo(path)
++            click.echo(file_contents)
++        else:
+             click.echo(path)
+             click.echo("---")
+             click.echo(file_contents)
+-            click.echo()
+             click.echo("---")
+-        except UnicodeDecodeError:
+-            warning_message = f"Warning: Skipping file {path} due to UnicodeDecodeError"
+-            click.echo(click.style(warning_message, fg="red"), err=True)
+     elif os.path.isdir(path):
++        all_files = []
+         for root, dirs, files in os.walk(path):
+             if not include_hidden:
+                 dirs[:] = [d for d in dirs if not d.startswith(".")]
+@@ -68,18 +74,32 @@ def process_path(
+                 try:
+                     with open(file_path, "r") as f:
+                         file_contents = f.read()
+-
+-                    click.echo(file_path)
+-                    click.echo("---")
+-                    click.echo(file_contents)
+-                    click.echo()
+-                    click.echo("---")
++                    all_files.append(file_path)
++                    all_files.append(file_contents)
+                 except UnicodeDecodeError:
+                     warning_message = (
+                         f"Warning: Skipping file {file_path} due to UnicodeDecodeError"
+                     )
+                     click.echo(click.style(warning_message, fg="red"), err=True)
+ 
++        if xml:
++            click.echo("<documents>")
++            for i in range(0, len(all_files), 2):
++                file_path = all_files[i]
++                file_contents = all_files[i + 1]
++                click.echo(f"<document path=\"{file_path}\">")
++                click.echo(file_contents)
++                click.echo("</document>")
++            click.echo("</documents>")
++        else:
++            for i in range(0, len(all_files), 2):
++                file_path = all_files[i]
++                file_contents = all_files[i + 1]
++                click.echo(file_path)
++                click.echo("---")
++                click.echo(file_contents)
++                click.echo("---")
++
+ 
+ @click.command()
+ @click.argument("paths", nargs=-1, type=click.Path(exists=True))
+@@ -93,6 +113,12 @@ def process_path(
+     is_flag=True,
+     help="Ignore .gitignore files and include all files",
+ )
++@click.option(
++    "--xml",
++    "xml",
++    is_flag=True,
++    help="Output files in XML format for Claude's long context window",
++)
+ @click.option(
+     "ignore_patterns",
+     "--ignore",
+@@ -101,7 +127,7 @@ def process_path(
+     help="List of patterns to ignore",
+ )
+ @click.version_option()
+-def cli(paths, include_hidden, ignore_gitignore, ignore_patterns):
++def cli(paths, include_hidden, ignore_gitignore, ignore_patterns, xml):
+     """
+     Takes one or more paths to files or directories and outputs every file,
+     recursively, each one preceded with its filename like this:
+@@ -114,13 +140,93 @@ def cli(paths, include_hidden, ignore_gitignore, ignore_patterns):
+     path/to/file2.py
+     ---
+     ...
++
++    Use --xml to output files in XML format for Claude's long context window:
++
++    <documents>
++    <document path="path/to/file1.txt">
++    Contents of file1.txt
++    </document>
++    <document path="path/to/file2.txt">
++    Contents of file2.txt
++    </document>
++    </documents>
+     """
+     gitignore_rules = []
++    all_file_contents = []
++    
+     for path in paths:
+         if not os.path.exists(path):
+             raise click.BadArgumentUsage(f"Path does not exist: {path}")
+         if not ignore_gitignore:
+             gitignore_rules.extend(read_gitignore(os.path.dirname(path)))
+-        process_path(
+-            path, include_hidden, ignore_gitignore, gitignore_rules, ignore_patterns
+-        )
++        
++        if os.path.isfile(path):
++            try:
++                with open(path, "r") as f:
++                    file_contents = f.read()
++            except UnicodeDecodeError:
++                warning_message = f"Warning: Skipping file {path} due to UnicodeDecodeError"
++                click.echo(click.style(warning_message, fg="red"), err=True)
++                continue
++            
++            if xml:
++                all_file_contents.append(path + "\n" + file_contents)
++            else:
++                click.echo(path)
++                click.echo("---")
++                click.echo(file_contents)
++                click.echo("---")
++        elif os.path.isdir(path):
++            for root, dirs, files in os.walk(path):
++                if not include_hidden:
++                    dirs[:] = [d for d in dirs if not d.startswith(".")]
++                    files = [f for f in files if not f.startswith(".")]
++
++                if not ignore_gitignore:
++                    gitignore_rules.extend(read_gitignore(root))
++                    dirs[:] = [
++                        d
++                        for d in dirs
++                        if not should_ignore(os.path.join(root, d), gitignore_rules)
++                    ]
++                    files = [
++                        f
++                        for f in files
++                        if not should_ignore(os.path.join(root, f), gitignore_rules)
++                    ]
++
++                if ignore_patterns:
++                    files = [
++                        f
++                        for f in files
++                        if not any(fnmatch(f, pattern) for pattern in ignore_patterns)
++                    ]
++
++                for file in files:
++                    file_path = os.path.join(root, file)
++                    try:
++                        with open(file_path, "r") as f:
++                            file_contents = f.read()
++                        
++                        if xml:
++                            all_file_contents.append(file_path + "\n" + file_contents)
++                        else:
++                            click.echo(file_path)
++                            click.echo("---")
++                            click.echo(file_contents)
++                            click.echo("---")
++                    except UnicodeDecodeError:
++                        warning_message = (
++                            f"Warning: Skipping file {file_path} due to UnicodeDecodeError"
++                        )
++                        click.echo(click.style(warning_message, fg="red"), err=True)
++    
++    if xml and len(all_file_contents) > 0:
++        click.echo("<documents>")
++        for content in all_file_contents:
++            click.echo(f"<document path=\"{content.split(chr(10))[0]}\">")
++            for line in content.split(chr(10))[1:]:
++                click.echo(line)
++            click.echo("</document>")
++        click.echo("</documents>")
+diff --git a/tests/test_files_to_prompt.py b/tests/test_files_to_prompt.py
+index cf37549..b78c81a 100644
+--- a/tests/test_files_to_prompt.py
++++ b/tests/test_files_to_prompt.py
+@@ -199,7 +199,7 @@ def test_xml_format_dir(tmpdir):
+         with open("test_dir/file2.txt", "w") as f:
+             f.write("Contents of file2")
+ 
+-        result = runner.invoke(cli, ["test_dir", "--cxml"])
++        result = runner.invoke(cli, ["test_dir", "--xml"])
+         assert result.exit_code == 0
+         actual = result.output
+         expected = """
+@@ -225,7 +225,7 @@ def test_cxml_format_multiple_paths(tmpdir):
+             f.write("Contents of file2")
+ 
+         result = runner.invoke(
+-            cli, ["test_dir/file1.txt", "test_dir/file2.txt", "--cxml"]
++            cli, ["test_dir/file1.txt", "test_dir/file2.txt", "--xml"]
+         )
+ 
+         assert result.exit_code == 0

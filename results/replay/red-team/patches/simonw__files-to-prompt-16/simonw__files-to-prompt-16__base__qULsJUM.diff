@@ -1,0 +1,132 @@
+diff --git a/files_to_prompt/cli.py b/files_to_prompt/cli.py
+index afba856..c222fbf 100644
+--- a/files_to_prompt/cli.py
++++ b/files_to_prompt/cli.py
+@@ -22,20 +22,18 @@ def read_gitignore(path):
+     return []
+ 
+ 
+-def process_path(
+-    path, include_hidden, ignore_gitignore, gitignore_rules, ignore_patterns
+-):
++def collect_files(path, include_hidden, ignore_gitignore, gitignore_rules, ignore_patterns):
++    """Collect file contents from a path (file or directory)."""
++    file_contents = []
++    
+     if os.path.isfile(path):
+         try:
+             with open(path, "r") as f:
+-                file_contents = f.read()
+-            click.echo(path)
+-            click.echo("---")
+-            click.echo(file_contents)
+-            click.echo()
+-            click.echo("---")
++                file_contents.append((path, f.read()))
+         except UnicodeDecodeError:
+-            warning_message = f"Warning: Skipping file {path} due to UnicodeDecodeError"
++            warning_message = (
++                f"Warning: Skipping file {path} due to UnicodeDecodeError"
++            )
+             click.echo(click.style(warning_message, fg="red"), err=True)
+     elif os.path.isdir(path):
+         for root, dirs, files in os.walk(path):
+@@ -67,18 +65,27 @@ def process_path(
+                 file_path = os.path.join(root, file)
+                 try:
+                     with open(file_path, "r") as f:
+-                        file_contents = f.read()
+-
+-                    click.echo(file_path)
+-                    click.echo("---")
+-                    click.echo(file_contents)
+-                    click.echo()
+-                    click.echo("---")
++                        file_contents.append((file_path, f.read()))
+                 except UnicodeDecodeError:
+                     warning_message = (
+                         f"Warning: Skipping file {file_path} due to UnicodeDecodeError"
+                     )
+                     click.echo(click.style(warning_message, fg="red"), err=True)
++    
++    return file_contents
++
++
++def format_xml_output(file_contents):
++    """Format file contents as XML."""
++    result = """
++<documents>
++"""
++    for file_path, file_content in file_contents:
++        result += f"<document path=\"{file_path}\">\n"
++        result += file_content
++        result += "\n</document>\n"
++    result += "</documents>\n"
++    return result
+ 
+ 
+ @click.command()
+@@ -100,8 +107,14 @@ def process_path(
+     default=[],
+     help="List of patterns to ignore",
+ )
++@click.option(
++    "--cxml",
++    "is_xml",
++    is_flag=True,
++    help="Output in XML format for Claude's context window",
++)
+ @click.version_option()
+-def cli(paths, include_hidden, ignore_gitignore, ignore_patterns):
++def cli(paths, include_hidden, ignore_gitignore, ignore_patterns, is_xml):
+     """
+     Takes one or more paths to files or directories and outputs every file,
+     recursively, each one preceded with its filename like this:
+@@ -116,11 +129,39 @@ def cli(paths, include_hidden, ignore_gitignore, ignore_patterns):
+     ...
+     """
+     gitignore_rules = []
+-    for path in paths:
+-        if not os.path.exists(path):
+-            raise click.BadArgumentUsage(f"Path does not exist: {path}")
+-        if not ignore_gitignore:
+-            gitignore_rules.extend(read_gitignore(os.path.dirname(path)))
+-        process_path(
+-            path, include_hidden, ignore_gitignore, gitignore_rules, ignore_patterns
+-        )
++    
++    if is_xml:
++        # Collect all file contents in XML format
++        for path in paths:
++            if not os.path.exists(path):
++                raise click.BadArgumentUsage(f"Path does not exist: {path}")
++            if not ignore_gitignore:
++                gitignore_rules.extend(read_gitignore(os.path.dirname(path)))
++        
++        file_contents = []
++        for path in paths:
++            file_contents.extend(collect_files(
++                path, include_hidden, ignore_gitignore, gitignore_rules, ignore_patterns
++            ))
++        
++        click.echo(format_xml_output(file_contents))
++    else:
++        # Standard output format
++        for path in paths:
++            if not os.path.exists(path):
++                raise click.BadArgumentUsage(f"Path does not exist: {path}")
++            if not ignore_gitignore:
++                gitignore_rules.extend(read_gitignore(os.path.dirname(path)))
++            
++            for file_path, file_content in collect_files(
++                path, include_hidden, ignore_gitignore, gitignore_rules, ignore_patterns
++            ):
++                click.echo(file_path)
++                click.echo("---")
++                click.echo(file_content)
++                click.echo()
++                click.echo("---")
++
++
++if __name__ == "__main__":
++    cli()

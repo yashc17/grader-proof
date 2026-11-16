@@ -1,0 +1,27 @@
+diff --git a/src/zope/schema/_bootstrapfields.py b/src/zope/schema/_bootstrapfields.py
+index 8d5e7dc..b254b8b 100644
+--- a/src/zope/schema/_bootstrapfields.py
++++ b/src/zope/schema/_bootstrapfields.py
+@@ -205,6 +205,22 @@ class Field(Attribute):
+     def __ne__(self, other):
+         return not self.__eq__(other)
+ 
++    def __hash__(self):
++        # Hash by property names and values (like __eq__ does)
++        # This ensures equal objects have equal hashes
++        names = {}  # used as set of property names, ignoring values
++        for interface in providedBy(self):
++            names.update(getFields(interface))
++
++        # order will be different always, don't hash it
++        if 'order' in names:
++            del names['order']
++        
++        # Create a frozenset of (name, value) tuples to hash
++        # This makes equal objects hash equal, and different objects likely different
++        items = frozenset(names)
++        return hash(frozenset(names))
++
+     def _validate(self, value):
+         if self._type is not None and not isinstance(value, self._type):
+             raise WrongType(value, self._type, self.__name__)

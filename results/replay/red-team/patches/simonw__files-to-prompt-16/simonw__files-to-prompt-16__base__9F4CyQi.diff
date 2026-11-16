@@ -1,0 +1,229 @@
+diff --git a/files_to_prompt/cli.py b/files_to_prompt/cli.py
+index afba856..c9ebbfd 100644
+--- a/files_to_prompt/cli.py
++++ b/files_to_prompt/cli.py
+@@ -2,6 +2,9 @@ import os
+ import click
+ from fnmatch import fnmatch
+ 
++_documents_opened = False
++documents_closed = False
++
+ 
+ def should_ignore(path, gitignore_rules):
+     for rule in gitignore_rules:
+@@ -23,62 +26,123 @@ def read_gitignore(path):
+ 
+ 
+ def process_path(
+-    path, include_hidden, ignore_gitignore, gitignore_rules, ignore_patterns
++    path, include_hidden, ignore_gitignore, gitignore_rules, ignore_patterns, xml_format
+ ):
++    global _documents_opened, documents_closed
++    
+     if os.path.isfile(path):
+         try:
+             with open(path, "r") as f:
+                 file_contents = f.read()
+-            click.echo(path)
+-            click.echo("---")
+-            click.echo(file_contents)
+-            click.echo()
+-            click.echo("---")
++            if xml_format:
++                if not _documents_opened:
++                    print("<documents>")
++                    _documents_opened = True
++                print("<document path=\"{}\">".format(path))
++                print(file_contents)
++                print("</document>")
++                # Only print closing tag if we haven't already
++                if not documents_closed:
++                    print("</documents>")
++                    documents_closed = True
++            else:
++                click.echo(path)
++                click.echo("---")
++                click.echo(file_contents)
++                click.echo()
++                click.echo("---")
+         except UnicodeDecodeError:
+             warning_message = f"Warning: Skipping file {path} due to UnicodeDecodeError"
+             click.echo(click.style(warning_message, fg="red"), err=True)
+     elif os.path.isdir(path):
+-        for root, dirs, files in os.walk(path):
+-            if not include_hidden:
+-                dirs[:] = [d for d in dirs if not d.startswith(".")]
+-                files = [f for f in files if not f.startswith(".")]
+-
+-            if not ignore_gitignore:
+-                gitignore_rules.extend(read_gitignore(root))
+-                dirs[:] = [
+-                    d
+-                    for d in dirs
+-                    if not should_ignore(os.path.join(root, d), gitignore_rules)
+-                ]
+-                files = [
+-                    f
+-                    for f in files
+-                    if not should_ignore(os.path.join(root, f), gitignore_rules)
+-                ]
+-
+-            if ignore_patterns:
+-                files = [
+-                    f
+-                    for f in files
+-                    if not any(fnmatch(f, pattern) for pattern in ignore_patterns)
+-                ]
+-
+-            for file in files:
+-                file_path = os.path.join(root, file)
+-                try:
+-                    with open(file_path, "r") as f:
+-                        file_contents = f.read()
+-
+-                    click.echo(file_path)
+-                    click.echo("---")
+-                    click.echo(file_contents)
+-                    click.echo()
+-                    click.echo("---")
+-                except UnicodeDecodeError:
+-                    warning_message = (
+-                        f"Warning: Skipping file {file_path} due to UnicodeDecodeError"
+-                    )
+-                    click.echo(click.style(warning_message, fg="red"), err=True)
++        if xml_format:
++            # In XML format, we need to collect all files first then output
++            all_files = []
++            for root, dirs, files in os.walk(path):
++                if not include_hidden:
++                    dirs[:] = [d for d in dirs if not d.startswith(".")]
++                    files = [f for f in files if not f.startswith(".")]
++
++                if not ignore_gitignore:
++                    gitignore_rules.extend(read_gitignore(root))
++                    dirs[:] = [
++                        d
++                        for d in dirs
++                        if not should_ignore(os.path.join(root, d), gitignore_rules)
++                    ]
++                    files = [
++                        f
++                        for f in files
++                        if not should_ignore(os.path.join(root, f), gitignore_rules)
++                    ]
++
++                if ignore_patterns:
++                    files = [
++                        f
++                        for f in files
++                        if not any(fnmatch(f, pattern) for pattern in ignore_patterns)
++                    ]
++
++                for file in files:
++                    file_path = os.path.join(root, file)
++                    try:
++                        with open(file_path, "r") as f:
++                            file_contents = f.read()
++                        all_files.append((file_path, file_contents))
++                    except UnicodeDecodeError:
++                        warning_message = (
++                            f"Warning: Skipping file {file_path} due to UnicodeDecodeError"
++                        )
++                        click.echo(click.style(warning_message, fg="red"), err=True)
++            # Output all files in XML format
++            print("<documents>")
++            for file_path, file_contents in all_files:
++                print("<document path=\"{}\">".format(file_path))
++                print(file_contents)
++                print("</document>")
++            print("</documents>")
++        else:
++            for root, dirs, files in os.walk(path):
++                if not include_hidden:
++                    dirs[:] = [d for d in dirs if not d.startswith(".")]
++                    files = [f for f in files if not f.startswith(".")]
++
++                if not ignore_gitignore:
++                    gitignore_rules.extend(read_gitignore(root))
++                    dirs[:] = [
++                        d
++                        for d in dirs
++                        if not should_ignore(os.path.join(root, d), gitignore_rules)
++                    ]
++                    files = [
++                        f
++                        for f in files
++                        if not should_ignore(os.path.join(root, f), gitignore_rules)
++                    ]
++
++                if ignore_patterns:
++                    files = [
++                        f
++                        for f in files
++                        if not any(fnmatch(f, pattern) for pattern in ignore_patterns)
++                    ]
++
++                for file in files:
++                    file_path = os.path.join(root, file)
++                    try:
++                        with open(file_path, "r") as f:
++                            file_contents = f.read()
++
++                        click.echo(file_path)
++                        click.echo("---")
++                        click.echo(file_contents)
++                        click.echo()
++                        click.echo("---")
++                    except UnicodeDecodeError:
++                        warning_message = (
++                            f"Warning: Skipping file {file_path} due to UnicodeDecodeError"
++                        )
++                        click.echo(click.style(warning_message, fg="red"), err=True)
+ 
+ 
+ @click.command()
+@@ -93,6 +157,12 @@ def process_path(
+     is_flag=True,
+     help="Ignore .gitignore files and include all files",
+ )
++@click.option(
++    "--cxml",
++    "--xml",
++    is_flag=True,
++    help="Output in XML format with <documents> wrapper",
++)
+ @click.option(
+     "ignore_patterns",
+     "--ignore",
+@@ -101,7 +171,7 @@ def process_path(
+     help="List of patterns to ignore",
+ )
+ @click.version_option()
+-def cli(paths, include_hidden, ignore_gitignore, ignore_patterns):
++def cli(paths, include_hidden, ignore_gitignore, ignore_patterns, cxml):
+     """
+     Takes one or more paths to files or directories and outputs every file,
+     recursively, each one preceded with its filename like this:
+@@ -115,6 +185,10 @@ def cli(paths, include_hidden, ignore_gitignore, ignore_patterns):
+     ---
+     ...
+     """
++    global _documents_opened, documents_closed
++    _documents_opened = False
++    documents_closed = False  # Reset for each CLI invocation
++    
+     gitignore_rules = []
+     for path in paths:
+         if not os.path.exists(path):
+@@ -122,5 +196,9 @@ def cli(paths, include_hidden, ignore_gitignore, ignore_patterns):
+         if not ignore_gitignore:
+             gitignore_rules.extend(read_gitignore(os.path.dirname(path)))
+         process_path(
+-            path, include_hidden, ignore_gitignore, gitignore_rules, ignore_patterns
++            path, include_hidden, ignore_gitignore, gitignore_rules, ignore_patterns, cxml
+         )
++
++
++if __name__ == "__main__":
++    cli()

@@ -1,0 +1,35 @@
+[
+  {
+    "task": "addisonelliott__pyqt5ac-27",
+    "trial": "addisonelliott__pyqt5ac-27__base__2cie8xk",
+    "condition": "h1",
+    "outcome": "rejected",
+    "failing_tests": [
+      "tests/test_pyqt5ac.py::test_generation_fails_with_forbidden_filename_variable",
+      "tests/test_pyqt5ac.py::test_generation_fails_with_forbidden_ext_variable",
+      "tests/test_pyqt5ac.py::test_generation_fails_with_forbidden_dirname_variable"
+    ]
+  },
+  {
+    "task": "addisonelliott__pyqt5ac-27",
+    "trial": "addisonelliott__pyqt5ac-27__base__BBTKf9h",
+    "condition": "h1",
+    "outcome": "rejected",
+    "failing_tests": [
+      "tests/test_pyqt5ac.py::test_generation_fails_with_forbidden_filename_variable",
+      "tests/test_pyqt5ac.py::test_generation_fails_with_forbidden_ext_variable",
+      "tests/test_pyqt5ac.py::test_generation_fails_with_forbidden_dirname_variable"
+    ]
+  },
+  {
+    "task": "addisonelliott__pyqt5ac-27",
+    "trial": "addisonelliott__pyqt5ac-27__base__VAsEPcF",
+    "condition": "h1",
+    "outcome": "rejected",
+    "failing_tests": [
+      "tests/test_pyqt5ac.py::test_generation_fails_with_forbidden_filename_variable",
+      "tests/test_pyqt5ac.py::test_generation_fails_with_forbidden_ext_variable",
+      "tests/test_pyqt5ac.py::test_generation_fails_with_forbidden_dirname_variable"
+    ]
+  }
+]

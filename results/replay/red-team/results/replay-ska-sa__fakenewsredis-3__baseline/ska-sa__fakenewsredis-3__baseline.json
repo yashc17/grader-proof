@@ -1,0 +1,26 @@
+[
+  {
+    "task": "ska-sa__fakenewsredis-3",
+    "trial": "ska-sa__fakenewsredis-3__baselin__EsuwMGN",
+    "condition": "baseline",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "ska-sa__fakenewsredis-3",
+    "trial": "ska-sa__fakenewsredis-3__baselin__V6x6Nu7",
+    "condition": "baseline",
+    "outcome": "accepted",
+    "failing_tests": []
+  },
+  {
+    "task": "ska-sa__fakenewsredis-3",
+    "trial": "ska-sa__fakenewsredis-3__baselin__hBvPsp3",
+    "condition": "baseline",
+    "outcome": "rejected",
+    "failing_tests": [
+      "test_fakenewsredis.py::TestFakeStrictRedis::test_setrange_expiry",
+      "test_fakenewsredis.py::TestFakeStrictRedisDecodeResponses::test_setrange_expiry"
+    ]
+  }
+]

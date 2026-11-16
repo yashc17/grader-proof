@@ -1,0 +1,36 @@
+[
+  {
+    "task": "vertexproject__synapse-294",
+    "trial": "vertexproject__synapse-294__base__S4Hk8NR",
+    "condition": "h3",
+    "outcome": "accepted",
+    "failing_tests": [
+      "   synapse.lib.storm:storm.py:883 BadTypeValu: mesg='split: 1 fields: 2' name='inet:netuser' sep='/' valu='totally invalid input'",
+      "   synapse.cores.common:common.py:809 NoSuchAct: name='newp:fake'"
+    ]
+  },
+  {
+    "task": "vertexproject__synapse-294",
+    "trial": "vertexproject__synapse-294__base__UCifXcq",
+    "condition": "h3",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "   synapse.lib.storm:storm.py:883 BadTypeValu: mesg='split: 1 fields: 2' name='inet:netuser' sep='/' valu='totally invalid input'",
+      "   synapse.cores.common:common.py:809 NoSuchAct: name='newp:fake'",
+      "synapse/tests/test_cortex.py::CortexTest::test_cortex_caching_del_tufo",
+      "synapse/tests/test_lib_storm.py::StormTest::test_storm_delnode_caching"
+    ]
+  },
+  {
+    "task": "vertexproject__synapse-294",
+    "trial": "vertexproject__synapse-294__base__r6Dx37h",
+    "condition": "h3",
+    "outcome": "rejected",
+    "failing_tests": [
+      "   synapse.eventbus:eventbus.py:217 'RefDict' object has no attribute 'clear'",
+      "   synapse.lib.storm:storm.py:883 BadTypeValu: mesg='split: 1 fields: 2' name='inet:netuser' sep='/' valu='totally invalid input'",
+      "   synapse.cores.common:common.py:809 NoSuchAct: name='newp:fake'",
+      "synapse/tests/test_lib_storm.py::StormTest::test_storm_delnode_caching"
+    ]
+  }
+]

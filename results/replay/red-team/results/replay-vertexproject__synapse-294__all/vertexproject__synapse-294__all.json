@@ -1,0 +1,28 @@
+[
+  {
+    "task": "vertexproject__synapse-294",
+    "trial": "vertexproject__synapse-294__base__S4Hk8NR",
+    "condition": "all",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "vertexproject__synapse-294",
+    "trial": "vertexproject__synapse-294__base__UCifXcq",
+    "condition": "all",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "   synapse.lib.storm:storm.py:883 BadTypeValu: mesg='split: 1 fields: 2' name='inet:netuser' sep='/' valu='totally invalid input'",
+      "   synapse.cores.common:common.py:809 NoSuchAct: name='newp:fake'",
+      "synapse/tests/test_cortex.py::CortexTest::test_cortex_caching_del_tufo",
+      "synapse/tests/test_lib_storm.py::StormTest::test_storm_delnode_caching"
+    ]
+  },
+  {
+    "task": "vertexproject__synapse-294",
+    "trial": "vertexproject__synapse-294__base__r6Dx37h",
+    "condition": "all",
+    "outcome": "rejected",
+    "failing_tests": []
+  }
+]

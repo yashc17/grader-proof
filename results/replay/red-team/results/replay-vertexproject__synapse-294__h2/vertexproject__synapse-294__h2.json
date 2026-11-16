@@ -1,0 +1,23 @@
+[
+  {
+    "task": "vertexproject__synapse-294",
+    "trial": "vertexproject__synapse-294__base__S4Hk8NR",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "vertexproject__synapse-294",
+    "trial": "vertexproject__synapse-294__base__UCifXcq",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "vertexproject__synapse-294",
+    "trial": "vertexproject__synapse-294__base__r6Dx37h",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": []
+  }
+]

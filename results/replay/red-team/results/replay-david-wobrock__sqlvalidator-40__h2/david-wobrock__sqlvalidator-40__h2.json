@@ -1,0 +1,23 @@
+[
+  {
+    "task": "david-wobrock__sqlvalidator-40",
+    "trial": "david-wobrock__sqlvalidator-40__bdkNoGi",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "david-wobrock__sqlvalidator-40",
+    "trial": "david-wobrock__sqlvalidator-40__iPuyznn",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": []
+  },
+  {
+    "task": "david-wobrock__sqlvalidator-40",
+    "trial": "david-wobrock__sqlvalidator-40__pebCjir",
+    "condition": "h2",
+    "outcome": "rejected",
+    "failing_tests": []
+  }
+]

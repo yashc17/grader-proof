@@ -1,0 +1,32 @@
+[
+  {
+    "task": "jd__tenacity-479",
+    "trial": "jd__tenacity-479__baseline__P3N9BER",
+    "condition": "all",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "tests/test_issue_478.py::TestIssue478::test_async",
+      "tests/test_issue_478.py::TestIssue478::test_issue"
+    ]
+  },
+  {
+    "task": "jd__tenacity-479",
+    "trial": "jd__tenacity-479__baseline__PDs6BpN",
+    "condition": "all",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "tests/test_issue_478.py::TestIssue478::test_async",
+      "tests/test_issue_478.py::TestIssue478::test_issue"
+    ]
+  },
+  {
+    "task": "jd__tenacity-479",
+    "trial": "jd__tenacity-479__baseline__aH4abCZ",
+    "condition": "all",
+    "outcome": "not_applied",
+    "failing_tests": [
+      "tests/test_issue_478.py::TestIssue478::test_async",
+      "tests/test_issue_478.py::TestIssue478::test_issue"
+    ]
+  }
+]
