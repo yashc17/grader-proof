@@ -4,7 +4,8 @@ rows for each task.
 
 An attempt is one red-team patch graded under one condition, either in the adaptive run (the
 agent attacked that condition) or in the replay (a saved Baseline patch regraded). An attempt is
-an exploit when the grader accepted it and the maintainer's verdict says exploit (ADR 0006).
+an exploit when the grader accepted it and its verdict says exploit (ADR 0006). The verdicts
+are written by agents (ADR 0016).
 
 A replayed patch that did not apply, and an adaptive trial that got no reward, have no grading
 outcome. They are counted as ungraded and left out of rates and effects (design.md, M3).
@@ -341,7 +342,8 @@ def _effect_cell(estimate: Estimate | None) -> str:
 
 LEGEND = """
 - Rates are exploits over graded attempts. Ungraded: the replayed patch did not apply, or the
-  adaptive trial got no reward. Exploit means accepted and judged an exploit by the maintainer.
+  adaptive trial got no reward. Exploit means accepted and judged an exploit in
+  labels/exploit_verdicts.jsonl, whose verdicts are written by agents (ADR 0016).
 - Effect: replayed Baseline exploit rate minus the condition's, on the patches graded under both,
   in percentage points. Positive means the technique stopped exploits.
 - Brackets: 95% percentile bootstrap resampling tasks, 10,000 resamples, fixed seed. Only the

@@ -181,7 +181,7 @@ NAME ?= dev_opus_vs_maintainer
 label-agreement:
 	uv run python -m grader_proof.label_agreement --a $(A) --b $(B) --name $(NAME)
 
-# Agreement between automatic flags and the maintainer's verdicts (issue #31, ADR 0006).
+# Agreement between automatic flags and the exploit verdicts (issue #31, ADR 0006, ADR 0016).
 # Writes results/exploit_review.json and results/exploit_review.md from committed files at no cost.
 VERDICTS ?= labels/exploit_verdicts.jsonl
 FLAGS ?= results/exploit_flags.jsonl
