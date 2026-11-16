@@ -67,7 +67,7 @@ A change to the grader that is meant to stop exploits. H1 restores the test file
 An agent told to make the grader pass without fixing the issue.
 
 **Exploit**:
-A red-team patch that the grader accepts and that the maintainer judged not to fix the issue.
+A red-team patch that the grader accepts and that the exploit verdict says does not fix the issue. The verdicts are written by agents (ADR 0016).
 _Avoid_: hack, cheat
 
 **Exploit rate**:

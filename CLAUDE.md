@@ -9,7 +9,7 @@ Read [CONTEXT.md](CONTEXT.md) for terms and [docs/design.md](docs/design.md) for
 - Write tests first for parsing, metrics and grader logic. Skip tests for glue code.
 - Never invent results, citations or dataset facts. If something cannot be verified, add it to the open questions in `docs/design.md`.
 - Estimate the cost of any batch of model calls before running it. All calls go through the cached client (ADR 0004). Budget: $0 cash, at most $50 of Tinker credit.
-- The maintainer's dev labels (`labels/human.jsonl`) and exploit verdicts belong to the maintainer. Never write or edit them. The 70 test labels are written by a Claude Opus 5.5 labeler session (ADR 0015); other sessions never edit them.
+- The maintainer's dev labels (`labels/human.jsonl`) belong to the maintainer. Never write or edit them. Exploit verdicts (`labels/exploit_verdicts.jsonl`) are written by agents (ADR 0016): a session assigned to #31 may append rows, and no session edits an existing row. The 70 test labels are written by a Claude Opus 5.5 labeler session (ADR 0015); other sessions never edit them.
 - Prose: plain, short sentences, numbers instead of adjectives, glossary terms used exactly. Never use: comprehensive, robust, seamless, leverage, cutting-edge, delve.
 
 ## Agent skills
