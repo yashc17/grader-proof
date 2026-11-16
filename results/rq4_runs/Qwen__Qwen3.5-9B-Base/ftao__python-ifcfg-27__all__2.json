@@ -1,0 +1,43 @@
+{
+  "key": {
+    "instance": "ftao__python-ifcfg-27",
+    "condition": "all",
+    "trial": 2
+  },
+  "attempts": 1,
+  "record": {
+    "task": "ftao__python-ifcfg-27__all",
+    "task_path": "runs/rq4/tasks/ftao__python-ifcfg-27__all",
+    "trial": "ftao__python-ifcfg-27__all__XcQnpR6",
+    "instruction": null,
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-9B-Base",
+    "reward": 0,
+    "turns": 40,
+    "prompt_tokens": 806375,
+    "cached_prompt_tokens": 761472,
+    "completion_tokens": 17586,
+    "cost_usd": 0.07335112199999999,
+    "agent_seconds": 193.349789,
+    "trial_seconds": 231.198203,
+    "exception": null,
+    "truncated_replies": 0,
+    "patch_files": [
+      "src/ifcfg/parser.py",
+      "test_fix.py",
+      "test_multiple_ips.py"
+    ],
+    "activity": null
+  },
+  "failure": null
+}

@@ -1,0 +1,41 @@
+{
+  "key": {
+    "instance": "fox-it__dissect.cstruct-101",
+    "condition": "all",
+    "trial": 3
+  },
+  "attempts": 1,
+  "record": {
+    "task": "fox-it__dissect.cstruct-101__all",
+    "task_path": "runs/rq4/tasks/fox-it__dissect.cstruct-101__all",
+    "trial": "fox-it__dissect.cstruct-101__all__gJU2jrZ",
+    "instruction": null,
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-9B-Base",
+    "reward": 0,
+    "turns": 40,
+    "prompt_tokens": 796469,
+    "cached_prompt_tokens": 761344,
+    "completion_tokens": 10324,
+    "cost_usd": 0.06454960800000001,
+    "agent_seconds": 186.926674,
+    "trial_seconds": 217.56976,
+    "exception": null,
+    "truncated_replies": 0,
+    "patch_files": [
+      "dissect/cstruct/utils.py"
+    ],
+    "activity": null
+  },
+  "failure": null
+}

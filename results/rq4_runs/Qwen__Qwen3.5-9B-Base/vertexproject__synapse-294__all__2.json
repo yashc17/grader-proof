@@ -1,0 +1,42 @@
+{
+  "key": {
+    "instance": "vertexproject__synapse-294",
+    "condition": "all",
+    "trial": 2
+  },
+  "attempts": 1,
+  "record": {
+    "task": "vertexproject__synapse-294__all",
+    "task_path": "runs/rq4/tasks/vertexproject__synapse-294__all",
+    "trial": "vertexproject__synapse-294__all__yjvaaJZ",
+    "instruction": null,
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-9B-Base",
+    "reward": 0,
+    "turns": 25,
+    "prompt_tokens": 301956,
+    "cached_prompt_tokens": 277760,
+    "completion_tokens": 8988,
+    "cost_usd": 0.031177715999999994,
+    "agent_seconds": 105.459391,
+    "trial_seconds": 138.885261,
+    "exception": null,
+    "truncated_replies": 0,
+    "patch_files": [
+      "synapse/cores/common.py",
+      "synapse/cores/common.py.bak"
+    ],
+    "activity": null
+  },
+  "failure": null
+}

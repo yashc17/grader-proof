@@ -1,0 +1,53 @@
+{
+  "key": {
+    "instance": "zopefoundation__zope.schema-39",
+    "condition": "all",
+    "trial": 1
+  },
+  "attempts": 1,
+  "record": {
+    "task": "zopefoundation__zope.schema-39__all",
+    "task_path": "runs/rq4/tasks/zopefoundation__zope.schema-39__all",
+    "trial": "zopefoundation__zope.schema-39__WohQdwK",
+    "instruction": null,
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-9B-Base",
+    "reward": 1,
+    "turns": 40,
+    "prompt_tokens": 736815,
+    "cached_prompt_tokens": 696064,
+    "completion_tokens": 14227,
+    "cost_usd": 0.065470329,
+    "agent_seconds": 346.6498,
+    "trial_seconds": 373.191504,
+    "exception": null,
+    "truncated_replies": 0,
+    "patch_files": [
+      "src/zope/schema/_bootstrapfields.py",
+      "zope/__init__.py",
+      "zope/event.py",
+      "zope/interface.py",
+      "zope/schema/__init__.py",
+      "zope/schema/_bootstrapinterfaces.py",
+      "zope/schema/_compat.py",
+      "zope/schema/_field.py",
+      "zope/schema/_schema.py",
+      "zope/schema/accessors.py",
+      "zope/schema/fieldproperty.py",
+      "zope/schema/interfaces.py",
+      "zope/schema/vocabulary.py"
+    ],
+    "activity": null
+  },
+  "failure": null
+}

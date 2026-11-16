@@ -1,0 +1,41 @@
+{
+  "key": {
+    "instance": "jd__tenacity-479",
+    "condition": "all",
+    "trial": 2
+  },
+  "attempts": 1,
+  "record": {
+    "task": "jd__tenacity-479__all",
+    "task_path": "runs/rq4/tasks/jd__tenacity-479__all",
+    "trial": "jd__tenacity-479__all__3iArw8x",
+    "instruction": null,
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-9B-Base",
+    "reward": 0,
+    "turns": 27,
+    "prompt_tokens": 475369,
+    "cached_prompt_tokens": 445568,
+    "completion_tokens": 5783,
+    "cost_usd": 0.040341261,
+    "agent_seconds": 132.241748,
+    "trial_seconds": 159.691366,
+    "exception": null,
+    "truncated_replies": 1,
+    "patch_files": [
+      "test_retry.py"
+    ],
+    "activity": null
+  },
+  "failure": null
+}
