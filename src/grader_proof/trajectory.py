@@ -71,6 +71,8 @@ class Message(Frozen):
     role: str
     content: str
     tool_calls: tuple[ToolCall, ...]
+    # Set on tool messages: the id of the call this message answers.
+    tool_call_id: str | None = None
 
 
 class Trajectory(Frozen):
@@ -90,6 +92,7 @@ class Trajectory(Frozen):
                 role=raw["role"],
                 content=raw["content"] or "",
                 tool_calls=tuple(ToolCall.from_raw(c) for c in raw["tool_calls"] or ()),
+                tool_call_id=raw.get("tool_call_id"),
             )
             for raw in row["trajectory"]
         )

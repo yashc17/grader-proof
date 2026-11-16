@@ -70,9 +70,9 @@ So 69.1% (95% interval 68.0–70.3) of unresolved trajectories with a self-check
 
 **Labeling sample.** 100 unresolved trajectories drawn uniformly with a fixed seed, at most one per instance, so class frequencies match the data. Before labeling, each is assigned at random to *dev* (30) or *test* (70). About a third will be self-check false positives, so the same labels feed RQ1.
 
-**Labeling tool.** A terminal tool that shows the issue text, a condensed trajectory (commands, errors, the last observations), the agent's patch next to the gold patch, and the `FAIL_TO_PASS` names. It records one failure class, a one-line note, and, for self-check false positives, why the self-check was fooled. Labels are appended to a JSONL file, so labeling can stop and resume at any point. The codebook and precedence order are in [ADR 0003](adr/0003-failure-class-taxonomy.md).
+**Labeling tool.** A terminal tool that shows the issue text, a condensed trajectory (commands, errors, the last observations), the agent's patch next to the gold patch, and the `FAIL_TO_PASS` names. It records one failure class, a one-line note, and, for self-check false positives, why the self-check was fooled. Labels are appended to a JSONL file, so labeling can stop and resume at any point. The codebook and precedence order are in [ADR 0003](adr/0003-failure-class-taxonomy.md). The maintainer labels the 30 dev items. Claude Opus 5.5 labels the 70 test items, blind to the maintainer's labels and to every triager output, from the same evidence plus label-free fact sheets ([ADR 0015](adr/0015-opus-test-labels.md)). Its decision rules are in `docs/codebook.md`.
 
-**Self-agreement.** About a week after labeling, the maintainer re-labels 20 random items without seeing the first answers. Cohen's κ between the two passes estimates how consistent the labels are, which is roughly the best κ a triager can reach.
+**Self-agreement.** A second, fresh Opus session re-labels 20 random test items without seeing the first labels. Cohen's κ between the two passes estimates how consistent the labels are, which is roughly the best κ a triager can reach. Opus also labels the 30 dev items blind; its κ against the maintainer's dev labels shows how close the two labelers are (ADR 0015).
 
 **Triager.**
 1. Rules run first and only fire on clear evidence, for example an `ImportError` on the repository's own package before any edit, a failed dependency install, or a network error in an observation. A rule either assigns a class or abstains.
@@ -233,7 +233,7 @@ Every LLM call goes through one cached client: the key is a hash of the full req
 | Disk fills up (79 GB free). The pilot image unpacks to 8.34 GB, more than the 3–4 GB assumed. | Twelve images at that size would not fit. Prune after each batch and keep fewer images on disk; prefer small images. |
 | Tinker's OpenAI-compatible endpoint is documented for checkpoints, not base models. | A pilot issue checks this first. Fallbacks: call Tinker's Python SDK through a thin client, or run the red team on a local model and report that limit. |
 | The red team rarely exploits. | That is a result. Report it, with the attempts it made. |
-| Labels come from one person. | Publish the codebook and labels, measure self-agreement, and state it as a limitation. |
+| Test labels come from one model (Claude Opus 5.5), not a person. | Publish the codebook, labels and evidence; measure Opus self-agreement and Opus-against-maintainer κ on dev; state it as a limitation (ADR 0015). |
 | Upstream tests are flaky. | The 3-of-3 oracle filter, and flaky tests are dropped from the grader. |
 | Time runs out. | Cut in this order: RL stretch, RQ4 down to one model or dropped, H4, tasks from 12 to 8. The hand labels and the Baseline/hardening/oracle comparison are never cut. |
 
@@ -257,7 +257,7 @@ docs/
   task-log.md      notes on converting each instance (M2)
 src/grader_proof/  library code, one module per job
 tests/             unit tests for parsing, metrics and grader logic
-labels/            hand labels, JSONL (ground truth, committed)
+labels/            dev labels (maintainer) and test labels (Opus), JSONL (ground truth, committed)
 tasks/             generated Harbor tasks, one folder per instance and condition (committed)
 results/           small CSV and JSON outputs of experiments (committed)
 figures/           SVG and PNG built from results/ by plotting.py
@@ -275,5 +275,5 @@ Module names inside `src/grader_proof/` are decided per issue, not up front. `ma
 3. Answered in part (issue #3): the Python SDK serves a base model without a training run. Judge and red team both use `Qwen/Qwen3.5-9B-Base` (section 6). The sampling call worked and `max_context_length` is 65,536 (section 6). The OpenAI-compatible endpoint serves the base model by name on `/completions` (HTTP 200, section 6), so #28 does not need the Python SDK fallback for model access; it needs a client that sends a non-default `User-Agent`, and the red-team agent must use `/completions` or confirm that `/chat/completions` works. Still open: whether `Qwen/Qwen3-8B` is a base model (it was used for the sampling call only).
 4. Answered for one image (issue #2): `12rambau__sepal_ui-411` runs under Colima with Rosetta, unpacks to 8.34 GB, and passes the gold patch on its test file (section 6). Still open: whether other images behave the same, and whether the full test suite runs, since `tests/test_gee.py` needs an Earth Engine login in this image.
 5. Can an interrupted Harbor job resume, or do we resume at the trial level ourselves?
-6. In the 2,004 "correct self-check, still unresolved" trajectories, how many failed because the patch broke a `PASS_TO_PASS` test rather than missing a `FAIL_TO_PASS` test? The labeled sample can answer this for a few.
+6. In the 2,004 "correct self-check, still unresolved" trajectories, how many failed because the patch broke a `PASS_TO_PASS` test rather than missing a `FAIL_TO_PASS` test? Not answerable from the data (issue #16). The trajectories dataset records the upstream outcome only as `resolved`, `gen_tests_correct` and `pred_passes_gen_tests`, one value per trajectory, with no per-test results, and a labeler reading the same data could only guess. Answering it needs the upstream tests rerun on each sampled patch in its instance's image, which is not planned.
 7. Do the SWE-rebench images keep history after the base commit? In the one image checked (`12rambau__sepal_ui-411`), `/testbed/.git` is a full clone with 116 refs and 1,677 commits after the base commit, and `git log --all` finds the fix and the upstream test commit. Any agent could read the answer under every condition. Issue #56 strips that history in the task builder and counts how many dataset trajectories read it.

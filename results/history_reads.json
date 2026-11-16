@@ -4,8 +4,8 @@
     "unresolved": 34913
   },
   "any_read": {
-    "resolved": 391,
-    "unresolved": 638
+    "resolved": 389,
+    "unresolved": 627
   },
   "by_kind": {
     "all_refs": {
@@ -13,8 +13,8 @@
       "unresolved": 538
     },
     "remote_ref": {
-      "resolved": 93,
-      "unresolved": 129
+      "resolved": 90,
+      "unresolved": 118
     },
     "reflog": {
       "resolved": 0,
@@ -38,8 +38,8 @@
     ],
     "remote_ref": [
       "cd /workspace/marshmallow-code__marshmallow__3.9 && git branch -a",
-      "cd /workspace/scipp__plopp__23.01 && git remote -v",
-      "cd /workspace/lincc-frameworks__nested-pandas__0.1 && git branch -a"
+      "cd /workspace/lincc-frameworks__nested-pandas__0.1 && git branch -a",
+      "cd /workspace/ARMmbed__mbed-tools__7.28 && git branch -a --contains 020c195"
     ],
     "reflog": [
       "cd /workspace/zopefoundation__persistent__4.5 && git reflog | head -20"

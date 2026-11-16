@@ -1,0 +1,345 @@
+{
+ "labeler": "Claude Opus 5.5 labeler session",
+ "label_file": "labels/opus_test.jsonl",
+ "items": 70,
+ "labels": {
+  "model_failure": 56,
+  "task_underspecified": 8,
+  "upstream_tests_wrong": 4,
+  "env_broken": 1,
+  "unclear": 1
+ },
+ "frozen_version": "judge-v2",
+ "triager": {
+  "items": 70,
+  "scored": 69,
+  "human_unclear": 1,
+  "triager_unclear": 0,
+  "agreement": 0.7391304347826086,
+  "kappa": 0.13988919667590022,
+  "low": -0.11290322580645175,
+  "high": 0.4058127018299245,
+  "confusion": {
+   "env_broken -> env_broken": 1,
+   "model_failure -> model_failure": 48,
+   "model_failure -> task_underspecified": 6,
+   "model_failure -> upstream_tests_wrong": 2,
+   "task_underspecified -> model_failure": 7,
+   "task_underspecified -> task_underspecified": 1,
+   "unclear -> model_failure": 1,
+   "upstream_tests_wrong -> model_failure": 3,
+   "upstream_tests_wrong -> upstream_tests_wrong": 1
+  }
+ },
+ "classes": {
+  "env_broken": {
+   "true_positives": 1,
+   "predicted": 1,
+   "actual": 1,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "task_underspecified": {
+   "true_positives": 1,
+   "predicted": 7,
+   "actual": 8,
+   "precision": 0.14285714285714285,
+   "recall": 0.125
+  },
+  "upstream_tests_wrong": {
+   "true_positives": 1,
+   "predicted": 3,
+   "actual": 4,
+   "precision": 0.3333333333333333,
+   "recall": 0.25
+  },
+  "model_failure": {
+   "true_positives": 48,
+   "predicted": 58,
+   "actual": 56,
+   "precision": 0.8275862068965517,
+   "recall": 0.8571428571428571
+  }
+ },
+ "rules_alone": {
+  "items": 70,
+  "scored": 69,
+  "human_unclear": 1,
+  "triager_unclear": 0,
+  "agreement": 0.3333333333333333,
+  "kappa": 0.08609271523178808,
+  "low": 0.04533411833971149,
+  "high": 0.1352890914269439,
+  "confusion": {
+   "env_broken -> abstain": 1,
+   "model_failure -> abstain": 33,
+   "model_failure -> model_failure": 23,
+   "task_underspecified -> abstain": 8,
+   "unclear -> model_failure": 1,
+   "upstream_tests_wrong -> abstain": 4
+  }
+ },
+ "rules": {
+  "items": 70,
+  "fired": 24,
+  "correct": 23,
+  "coverage": {
+   "successes": 24,
+   "n": 70,
+   "rate": 0.34285714285714286,
+   "low": 0.24245988802266882,
+   "high": 0.4596045030205579
+  },
+  "precision": {
+   "successes": 23,
+   "n": 24,
+   "rate": 0.9583333333333334,
+   "low": 0.7975819352134407,
+   "high": 0.9926065438344941
+  },
+  "rules": {
+   "no_network": {
+    "fired": 0,
+    "correct": 0
+   },
+   "own_install_failed": {
+    "fired": 0,
+    "correct": 0
+   },
+   "own_package_import_error": {
+    "fired": 0,
+    "correct": 0
+   },
+   "turn_limit": {
+    "fired": 24,
+    "correct": 23
+   }
+  },
+  "labels": {
+   "model_failure": 56,
+   "task_underspecified": 8,
+   "upstream_tests_wrong": 4,
+   "env_broken": 1,
+   "unclear": 1
+  }
+ },
+ "majority_class": "model_failure",
+ "majority": {
+  "items": 70,
+  "scored": 69,
+  "human_unclear": 1,
+  "triager_unclear": 0,
+  "agreement": 0.8115942028985508,
+  "kappa": 0.0,
+  "low": 0.0,
+  "high": 0.0,
+  "confusion": {
+   "env_broken -> model_failure": 1,
+   "model_failure -> model_failure": 56,
+   "task_underspecified -> model_failure": 8,
+   "unclear -> model_failure": 1,
+   "upstream_tests_wrong -> model_failure": 4
+  }
+ },
+ "self_agreement": {
+  "items": 20,
+  "scored": 20,
+  "human_unclear": 0,
+  "triager_unclear": 0,
+  "agreement": 1.0,
+  "kappa": 1.0,
+  "low": 1.0,
+  "high": 1.0,
+  "confusion": {
+   "model_failure -> model_failure": 14,
+   "task_underspecified -> task_underspecified": 5,
+   "upstream_tests_wrong -> upstream_tests_wrong": 1
+  }
+ },
+ "judge_outcomes": {
+  "parsed": 46
+ },
+ "judge_dollars": 0.0989703,
+ "disagreements": [
+  {
+   "trajectory_id": "chatcmpl-8860f9691d571a090e53538980a8b9b6",
+   "instance_id": "burnash__gspread-1308",
+   "labeled": "task_underspecified",
+   "note": "Issue asks to document the tuple return in the docstring and HISTORY.rst; the test requires Client.list_spreadsheet_files to return a plain list again.",
+   "predicted": "model_failure",
+   "source": "judge",
+   "evidence": "The gold patch adds a module-level list_spreadsheet_files() that returns only the list of files, and updates HISTORY.rst to document the change. The agent patch adds a module-level function that returns only the list, but leaves the client method's docstring claiming it returns a tuple, so the docstring is inconsistent with the implementation. The issue says the return value changed and needs a prominent mention in HISTORY.rst, which the agent did.",
+   "confidence": 0.85
+  },
+  {
+   "trajectory_id": "chatcmpl-90b1a7be83a1299787e7b67437cb8b37",
+   "instance_id": "tobymao__sqlglot-2165",
+   "labeled": "model_failure",
+   "note": "Tokenizer fix was enough, but the agent also added a Spark2 rawstring_sql that writes r'...' back out, while the test expects the plain-string output BigQuery already produces.",
+   "predicted": "task_underspecified",
+   "source": "judge",
+   "evidence": "The gold patch adds Spark2.Tokenizer.RAW_STRINGS = [(prefix + q, q) for q in [\"'\", '\"'] for prefix in (\"r\", \"R\")]; the agent patch adds Spark2.Tokenizer.RAW_STRINGS = [(prefix + q, q) for q in [\"'\", '\"'] for prefix in (\"r\", \"R\")]. The issue says 'Add a way to export a report as CSV' and names neither the method, the header nor the unit, so the agent's version is another reasonable reading.",
+   "confidence": 0.8
+  },
+  {
+   "trajectory_id": "chatcmpl-9bbe43c8d1c0c42eb87c2da2c8fb6d42",
+   "instance_id": "widdowquinn__pyani-207",
+   "labeled": "task_underspecified",
+   "note": "Agent fixed the CLI crash by passing logger from the dispatcher; the test requires subcmd_index(args) with one argument, a signature the issue never states and the workspace test contradicted.",
+   "predicted": "model_failure",
+   "source": "judge",
+   "evidence": "The gold patch changes subcmd_index to take only args (removing logger) and adds logger = logging.getLogger(__name__) inside; the agent patch changes run_main to inspect the function signature and call args.func(args, logger) when there are >1 parameters. The issue says 'TypeError: subcmd_index() missing 1 required positional argument: logger', so the fix is to remove the logger parameter from subcmd_index, which the gold patch does. The agent's patch is wrong because it adds a new call site in run_main that passes logger to subcmd_index, which still has the logger parameter, so the error persists.",
+   "confidence": 0.95
+  },
+  {
+   "trajectory_id": "chatcmpl-4350fb4c2b168ac10adad2f5ae992ec6",
+   "instance_id": "EdinburghGenomics__clarity_scripts-44",
+   "labeled": "task_underspecified",
+   "note": "Tests require REST schema changes the issue never mentions: run_elements/samples endpoints, 'aggregated.*' field paths, an 'RE Coverage' field and 'Required Yield (Gb)' / 'Coverage (X)' UDFs.",
+   "predicted": "model_failure",
+   "source": "judge",
+   "evidence": "The gold patch changes the endpoint from 'aggregate/run_elements' to 'run_elements' and adds coverage to the metrics mapping; the agent patch leaves the endpoint unchanged and does not add coverage. The issue explicitly asks to 'Add strategy to take coverage into account', so the agent missed that requirement.",
+   "confidence": 0.9
+  },
+  {
+   "trajectory_id": "chatcmpl-ae834d5298ad87141ba08591b967121e",
+   "instance_id": "pika__pika-888",
+   "labeled": "model_failure",
+   "note": "Large ints are packed with field tag b'L'; the issue's own workaround (cast to long) and the existing long branch use b'l', which the test's expected bytes contain.",
+   "predicted": "task_underspecified",
+   "source": "judge",
+   "evidence": "The gold patch uses struct.pack('>ci', b'I', value) inside a try/except that falls back to struct.pack('>cq', b'l', long(value)); the agent patch uses struct.pack('>cq', b'L', value) for large integers. The issue says 'struct 'i' format requires -2147483648 <= number <= 2147483647' and 'fits into a Python int, which is long and on our platform is 64-bit wide', so the agent's choice is another reasonable reading.",
+   "confidence": 0.85
+  },
+  {
+   "trajectory_id": "chatcmpl-9ab0bfb5c8b95e282d9dc06dee272e24",
+   "instance_id": "python-pillow__Pillow-4455",
+   "labeled": "task_underspecified",
+   "note": "Agent exposes the comment as info['comment'] decoded to str with the trailing NUL stripped; the test expects the raw bytes including b'\\x00', a format the issue never states.",
+   "predicted": "model_failure",
+   "source": "judge",
+   "evidence": "The gold patch adds self.info[\"comment\"] = s; the agent patch adds self.info[\"comment\"] = comment where comment = s.rstrip(b\"\\0\").decode(\"latin-1\", \"replace\"). The issue says 'Show the JPEG comment in the dict' and the gold patch stores the raw bytes; the agent's version is another reasonable reading that also satisfies the issue.",
+   "confidence": 0.9
+  },
+  {
+   "trajectory_id": "chatcmpl-24146deb26ccc5857c2d99f7bff4d782",
+   "instance_id": "Unidata__MetPy-2653",
+   "labeled": "upstream_tests_wrong",
+   "note": "Agent's fix gives visibility NaN as required, but its NaN passes through units.Quantity(...).m_as('meter') and is a new float, so the namedtuple == check (which relies on np.nan identity) fails.",
+   "predicted": "model_failure",
+   "source": "judge",
+   "evidence": "The gold patch adds a try-except around the division to raise ValueError when denom is 0; the agent patch wraps the division in try-except and sets visibility = np.nan. The issue says 'ZeroDivisionError: division by zero' and the agent's own tests show the fix works, so the agent missed the ValueError requirement.",
+   "confidence": 0.9
+  },
+  {
+   "trajectory_id": "chatcmpl-65db9d4f015096e7894d3d8a19fb860d",
+   "instance_id": "goerz__zip_files-5",
+   "labeled": "model_failure",
+   "note": "Builds a bare ZipInfo(name): the file-type bits are OR'd into the low word instead of shifted, so filemode shows '?r-x------', and the entry's date drops to 1980, which writestr(str) previously set to now.",
+   "predicted": "task_underspecified",
+   "source": "judge",
+   "evidence": "The gold patch adds ZipInfo.from_file and sets zinfo.compress_type=compression; the agent patch sets zip_info.external_attr from stat.S_IMODE and st_mode, which is a different mechanism. The issue says 'File permissions, like the \"executable\" flag are not preserved', so the agent's approach is another reasonable reading.",
+   "confidence": 0.75
+  },
+  {
+   "trajectory_id": "chatcmpl-0df2cd8ab2e5f4224aa4e75f4e003b96",
+   "instance_id": "python-pillow__Pillow-6917",
+   "labeled": "model_failure",
+   "note": "Switched Image.open and pilinfo to read OPEN keys but left 'ID.append(id)' in register_open, so Image.ID still gains a duplicate on every call, which is the issue's stated expectation.",
+   "predicted": "task_underspecified",
+   "source": "judge",
+   "evidence": "The gold patch adds 'if id not in ID: ID.append(id)' to register_open; the agent patch replaces 'formats = ID' with 'formats = list(OPEN)' in Image.open and removes Image.ID.remove in FitsStubImagePlugin and features.py. The issue only says 'Image.register_open called multiple times' and 'Image.ID should not contain similar values', so the agent's change is another reasonable reading.",
+   "confidence": 0.85
+  },
+  {
+   "trajectory_id": "chatcmpl-fa3b919861c9d142c57e20dab20699e3",
+   "instance_id": "marrink-lab__vermouth-martinize-280",
+   "labeled": "task_underspecified",
+   "note": "The issue allows removal 'either' in CanonicalizeModifications 'or a separate processor'; the agent built the separate RemoveUnknownAtoms processor, but the test runs only CanonicalizeModifications and expects the atoms gone.",
+   "predicted": "model_failure",
+   "source": "judge",
+   "evidence": "The gold patch adds RemoveUnknownAtoms to remove unrecognized atoms and improves error messages; the agent patch only changes logging level from exception to error in canonicalize_modifications.py and adds a KeyError handler in repair_graph.py. The agent's own tests pass, but the FAIL_TO_PASS tests check that unknown atoms are removed and that error messages are improved, which the agent patch does not do.",
+   "confidence": 0.9
+  },
+  {
+   "trajectory_id": "chatcmpl-b881c1746cccf9b5d40da3148a696cc8",
+   "instance_id": "manubot__manubot-345",
+   "labeled": "model_failure",
+   "note": "Kept the wrong 'for last, first' unpacking of Citoid's [first, last] author pairs and added a heuristic that swaps back only when the surname contains a period; ordinary names stay swapped.",
+   "predicted": "upstream_tests_wrong",
+   "source": "judge",
+   "evidence": "The gold patch swaps the order of the loop variables from 'for last, first in mediawiki[\"author\"]' to 'for first, last in mediawiki[\"author\"]' to fix the author name order. The agent's patch adds a complex heuristic that only swaps when 'first' looks like a surname and 'last' looks like initials, which is unnecessary and incorrect for the reported case where the names are simply in the wrong order. The agent's own tests show the fix works, but the gold patch is the minimal correct fix.",
+   "confidence": 0.7
+  },
+  {
+   "trajectory_id": "chatcmpl-80c8720faa6e3b2e1d12f1509df4eda1",
+   "instance_id": "zopefoundation__zope.sendmail-47",
+   "labeled": "model_failure",
+   "note": "Filtered empty recipients inside SMTPMailer.send and hardened connection close, but left queue._parseMessage turning 'a, , b' into a tuple with an empty address, which is what the test checks.",
+   "predicted": "task_underspecified",
+   "source": "judge",
+   "evidence": "The gold patch adds a filter in queue.py to skip empty addresses in X-Zope-To; the agent patch adds a filter in mailer.py to skip empty recipients before calling vote/sendmail. The issue says 'empty recipients' and 'mail was not sent because the connection with the SMTPServer was lost', so the agent's change is another reasonable reading.",
+   "confidence": 0.7
+  },
+  {
+   "trajectory_id": "chatcmpl-1a280c341763f11ce9f1ee279c4f81e5",
+   "instance_id": "ReactiveX__RxPY-537",
+   "labeled": "upstream_tests_wrong",
+   "note": "Agent implemented the issue's rule (complete when a finished source's queue is empty); the tests require completing on any source completion even with items queued, and one F2P test checks an unrelated to_future cancel fix.",
+   "predicted": "model_failure",
+   "source": "judge",
+   "evidence": "The gold patch adds 'elif is_done[i] and len(queues[i]) == 0: observer.on_completed()' to complete when a source is done and its queue is empty; the agent patch adds 'elif len(queues[i]) == 0: observer.on_completed()' which triggers on every onNext, causing premature completion. The issue states 'zip operator should complete if a single upstream source completes and the corresponding queue is empty', so the agent missed the 'is_done[i]' condition.",
+   "confidence": 0.95
+  },
+  {
+   "trajectory_id": "chatcmpl-f605861056c7c8b9430862e89fef7afd",
+   "instance_id": "deshima-dev__decode-16",
+   "labeled": "task_underspecified",
+   "note": "Issue contradicts itself: titled 'Release v0.5.9' but its checklist says update versions 0.5.7 → 0.5.8; the repo is already 0.5.8, so the agent only fixed pyyaml and left __version__ at 0.5.8, while the test wants 0.5.9.",
+   "predicted": "model_failure",
+   "source": "judge",
+   "evidence": "The gold patch updates pyproject.toml to pyyaml = \"^5.3\" and poetry.lock to version 5.3.1; the agent updates pyproject.toml to pyyaml = \"^5.3\" but poetry.lock to version 5.4.1. The issue says 'Fix wrong version of pyyaml (^3.13 → ^5.3)' and 'Also update poetry.lock', so the agent's lock file version is wrong. The agent's own tests pass, but the upstream tests fail because the lock file is incorrect.",
+   "confidence": 0.9
+  },
+  {
+   "trajectory_id": "chatcmpl-86305135dfaf29a478aec6886c89ce26",
+   "instance_id": "firebase__firebase-admin-python-96",
+   "labeled": "task_underspecified",
+   "note": "Issue asks only that False be accepted; the agent accepted False, 0 and {} but kept rejecting '' per the existing 'must not be empty or None' contract, while the tests also require '' to be valid.",
+   "predicted": "model_failure",
+   "source": "judge",
+   "evidence": "The gold patch changes the condition from 'if not start:' to 'if start is None:' (and similarly for end and value), so False is accepted; the agent patch changes it to 'if start is None or start == \"\":' (and similarly), which rejects the empty string and would also reject False if the value were a string, so the agent's patch is not the same as the gold patch. The issue states the exact methods and the exact value (boolean False) that must be accepted, so the agent's change is not a reasonable reading of the issue.",
+   "confidence": 0.9
+  },
+  {
+   "trajectory_id": "chatcmpl-5e6c471a0bf8193e70c1d6c50288d822",
+   "instance_id": "pyvista__pyvista-4315",
+   "labeled": "model_failure",
+   "note": "Accepted Sequences in the 2- and 3-argument branches but not the 1-argument branch, which still requires np.ndarray, so RectilinearGrid([0, 1]) raises TypeError.",
+   "predicted": "upstream_tests_wrong",
+   "source": "judge",
+   "evidence": "The gold patch changes isinstance checks to accept both np.ndarray and Sequence, and calls np.asanyarray on the first argument; the agent patch adds a helper is_valid_coord_arg that excludes str and pathlib.Path, then converts sequences to np.asarray. The issue says RectilinearGrid should accept Sequences, so the agent's change is reasonable. The agent's own tests pass, but the FAIL_TO_PASS test fails because the agent's helper excludes str/Path, which the gold patch does not.",
+   "confidence": 0.75
+  },
+  {
+   "trajectory_id": "chatcmpl-39aa2d241afbfb2c4e0c9d19bbc023c3",
+   "instance_id": "astanin__python-tabulate-243",
+   "labeled": "upstream_tests_wrong",
+   "note": "Agent's empty-string handling matches the gold logic in _type and _format, but F2P test_floatfmt_thousands checks parsing '1,234.56' as a float, a thousands-separator feature the issue never mentions.",
+   "predicted": "model_failure",
+   "source": "judge",
+   "evidence": "The gold patch adds two checks in _type: empty str and empty bytes return type(None). The agent patch adds the same checks in _type and _format, but the tests still fail with ValueError: could not convert string to float: '' in test/test_output.py::test_floatfmt_thousands. The agent's own tests pass, but the upstream tests fail, so the patch is incomplete.",
+   "confidence": 0.9
+  },
+  {
+   "trajectory_id": "chatcmpl-6554585c992398394d347abc7a27a622",
+   "instance_id": "dwavesystems__dwave-system-373",
+   "labeled": "model_failure",
+   "note": "Issue says the order_by expression '-version' is wrong; the agent kept '-version' and only moved it from the solver filter to a get_solver(order_by=...) argument, editing the existing tests to match.",
+   "predicted": "task_underspecified",
+   "source": "judge",
+   "evidence": "The gold patch moves order_by from solver.setdefault('order_by', '-version') to solver.setdefault('order_by', '-properties.version') and passes it to get_solver(order_by=order_by); the agent patch extracts order_by from solver and passes it to get_solver(order_by=order_by), which is a different behavior. The issue says 'the exact order_by expression is wrong', so the agent's change is another reasonable reading.",
+   "confidence": 0.7
+  }
+ ]
+}

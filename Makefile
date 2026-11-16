@@ -1,4 +1,4 @@
-.PHONY: candidates install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot redteam redteam-summary
+.PHONY: triage-eval triage-prevalence candidates fact-sheets install lint typecheck test check data-facts h2-gold-patches held-out-facts task oracle-check sample label history-reads rules-dev judge-dev red-team-trial red-team-pilot redteam redteam-summary replay-export replay-results rq3 figures rq1 label-agreement label-page exploit-review
 
 install:
 	uv sync
@@ -48,6 +48,15 @@ oracle-check:
 sample:
 	uv run python -m grader_proof.label_cli sample
 
+# Writes data/label_view/index.html: a browser page for labeling the dev items.
+label-page:
+	uv run python -m grader_proof.label_view
+
+# Writes labels/fact_sheets/test/: one page of facts per test item and index.html (issue #9).
+# The pages hold no label. Needs the data that data-facts downloads.
+fact-sheets:
+	uv run python -m grader_proof.fact_sheet
+
 # Labels the next unlabeled trajectory. Usage: make label SPLIT=dev (or test, or all)
 label:
 	uv run python -m grader_proof.label_cli label --split $(or $(SPLIT),dev)
@@ -62,7 +71,7 @@ history-reads:
 	uv run python -m grader_proof.history_reads
 
 # Coverage and precision of the triage rules on the 30 dev labels; writes results/rules_dev.json.
-# Needs labels/human.jsonl (the maintainer's, not in the repo) and the data from `make data-facts`.
+# Needs labels/human.jsonl (the maintainer's dev labels) and the data from `make data-facts`.
 rules-dev:
 	uv run python -m grader_proof.rules_eval
 
@@ -71,6 +80,21 @@ rules-dev:
 # TINKER_API_KEY. Prints each batch's cost estimate and asks before calling the model.
 judge-dev:
 	uv run python -m grader_proof.judge_eval
+
+# Scores the frozen triager on the 70 test labels; writes results/triage_test.json (issue #14).
+# Refuses to run until every test item has a label. Needs the label file, the data from
+# `make data-facts` and, for calls not in cache/llm/, TINKER_API_KEY. Asks before calling the model.
+# Usage: make triage-eval [LABELS=labels/opus_test.jsonl] [RELABELS=labels/opus_test_relabel.jsonl] [LABELER="Claude Opus 5.5 labeler session"]
+LABELS ?= labels/opus_test.jsonl
+RELABELS ?= labels/opus_test_relabel.jsonl
+LABELER ?= Claude Opus 5.5 labeler session
+triage-eval:
+	uv run python -m grader_proof.triage_eval --labels "$(LABELS)" --relabels "$(RELABELS)" --labeler "$(LABELER)"
+
+# Class shares from the frozen triager on 1,000 trajectories outside the labeling sample; writes
+# results/triage_prevalence.json and .md (issue #15). Same needs and cost prompt as triage-eval.
+triage-prevalence:
+	uv run python -m grader_proof.prevalence
 
 # Red-team pilot (issue #28). `make red-team-trial` adds one trial to runs/red-team-pilot: terminus-2
 # through Harbor's Tinker backend, with RED_TEAM_INSTRUCTION appended to the task instruction.
@@ -104,3 +128,63 @@ redteam:
 # Rebuilds results/red_team_runs.json and results/red_team.json from the trial files, at no cost.
 redteam-summary:
 	uv run python -m grader_proof.red_team_runs --summary-only
+
+# Replay (issue #32). A replay set is results/replay/$(REPLAY_SET): the saved Baseline red-team
+# patches, regraded under every condition by the replay workflow on Actions.
+# `make replay-export JOBS="runs/<job> ..." [SUMMARY=results/red_team.json]` copies each Baseline
+# trial's patch.diff into the set; with SUMMARY, exactly the Baseline trials that file lists.
+# Commit the set, push, then run: gh workflow run replay.yml --ref <branch> -f set=$(REPLAY_SET)
+# `make replay-results` downloads the latest replay run (or RUN=<run id>) into the set.
+REPLAY_SET ?= red-team
+replay-export:
+	@test -n "$(JOBS)" || { echo "usage: make replay-export JOBS=<job dirs> [REPLAY_SET=<set>]"; exit 2; }
+	uv run python -m grader_proof.replay export $(JOBS) --set results/replay/$(REPLAY_SET) \
+		$(if $(SUMMARY),--summary $(SUMMARY))
+
+replay-results:
+	@test -n "$(REPLAY_SET)" || { echo "REPLAY_SET is empty"; exit 2; }
+	rm -rf results/replay/$(REPLAY_SET)/results
+	gh run download $${RUN:-$$(gh run list --workflow replay.yml --limit 1 --json databaseId --jq '.[0].databaseId')} --pattern 'replay-*' --dir results/replay/$(REPLAY_SET)/results
+
+# RQ3 table (results/rq3.csv and .md): exploit rates, effects with 95% task-clustered intervals,
+# exploit categories and oracle acceptance, for all tasks and per task. Reads the replay set, the
+# adaptive red-team summary (ADAPTIVE=, empty to leave it out), labels/exploit_verdicts.jsonl
+# and results/oracle-check. Fails if an accepted patch has no verdict yet.
+ADAPTIVE ?= results/red_team.json
+RQ3_OUT ?= results/rq3
+rq3:
+	uv run python -m grader_proof.rq3 --replay results/replay/$(REPLAY_SET)/results \
+		$(if $(ADAPTIVE),--adaptive $(ADAPTIVE)) --out $(RQ3_OUT)
+
+# Figures for the write-up (issue #34), as SVG and PNG in figures/, from the table `make rq3` writes.
+# Pilot check, never committed: make figures RQ3_TABLE=results/replay/pilot/rq3.csv FIGURES=figures/pilot LABEL=pilot
+RQ3_TABLE ?= results/rq3.csv
+FIGURES ?= figures
+figures:
+	uv run python -m grader_proof.plotting --table $(RQ3_TABLE) --out $(FIGURES) $(if $(LABEL),--label $(LABEL))
+
+# RQ1 table (issue #16): why self-checks were fooled, from labels only. Writes $(RQ1_OUT).csv and
+# .md: each fooled_reason with its count and share of the labeled self-check false positives.
+LABELS ?= labels/opus_test.jsonl
+RQ1_OUT ?= results/rq1
+rq1:
+	uv run python -m grader_proof.rq1 --labels $(LABELS) --out $(RQ1_OUT)
+
+# Agreement between two label files (issue #10 and ADR 0015), over the trajectories in both:
+# failure-class agreement with a Wilson 95% interval and Cohen's kappa with a 95% bootstrap
+# interval (`unclear` left out and counted, ADR 0003), the class pairs they disagree on, and
+# fooled-reason agreement. Writes results/agreement_$(NAME).json and .md.
+# Self-agreement: make label-agreement A=labels/opus_test.jsonl B=labels/opus_test_relabel.jsonl NAME=test_opus_self_agreement
+A ?= labels/human.jsonl
+B ?= labels/opus_dev.jsonl
+NAME ?= dev_opus_vs_maintainer
+label-agreement:
+	uv run python -m grader_proof.label_agreement --a $(A) --b $(B) --name $(NAME)
+
+# Agreement between automatic flags and the maintainer's verdicts (issue #31, ADR 0006).
+# Writes results/exploit_review.json and results/exploit_review.md from committed files at no cost.
+VERDICTS ?= labels/exploit_verdicts.jsonl
+FLAGS ?= results/exploit_flags.jsonl
+EXPLOIT_REVIEW_OUT ?= results
+exploit-review:
+	uv run python -m grader_proof.exploit_review summary --verdicts $(VERDICTS) --flags $(FLAGS) --out-dir $(EXPLOIT_REVIEW_OUT)

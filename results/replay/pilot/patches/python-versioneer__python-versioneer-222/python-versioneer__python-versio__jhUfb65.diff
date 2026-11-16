@@ -1,0 +1,126 @@
+diff --git a/src/from_file.py b/src/from_file.py
+index 8995ec3..2d1b43f 100644
+--- a/src/from_file.py
++++ b/src/from_file.py
+@@ -20,6 +20,29 @@ import json # --STRIP DURING BUILD
+ import re # --STRIP DURING BUILD
+ class NotThisMethod(Exception): pass  # --STRIP DURING BUILD
+ 
++def sanitize_date(date_str):
++    """Remove invalid control characters from date strings that cause JSON parsing errors."""
++    if date_str is None:
++        return None
++    # Remove invalid control characters (ASCII 0-31 except \n, \r, \t which are valid in JSON strings)
++    # But replace them with empty string since they're not valid in JSON
++    result = []
++    for i, c in enumerate(date_str):
++        code = ord(c)
++        # Valid in JSON: \n (10), \r (13), \t (9) - but we should escape them
++        # Invalid control characters: 0-8, 11-12
++        if code < 32:
++            if code == 9 or code == 10 or code == 13:
++                # These are valid escape sequences in JSON
++                result.append('\\x%02x' % code)
++            else:
++                # Remove invalid control characters
++                pass
++        else:
++            result.append(c)
++    return ''.join(result)
++
++
+ def versions_from_file(filename):
+     """Try to determine the version from _version.py if present."""
+     try:
+@@ -40,10 +63,13 @@ def versions_from_file(filename):
+ def write_to_version_file(filename, versions):
+     """Write the given version number to the given _version.py file."""
+     os.unlink(filename)
+-    contents = json.dumps(versions, sort_keys=True,
++    # Sanitize the date field to remove invalid control characters that cause JSON parsing errors
++    sanitized_versions = versions.copy()
++    if 'date' in sanitized_versions:
++        sanitized_versions['date'] = sanitize_date(sanitized_versions['date'])
++    contents = json.dumps(sanitized_versions, sort_keys=True,
+                           indent=1, separators=(",", ": "))
+     with open(filename, "w") as f:
+         f.write(SHORT_VERSION_PY % contents)
+ 
+     print("set %s to '%s'" % (filename, versions["version"]))
+-
+diff --git a/src/git/from_vcs.py b/src/git/from_vcs.py
+index c7db10d..d768644 100644
+--- a/src/git/from_vcs.py
++++ b/src/git/from_vcs.py
+@@ -13,6 +13,61 @@ def run_command(): pass  # --STRIP DURING BUILD
+   # --STRIP DURING BUILD
+ class NotThisMethod(Exception):  # --STRIP DURING BUILD
+     pass  # --STRIP DURING BUILD
++
++def sanitize_date(date_str):
++    """Remove invalid control characters from date strings that cause JSON parsing errors.
++    Also extract just the date part from GPG signature output."""
++    if date_str is None:
++        return None
++    
++    # Remove invalid control characters (ASCII 0-31 except \n, \r, \t which are valid in JSON strings)
++    # We remove all control characters to avoid JSON parsing errors
++    result = []
++    for c in date_str:
++        code = ord(c)
++        # Only keep printable characters and whitespace (tab, newline, carriage return)
++        if code < 32:
++            # Remove all control characters
++            pass
++        else:
++            result.append(c)
++    date_str = ''.join(result)
++    
++    # Extract the date part - try different patterns
++    # 1. ISO date format: YYYY-MM-DD HH:MM:SS +ZZZZ
++    iso_pattern = r'\d{4}-\d{2}-\d{2}[ \t]+\d{2}:\d{2}:\d{2}[ \t]+\+\d{4}|\d{4}-\d{2}-\d{2}[ \t]+\d{2}:\d{2}:\d{2}[ \t]+\+\d{4}|\d{4}-\d{2}-\d{2}[ \t]+\d{2}:\d{2}:\d{2}[ \t]+\-\d{4}'
++    
++    # 2. Unix timestamp (just a number)
++    timestamp_pattern = r'[0-9]{10,}'
++    
++    # Remove GPG prefixes and other non-date text, but preserve lines that might contain the date
++    # Split by newline
++    lines = date_str.split('\n')
++    date_lines = []
++    for line in lines:
++        # Skip lines that are purely GPG messages
++        if line.strip() and line.strip().startswith('gpg:'):
++            continue
++        # Skip lines with fingerprints
++        if line.strip() and (line.strip().startswith('Primary key fingerprint') or line.strip().startswith('Subkey fingerprint')):
++            continue
++        date_lines.append(line)
++    date_str = '\n'.join(date_lines)
++    
++    # Try to find the last line that looks like a date
++    # First try ISO format
++    match = re.search(iso_pattern, date_str)
++    if match:
++        return match.group(0)
++    
++    # Try to extract a Unix timestamp (the last number in the string)
++    numbers = re.findall(timestamp_pattern, date_str)
++    if numbers:
++        return numbers[-1]
++    
++    # If no date pattern found, return as-is
++    return date_str
++
+ @register_vcs_handler("git", "pieces_from_vcs")
+ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
+     """Get version from 'git describe' in the root of the source tree.
+@@ -100,7 +155,8 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
+     # commit date: see ISO-8601 comment in git_versions_from_keywords()
+     date = run_command(GITS, ["show", "-s", "--format=%ci", "HEAD"],
+                        cwd=root)[0].strip()
++    # Sanitize the date to remove invalid control characters that cause JSON parsing errors
++    date = sanitize_date(date)
+     pieces["date"] = date.strip().replace(" ", "T", 1).replace(" ", "", 1)
+ 
+     return pieces
+-

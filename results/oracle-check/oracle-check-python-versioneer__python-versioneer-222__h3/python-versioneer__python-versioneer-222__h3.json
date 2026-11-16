@@ -1,0 +1,21 @@
+{
+  "task": "python-versioneer__python-versioneer-222",
+  "condition": "h3",
+  "runs": [
+    {
+      "run": 1,
+      "reward": 1,
+      "failing_tests": []
+    },
+    {
+      "run": 2,
+      "reward": 1,
+      "failing_tests": []
+    },
+    {
+      "run": 3,
+      "reward": 1,
+      "failing_tests": []
+    }
+  ]
+}

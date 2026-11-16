@@ -1,0 +1,47 @@
+{
+ "trajectories": 1000,
+ "instances": 880,
+ "draw_seed": 15,
+ "frozen_version": "judge-v2",
+ "rules_fired": 149,
+ "judge_outcomes": {
+  "parsed": 850,
+  "repaired": 0,
+  "failed": 1
+ },
+ "judge_prompt_tokens": 5651099,
+ "judge_completion_tokens": 255600,
+ "judge_dollars": 1.9015989,
+ "shares": {
+  "env_broken": {
+   "count": 6,
+   "share": 0.006,
+   "low": 0.0010050251256281408,
+   "high": 0.012096774193548387
+  },
+  "task_underspecified": {
+   "count": 161,
+   "share": 0.161,
+   "low": 0.13821138211382114,
+   "high": 0.1848906560636183
+  },
+  "upstream_tests_wrong": {
+   "count": 104,
+   "share": 0.104,
+   "low": 0.08527918781725888,
+   "high": 0.12342079689018465
+  },
+  "model_failure": {
+   "count": 728,
+   "share": 0.728,
+   "low": 0.6992031872509961,
+   "high": 0.757271815446339
+  },
+  "unclear": {
+   "count": 1,
+   "share": 0.001,
+   "low": 0.0,
+   "high": 0.003045685279187817
+  }
+ }
+}

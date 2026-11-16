@@ -1,7 +1,11 @@
+from pathlib import Path
+
 import polars as pl
 import pytest
 
+from grader_proof import data_facts
 from grader_proof.data_facts import (
+    compute_facts,
     exit_category,
     self_check_rates,
     self_check_table,
@@ -73,3 +77,48 @@ def test_summarize_by_repo():
     assert a["pass_rate_unresolved"] == pytest.approx(2 / 3)
     assert (b["trajectories"], b["with_self_check"]) == (3, 1)
     assert b["pass_rate_unresolved"] is None
+
+
+def test_compute_facts_sorts_exit_category_keys(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "trajectories").mkdir()
+    (tmp_path / "swe-rebench").mkdir()
+    trajectories = pl.DataFrame(
+        [
+            ("a-1", "a/a", "submit", 0, 1.0, 1.0),
+            ("a-1", "a/a", "RuntimeError: Agent reached max iteration", 1, 1.0, 1.0),
+            ("a-1", "a/a", "AgentStuckInLoopError: x", 0, 0.0, 0.0),
+            ("a-1", "a/a", "Timeout", 1, 0.0, 0.0),
+        ],
+        schema={
+            "instance_id": pl.String,
+            "repo": pl.String,
+            "exit_status": pl.String,
+            "resolved": pl.Int64,
+            "pred_passes_gen_tests": pl.Float64,
+            "gen_tests_correct": pl.Float64,
+        },
+        orient="row",
+    )
+    trajectories.write_parquet(tmp_path / "trajectories/trajectories.parquet")
+    pl.DataFrame(
+        {"instance_id": ["a-1"], "image_name": ["img-x86_64"]},
+    ).write_parquet(tmp_path / "swe-rebench/part.parquet")
+
+    monkeypatch.setattr(data_facts, "DATA_DIR", tmp_path)
+    facts, _, _ = compute_facts()
+    exit_counts = facts["exit_category"]
+    assert isinstance(exit_counts, dict)
+    assert list(exit_counts) == [
+        "infrastructure_error",
+        "stuck_in_loop",
+        "submit",
+        "turn_limit",
+    ]
+    assert exit_counts == {
+        "infrastructure_error": 1,
+        "stuck_in_loop": 1,
+        "submit": 1,
+        "turn_limit": 1,
+    }

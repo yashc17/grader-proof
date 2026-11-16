@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if page == "index" %}Test fact sheets{% else %}{{ sheet.number }}. {{ sheet.item.instance_id }}{% endif %}</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1d1d1f; --muted: #6e6e73; --line: #d2d2d7; --panel: #f5f5f7;
+    --accent: #0b57d0; --add: #e6f4ea; --del: #fce8e6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1c1c1e; --fg: #f2f2f7; --muted: #aeaeb2; --line: #3a3a3c; --panel: #2c2c2e;
+      --accent: #8ab4f8; --add: #1e3a26; --del: #3d1f1d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1c1e; --fg: #f2f2f7; --muted: #aeaeb2; --line: #3a3a3c; --panel: #2c2c2e;
+    --accent: #8ab4f8; --add: #1e3a26; --del: #3d1f1d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 15px/1.5 -apple-system, system-ui, sans-serif; }
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+           padding: 12px 20px; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 17px; margin: 0 auto 0 0; }
+  a { color: var(--accent); }
+  main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+  .meta { color: var(--muted); font-size: 13px; }
+  h2 { font-size: 15px; margin: 26px 0 6px; }
+  h3 { font-size: 13px; margin: 14px 0 4px; font-family: ui-monospace, Menlo, monospace; }
+  summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+  .issue { white-space: pre-wrap; background: var(--panel); padding: 12px; border-radius: 8px;
+           max-height: 420px; overflow-y: auto; }
+  pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12.5px/1.45 ui-monospace,
+        Menlo, monospace; }
+  .scroll { background: var(--panel); padding: 12px; border-radius: 8px; max-height: 420px;
+            overflow: auto; }
+  .patches { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .patches > div { min-width: 0; }
+  .add { background: var(--add); display: block; }
+  .del { background: var(--del); display: block; }
+  .tests code { display: inline-block; margin: 2px 4px 2px 0; padding: 1px 6px;
+                background: var(--panel); border-radius: 4px; font-size: 13px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line);
+           vertical-align: top; }
+  .run { margin: 10px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+  .none { color: var(--muted); font-style: italic; }
+  @media (max-width: 800px) {
+    .patches { grid-template-columns: 1fr; }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+{% macro patch_side(text) -%}
+  {%- if text is none -%}
+    <div class="scroll"><span class="none">not touched</span></div>
+  {%- else -%}
+    <div class="scroll"><pre>{% for kind, line in diff_lines(text) %}<span class="{{ kind }}">{{ line }}
+</span>{% endfor %}</pre></div>
+  {%- endif -%}
+{%- endmacro %}
+{% macro file_block(file) -%}
+  <h3>{{ file.path }}</h3>
+  <div class="patches">
+    <div><div class="meta">Agent patch</div>{{ patch_side(file.agent) }}</div>
+    <div><div class="meta">Gold patch</div>{{ patch_side(file.gold) }}</div>
+  </div>
+{%- endmacro %}
+{% if page == "index" %}
+<header><h1>Test fact sheets: {{ sheets | length }} items</h1></header>
+<main>
+  <p class="meta">Numbers follow the order of the test split in labels/sample.jsonl. Each sheet
+  states facts from the data and holds no label.</p>
+  <table>
+    <tr><th>#</th><th>Instance</th><th>Repo</th><th>Exit status</th><th>Turns</th></tr>
+    {% for s in sheets %}
+    <tr>
+      <td>{{ s.number }}</td>
+      <td><a href="{{ sheet_name(s.number, s.item.instance_id) }}">{{ s.item.instance_id }}</a></td>
+      <td>{{ s.repo }}</td>
+      <td><code>{{ s.ending.exit_status | truncate(60) }}</code></td>
+      <td>{{ s.ending.turns }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</main>
+{% else %}
+{% set end = sheet.ending %}
+<header>
+  <h1>{{ sheet.number }} of {{ total }}: {{ sheet.item.instance_id }}</h1>
+  <a href="index.html">Index</a>
+  {% if previous %}<a href="{{ previous }}">Previous</a>{% endif %}
+  {% if next %}<a href="{{ next }}">Next</a>{% endif %}
+</header>
+<main>
+  <div class="meta">repo {{ sheet.repo }} · trajectory {{ sheet.item.trajectory_id }}</div>
+
+  <h2>1. Issue</h2>
+  {% if sheet.issue_is_long %}
+  <details><summary>Issue text, {{ sheet.issue | length }} characters (click to open)</summary>
+    <div class="issue">{{ sheet.issue }}</div></details>
+  {% else %}
+  <div class="issue">{{ sheet.issue }}</div>
+  {% endif %}
+
+  <h2>2. Patches, file by file</h2>
+  {% set shown = sheet.files | rejectattr("hidden") | list %}
+  {% set hidden = sheet.files | selectattr("hidden") | list %}
+  <div class="meta">{{ shown | selectattr("shared") | list | length }} files touched by both,
+    {{ shown | selectattr("gold", "none") | list | length }} by the agent only,
+    {{ shown | selectattr("agent", "none") | list | length }} by the gold patch only,
+    {{ hidden | length }} hidden or cache files.</div>
+  {% if not sheet.files %}<p class="none">Both patches are empty.</p>{% endif %}
+  {% for file in shown %}{{ file_block(file) }}{% endfor %}
+  {% if hidden %}
+  <details><summary>{{ hidden | length }} hidden or cache files (click to open)</summary>
+    {% for file in hidden %}{{ file_block(file) }}{% endfor %}
+  </details>
+  {% endif %}
+
+  <h2>3. Upstream tests</h2>
+  <p>Which upstream tests failed on the agent's patch: <strong>not in the data</strong>. The
+  trajectory rows hold no evaluation logs, and nothing was rerun.</p>
+  <div class="tests"><div class="meta">FAIL_TO_PASS ({{ sheet.fail_to_pass | length }})</div>
+    {% for t in sheet.fail_to_pass %}<code>{{ t }}</code>{% endfor %}</div>
+  <details><summary>PASS_TO_PASS ({{ sheet.pass_to_pass | length }})</summary>
+    <div class="tests">{% for t in sheet.pass_to_pass %}<code>{{ t }}</code>{% endfor %}</div>
+  </details>
+
+  <h2>4. The agent's own test runs ({{ sheet.test_runs | length }})</h2>
+  <p class="meta">Agent's patch passes its own self-check: {{ sheet.self_check_passed }}.
+  Self-check separates the original code from the gold patch: {{ sheet.self_check_separates_gold }}.
+  Commands below are those whose parts start pytest, py.test, unittest, nose, tox, or a Python
+  file named like a test. Result lines are quoted from the output as printed.</p>
+  {% for run in sheet.test_runs %}
+  <div class="run">
+    <pre>$ {{ run.command }}</pre>
+    <div class="meta">exit code: {{ run.exit_code if run.exit_code is not none else "not shown in the output" }}</div>
+    {% if run.summary %}<pre>{{ run.summary | join("\n") }}</pre>
+    {% elif run.last_lines %}<div class="meta">no pytest or unittest result line; last lines:</div><pre>{{ run.last_lines | join("\n") }}</pre>
+    {% else %}<div class="none">no output recorded</div>{% endif %}
+  </div>
+  {% else %}
+  <p class="none">No test commands found.</p>
+  {% endfor %}
+
+  <h2>5. How the run ended</h2>
+  <p>Stopped at turn {{ end.turns }} of {{ end.limit }}. Exit status: <code>{{ end.exit_status }}</code></p>
+  <div class="meta">The limit of {{ end.limit }} is the one every run in the data that reached a
+  limit names.</div>
+  <div class="meta">Last {{ end.last_actions | length }} actions:</div>
+  {% for action in end.last_actions %}
+  <div class="run">
+    <pre>$ {{ action.command }}</pre>
+    {% if action.observation is none %}<div class="none">no observation: the run ended first</div>
+    {% else %}<details><summary>output, {{ action.observation | length }} characters</summary>
+      <div class="scroll"><pre>{{ action.observation }}</pre></div></details>{% endif %}
+  </div>
+  {% endfor %}
+</main>
+{% endif %}
+</body>
+</html>

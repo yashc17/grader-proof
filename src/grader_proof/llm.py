@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import math
 import os
 import tempfile
 from collections.abc import Callable, Sequence
@@ -10,7 +11,18 @@ from pathlib import Path
 from typing import Protocol
 
 DEFAULT_CACHE_DIR = Path("cache/llm")
-CHARS_PER_TOKEN = 4
+
+# An upper bound on prompt tokens from the text alone, without the model's tokenizer, which is a
+# download per model. ASCII is counted at 2 characters per token: over 917 cached judge prompts
+# for Qwen/Qwen3.5-9B-Base (code, diffs, test names; issue #74) the lowest was 2.15 characters per
+# token and the median 3.49, so the worst prompt keeps a 7% margin and a typical one is
+# overcounted by about 75%. A non-ASCII character counts its UTF-8 bytes: a byte-level BPE
+# tokenizer never spends more than one token per byte.
+ASCII_CHARS_PER_TOKEN = 2
+# The Qwen chat template adds 5 tokens per message and 3 to 5 per request (measured with the
+# Qwen3-8B and Qwen3.5-9B-Base tokenizers); these allowances cover both.
+CHAT_TOKENS_PER_REQUEST = 8
+CHAT_TOKENS_PER_MESSAGE = 8
 
 
 @dataclass(frozen=True)
@@ -96,6 +108,17 @@ class CachedClient:
             raise
 
 
+def max_prompt_tokens(request: Request) -> int:
+    """At least as many prompt tokens as the request will use (see ASCII_CHARS_PER_TOKEN)."""
+    text = "".join(message["content"] for message in request.messages)
+    non_ascii = [c for c in text if not c.isascii()]
+    tokens = math.ceil((len(text) - len(non_ascii)) / ASCII_CHARS_PER_TOKEN)
+    tokens += sum(len(c.encode()) for c in non_ascii)
+    if request.chat_template:
+        tokens += CHAT_TOKENS_PER_REQUEST + CHAT_TOKENS_PER_MESSAGE * len(request.messages)
+    return tokens
+
+
 @dataclass(frozen=True)
 class BatchEstimate:
     requests: int
@@ -107,7 +130,7 @@ class BatchEstimate:
 def estimate_batch(client: CachedClient, requests: Sequence[Request]) -> BatchEstimate:
     """Upper-bound cost of the uncached requests.
 
-    Prompt tokens are estimated from text length. Completion tokens assume every
+    Prompt tokens are bounded by `max_prompt_tokens`. Completion tokens assume every
     request hits `max_tokens`. Prefill is priced at the uncached rate.
     """
     pending = [r for r in requests if not client.is_cached(r)]
@@ -115,7 +138,7 @@ def estimate_batch(client: CachedClient, requests: Sequence[Request]) -> BatchEs
     dollars = 0.0
     for request in pending:
         price = PRICES[request.model]
-        prompt = sum(len(m["content"]) for m in request.messages) // CHARS_PER_TOKEN
+        prompt = max_prompt_tokens(request)
         prompt_tokens += prompt
         completion_tokens += request.max_tokens
         dollars += (prompt * price.prefill + request.max_tokens * price.sample) / 1e6
@@ -137,7 +160,7 @@ def run_batch(
     if estimate.requests:
         show(
             f"{estimate.requests} of {len(requests)} requests are not cached: "
-            f"about {estimate.prompt_tokens:,} prompt tokens and up to "
+            f"up to {estimate.prompt_tokens:,} prompt tokens and up to "
             f"{estimate.completion_tokens:,} completion tokens, at most ${estimate.dollars:.2f}."
         )
         if not confirm():
