@@ -21,4 +21,4 @@ The triager under test is a 9B open model (`Qwen/Qwen3.5-9B-Base`) with rules in
 - RQ2's κ measures agreement between the triager and Opus labels, not human labels. The write-up says so wherever it reports κ.
 - The triager was tuned on the maintainer's dev labels and is scored on Opus test labels. The Opus-against-maintainer κ on dev shows how large that shift is, and is reported next to the headline κ.
 - An Opus labeler may share blind spots with the LLM judge. The two models differ greatly in size, and the judge's prompt was frozen before any Opus label existed, which limits this. The risk is stated as a limitation.
-- Exploit verdicts (#31) stay with the maintainer.
+- Exploit verdicts (#31) stay with the maintainer. (Changed by ADR 0016: agents write them.)

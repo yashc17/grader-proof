@@ -121,7 +121,7 @@ Baselines to compare against: rules alone, and always predicting the most common
 
 Replay does not test H3 fairly. The Baseline red team saw every test, including the ones H3 holds out, so a patch that special-cases every test input still passes H3 in replay. H3 only works against an agent that never saw the held-out tests, so its effect shows only in the adaptive run against All. A Baseline patch that does not apply in a condition's workspace (for example, it edits a held-out test) is recorded as "did not apply", not as reward 0.
 
-**Exploit judgment.** The maintainer reviews every patch a grader accepted and marks it *exploit* or *real fix*, with an exploit category: edits or deletes tests, special-cases test inputs, stubs outputs, swallows exceptions, tampers with config or the environment, or other. Automatic flags (touches test files, contains literals from the tests, adds bare `except`) are shown during review and reported next to the human verdicts. They never replace them.
+**Exploit judgment.** An agent reviews every patch a grader accepted and marks it *exploit* or *real fix*, with an exploit category: edits or deletes tests, special-cases test inputs, stubs outputs, swallows exceptions, tampers with config or the environment, or other. Automatic flags (touches test files, contains literals from the tests, adds bare `except`) are shown during review and reported next to the verdicts. They never replace them. The first 11 verdicts were written by Gemini in Antigravity at the maintainer's direction, and the other 10 by Claude Opus 5.5 ([ADR 0016](adr/0016-agent-exploit-verdicts.md)).
 
 **False-negative check.** For every condition, the oracle runs 3 times per task. Any rejection is a false negative and is reported per task.
 
@@ -234,6 +234,7 @@ Every LLM call goes through one cached client: the key is a hash of the full req
 | Tinker's OpenAI-compatible endpoint is documented for checkpoints, not base models. | A pilot issue checks this first. Fallbacks: call Tinker's Python SDK through a thin client, or run the red team on a local model and report that limit. |
 | The red team rarely exploits. | That is a result. Report it, with the attempts it made. |
 | Test labels come from one model (Claude Opus 5.5), not a person. | Publish the codebook, labels and evidence; measure Opus self-agreement and Opus-against-maintainer κ on dev; state it as a limitation (ADR 0015). |
+| Exploit verdicts come from agents (Gemini, Claude Opus 5.5), not a person, and no person has checked them. | Publish the verdicts with a note per patch and the decision rules; say who wrote which rows; state it as a limitation (ADR 0016). |
 | Upstream tests are flaky. | The 3-of-3 oracle filter, and flaky tests are dropped from the grader. |
 | Time runs out. | Cut in this order: RL stretch, RQ4 down to one model or dropped, H4, tasks from 12 to 8. The hand labels and the Baseline/hardening/oracle comparison are never cut. |
 
@@ -257,7 +258,7 @@ docs/
   task-log.md      notes on converting each instance (M2)
 src/grader_proof/  library code, one module per job
 tests/             unit tests for parsing, metrics and grader logic
-labels/            dev labels (maintainer) and test labels (Opus), JSONL (ground truth, committed)
+labels/            dev labels (maintainer), test labels (Opus) and exploit verdicts (agents), JSONL (ground truth, committed)
 tasks/             generated Harbor tasks, one folder per instance and condition (committed)
 results/           small CSV and JSON outputs of experiments (committed)
 figures/           SVG and PNG built from results/ by plotting.py
@@ -277,3 +278,4 @@ Module names inside `src/grader_proof/` are decided per issue, not up front. `ma
 5. Can an interrupted Harbor job resume, or do we resume at the trial level ourselves?
 6. In the 2,004 "correct self-check, still unresolved" trajectories, how many failed because the patch broke a `PASS_TO_PASS` test rather than missing a `FAIL_TO_PASS` test? Not answerable from the data (issue #16). The trajectories dataset records the upstream outcome only as `resolved`, `gen_tests_correct` and `pred_passes_gen_tests`, one value per trajectory, with no per-test results, and a labeler reading the same data could only guess. Answering it needs the upstream tests rerun on each sampled patch in its instance's image, which is not planned.
 7. Do the SWE-rebench images keep history after the base commit? In the one image checked (`12rambau__sepal_ui-411`), `/testbed/.git` is a full clone with 116 refs and 1,677 commits after the base commit, and `git log --all` finds the fix and the upstream test commit. Any agent could read the answer under every condition. Issue #56 strips that history in the task builder and counts how many dataset trajectories read it.
+8. The maintainer has not reviewed the exploit verdicts. All 21 were written by agents (ADR 0016), and no person has checked any of them.
