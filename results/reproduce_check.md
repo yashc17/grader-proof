@@ -1,4 +1,4 @@
-# Reproduce check (issue #36, phase 1)
+# Reproduce check (issue #36)
 
 Run on a clean checkout of `origin/main` at 55aa99e, with no `.env` loaded and no Docker. Each target was run, then `git status` was checked. "Match" means the regenerated files are byte-identical to the committed ones.
 
@@ -21,10 +21,11 @@ Run on a clean checkout of `origin/main` at 55aa99e, with no `.env` loaded and n
 | `rq3` | `make rq3` (reads the committed replay results, `results/oracle-check` and the verdicts) | Match: `rq3.csv`, `rq3.md` |
 | `oracle-check` summary | `uv run python -m grader_proof.oracle_check summarize results/oracle-check` | Match: `oracle_check.csv` (192/192 runs accepted) |
 | `figures` | `make figures` | See below |
+| `rq4` | `make rq4` (phase 2, after merging `origin/m4/33-pass-rates`, PR #78, which is not on `main` yet) | Match: `results/rq4.json` rebuilt byte for byte from the committed `results/rq4_runs/` |
 
 ## Not run
 
-`redteam`, `red-team-trial`, `rq4-runs`, toy tests (Docker and model calls); `oracle-check` and `replay-results` downloads (Actions); `label` (maintainer); `candidates`, `task` (network and Docker Hub); `red-team-pilot` and `replay-export` (need `runs/`, which is not committed). Their committed outputs feed `redteam-summary`, `rq3`, `figures` and `exploit-review`, which match.
+`redteam`, `red-team-trial`, `rq4-runs` (needs Docker and the Tinker key), toy tests (Docker and model calls); `oracle-check` and `replay-results` downloads (Actions); `label` (maintainer); `candidates`, `task` (network and Docker Hub); `red-team-pilot` and `replay-export` (need `runs/`, which is not committed). Their committed outputs feed `redteam-summary`, `rq3`, `figures` and `exploit-review`, which match.
 
 ## Figures
 
@@ -42,3 +43,11 @@ README "Needs" entries that are wrong and should be fixed in #77:
 - `redteam-summary` is marked "the laptop's `runs/` folder". It reads the committed `results/red_team_runs/` and needs nothing.
 - `rq3` is marked "maintainer (exploit verdicts)". The verdicts are committed, so it needs nothing.
 - `exploit-review` is described as summarizing "maintainer" verdicts. They are agent-written (ADR 0016).
+
+## RQ4 (phase 2)
+
+`make rq4` prints, and `results/rq4.json` holds: `Qwen/Qwen3.5-9B-Base` mean pass rate 6% [0%, 14%] over 12 tasks (36 trials; tasks by passes 0/3: 10, 1/3: 2) and `Qwen/Qwen3.5-35B-A3B-Base` 19% [0%, 42%] (36 trials; 0/3: 9, 1/3: 1, 3/3: 2).
+
+The README on `m5/35-readme` (97ba5a8) RQ4 section and its results row match `results/rq4.json`: means 5.6% [0.0%, 13.9%] (9B) and 19.4% [0.0%, 41.7%] (35B-A3B), tasks at 0/3, 1/3 and 3/3 (10/2/0 and 9/1/2) with the task names given, and `no_reward` 0 of 36 for both. The spends match the run files: `cost_usd` summed over `results/rq4_runs/` is $1.6626 (9B) and $2.9859 (35B-A3B), which the README rounds to $1.66 and $2.99.
+
+This branch contains a merge of PR #78, so it should be merged after #78.
