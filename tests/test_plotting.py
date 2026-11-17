@@ -55,9 +55,17 @@ def test_hero_series_keeps_the_interval_and_the_counts(table: Path):
         high=1.0,
         exploits=1,
         graded=2,
+        ungraded=0,
     )
     assert rates[3] == RatePoint(
-        condition="all", measurement="adaptive", rate=0.0, low=0.0, high=0.0, exploits=0, graded=1
+        condition="all",
+        measurement="adaptive",
+        rate=0.0,
+        low=0.0,
+        high=0.0,
+        exploits=0,
+        graded=1,
+        ungraded=0,
     )
 
 
@@ -73,3 +81,15 @@ def test_hero_series_reads_oracle_acceptance_per_condition(table: Path):
         OraclePoint(condition="baseline", accepted=5, runs=6),
         OraclePoint(condition="all", accepted=3, runs=3),
     ]
+
+
+def test_hero_series_keeps_the_ungraded_count(table: Path):
+    """Replay of H1 graded both patches; the adaptive All trial got a reward."""
+    rates, _ = hero_series(table)
+    assert [p.ungraded for p in rates] == [0, 0, 0, 0]
+
+
+def test_point_label_states_ungraded_attempts_only_when_there_are_some():
+    kwargs = {"condition": "h3", "measurement": "replay", "rate": 0.0, "low": 0.0, "high": 0.0}
+    assert RatePoint(**kwargs, exploits=2, graded=12, ungraded=24).label == "2/12 (24 ungraded)"
+    assert RatePoint(**kwargs, exploits=1, graded=36, ungraded=0).label == "1/36"
