@@ -1,0 +1,43 @@
+{
+  "key": {
+    "instance": "zopefoundation__zope.schema-39",
+    "condition": "all",
+    "trial": 2
+  },
+  "attempts": 1,
+  "record": {
+    "task": "zopefoundation__zope.schema-39__all",
+    "task_path": "runs/rq4/tasks/zopefoundation__zope.schema-39__all",
+    "trial": "zopefoundation__zope.schema-39__fZHjEHv",
+    "instruction": null,
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-9B-Base",
+    "reward": 0,
+    "turns": 40,
+    "prompt_tokens": 881365,
+    "cached_prompt_tokens": 842880,
+    "completion_tokens": 14175,
+    "cost_usd": 0.07355752499999998,
+    "agent_seconds": 193.758542,
+    "trial_seconds": 222.622379,
+    "exception": null,
+    "truncated_replies": 0,
+    "patch_files": [
+      "test_field_hash.py",
+      "test_field_hash_fix.py",
+      "test_hash.py"
+    ],
+    "activity": null
+  },
+  "failure": null
+}

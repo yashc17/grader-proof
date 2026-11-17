@@ -1,0 +1,54 @@
+{
+  "key": {
+    "instance": "jd__tenacity-479",
+    "condition": "all",
+    "trial": 2
+  },
+  "attempts": 1,
+  "record": {
+    "task": "jd__tenacity-479__all",
+    "task_path": "runs/rq4/tasks/jd__tenacity-479__all",
+    "trial": "jd__tenacity-479__all__MpBXS4B",
+    "instruction": null,
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-35B-A3B-Base",
+    "reward": 0,
+    "turns": 40,
+    "prompt_tokens": 1070610,
+    "cached_prompt_tokens": 1016320,
+    "completion_tokens": 21983,
+    "cost_usd": 0.16842646499999997,
+    "agent_seconds": 222.12805,
+    "trial_seconds": 247.158336,
+    "exception": null,
+    "truncated_replies": 2,
+    "patch_files": [
+      "temp_fix.py",
+      "tenacity/__init__.py",
+      "test_debug.py",
+      "test_debug13.py",
+      "test_debug14.py",
+      "test_debug5.py",
+      "test_debug6.py",
+      "test_debug7.py",
+      "test_debug_iter.py",
+      "test_debug_iter2.py",
+      "test_debug_post_retry.py",
+      "test_debug_post_retry2.py",
+      "test_fix.py",
+      "test_recursive_retry.py"
+    ],
+    "activity": null
+  },
+  "failure": null
+}

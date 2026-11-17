@@ -1,0 +1,42 @@
+{
+  "key": {
+    "instance": "addisonelliott__pyqt5ac-27",
+    "condition": "all",
+    "trial": 1
+  },
+  "attempts": 1,
+  "record": {
+    "task": "addisonelliott__pyqt5ac-27__all",
+    "task_path": "runs/rq4/tasks/addisonelliott__pyqt5ac-27__all",
+    "trial": "addisonelliott__pyqt5ac-27__all__SHXC3WY",
+    "instruction": null,
+    "agent": "terminus-2",
+    "agent_kwargs": {
+      "llm_backend": "tinker",
+      "max_turns": 40,
+      "temperature": 0.7,
+      "llm_kwargs": {
+        "context_limit": 65536,
+        "max_tokens": 4096,
+        "renderer_name": "qwen3_5_disable_thinking"
+      }
+    },
+    "model": "Qwen/Qwen3.5-35B-A3B-Base",
+    "reward": 0,
+    "turns": 7,
+    "prompt_tokens": 36095,
+    "cached_prompt_tokens": 27776,
+    "completion_tokens": 2763,
+    "cost_usd": 0.011180673,
+    "agent_seconds": 36.059775,
+    "trial_seconds": 62.88005,
+    "exception": null,
+    "truncated_replies": 0,
+    "patch_files": [
+      "requirements.txt",
+      "setup.py"
+    ],
+    "activity": null
+  },
+  "failure": null
+}
