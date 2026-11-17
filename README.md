@@ -1,4 +1,4 @@
-This repo is aimed at answering the question: **can a grader built from a repository's own tests can be trusted to reward real fixes?** I tested this on real coding-agent traces and real containers. I found where these graders break, and which fixes close the gaps.
+This repo is aimed at answering the question: **can a grader built from a repository's own tests be trusted to reward real fixes?** I tested this on real coding-agent traces and real containers. I found where these graders break, and which fixes close the gaps.
 
 ## Why this matters
 
