@@ -131,7 +131,7 @@ Two models on Tinker, plus one local model if it runs in reasonable time, with t
 
 ### M5. Write-up
 
-The README's first screen gives 3–4 headline numbers, each with its interval and the `make` target that produced it, and one figure. Then methods, limitations, and how to reproduce. Results that contradict the expectations in section 5 are reported as they are.
+The README is a short summary: the findings with their intervals, one figure, next steps and a link to the full report. `docs/report.md` gives each headline number with the `make` target that produced it, then methods, limitations, and how to reproduce. Results that contradict the expectations in section 5 are reported as they are.
 
 ## 5. Metrics and uncertainty
 
@@ -249,11 +249,12 @@ Every LLM call goes through one cached client: the key is a hash of the full req
 ## 9. Repository layout
 
 ```
-README.md          findings first, then method, limitations, reproduce
+README.md          short summary: findings, figure, next steps
 CONTEXT.md         glossary
 Makefile           one target per experiment, plus check
 docs/
   design.md        this file
+  report.md        full methods, results, limitations, reproduce
   adr/             decisions
   task-log.md      notes on converting each instance (M2)
 src/grader_proof/  library code, one module per job
